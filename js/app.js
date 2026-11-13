@@ -11,7 +11,7 @@ import {
   setOnLoginSuccess
 } from './auth.js';
 import { subscribeRealtimeData } from './db.js';
-import { initUpdater } from './updater.js';
+import { initUpdater, refreshPwaInstallUI } from './updater.js';
 import { bindSalesEvents } from './ui-sales.js';
 import { bindExpenseEvents, renderExpenseLines, populateMasterCategoryDropdown } from './ui-expenses.js';
 import { bindDashboardEvents, renderDashboard, showSkeletons } from './ui-dashboard.js';
@@ -291,6 +291,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   bindExpenseEvents(() => switchTab('dashboard'));
   bindDashboardEvents(switchTab);
   bindSettingsEvents(() => {
+    refreshPwaInstallUI();
     if (state.currentUser) {
       populateMasterCategoryDropdown();
       renderSettingsRoster();

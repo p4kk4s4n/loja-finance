@@ -6,8 +6,10 @@
   <title>Loja Finance — Business Operations Dashboard</title>
 
   <link rel="icon" type="image/svg+xml" href="./icons/icon.svg">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#6366f1">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
@@ -27,7 +29,7 @@
       <div class="brand">
         <div class="brand-icon"><i class="fa-solid fa-chart-line"></i></div>
         <div class="brand-name">Loja Finance</div>
-        <span id="header-version-pill" class="version-pill">v2.0.0</span>
+        <span id="header-version-pill" class="version-pill">v2.0.1</span>
       </div>
 
       <div class="user-info">
@@ -502,11 +504,11 @@
           <div class="calc-container" style="margin-bottom:1.25rem;">
             <div class="calc-row">
               <span data-i18n="upd_current">Installed Version:</span>
-              <strong id="upd-current-ver">v2.0.0</strong>
+              <strong id="upd-current-ver">v2.0.1</strong>
             </div>
             <div class="calc-row">
               <span data-i18n="upd_latest">Latest on GitHub:</span>
-              <strong id="upd-latest-ver">v2.0.0</strong>
+              <strong id="upd-latest-ver">v2.0.1</strong>
             </div>
             <div class="calc-row">
               <label class="toggle-switch" for="pref-auto-update">
@@ -521,6 +523,37 @@
             </button>
             <button id="btn-install-update" type="button" class="btn-submit" style="display:none;">
               <i class="fa-solid fa-cloud-arrow-down"></i> <span data-i18n="upd_install_btn">Update Now</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Install App to Device (PWA / WebAPK) -->
+        <div class="glass-card" id="install-app-card">
+          <div class="glass-card-header">
+            <h3 class="glass-card-title"><i class="fa-solid fa-mobile-screen-button" style="color:var(--primary);"></i> <span data-i18n="pwa_title">Install App to Device</span></h3>
+            <span id="pwa-install-status" class="badge">Checking...</span>
+          </div>
+          <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1.25rem;" data-i18n="pwa_desc"></p>
+          <div class="calc-container" style="margin-bottom:1rem;">
+            <div class="calc-row">
+              <span data-i18n="pwa_url_label">Canonical App Link:</span>
+              <strong id="pwa-canonical-url" style="font-size:0.82rem; word-break:break-all; text-align:right;"></strong>
+            </div>
+            <div class="calc-row">
+              <span data-i18n="pwa_id_label">WebAPK App ID:</span>
+              <strong id="pwa-manifest-id" style="font-size:0.82rem; word-break:break-all; text-align:right;"></strong>
+            </div>
+          </div>
+          <p id="pwa-install-hint" style="font-size:0.82rem; color:var(--text-secondary); margin-bottom:1.25rem; line-height:1.45;"></p>
+          <div style="display:flex; justify-content:flex-end; gap:0.75rem; flex-wrap:wrap;">
+            <button id="btn-copy-app-link" type="button" class="btn-secondary">
+              <i class="fa-solid fa-share-nodes"></i> <span data-i18n="pwa_btn_copy">Copy Share Link</span>
+            </button>
+            <button id="btn-reset-pwa-cache" type="button" class="btn-secondary">
+              <i class="fa-solid fa-arrows-rotate"></i> <span data-i18n="pwa_btn_reset">Reset WebAPK Cache</span>
+            </button>
+            <button id="btn-install-pwa" type="button" class="btn-submit">
+              <i class="fa-solid fa-download"></i> <span data-i18n="pwa_btn_install">Install to Device</span>
             </button>
           </div>
         </div>

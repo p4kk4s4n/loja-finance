@@ -108,6 +108,14 @@ export const translations = {
     upd_check_btn: 'Verificar Atualizações',
     upd_install_btn: 'Atualizar Agora',
 
+    pwa_title: 'Instalar Aplicativo no Dispositivo',
+    pwa_desc: 'Instale o Loja Finance como aplicativo nativo (PWA / WebAPK) com URL canônica fixa para evitar duplicidade de instalação.',
+    pwa_url_label: 'Link Canônico do App:',
+    pwa_id_label: 'ID do WebAPK / Manifesto:',
+    pwa_btn_copy: 'Copiar Link',
+    pwa_btn_reset: 'Limpar Cache WebAPK',
+    pwa_btn_install: 'Instalar no Dispositivo',
+
     pref_title: 'Preferências Visuais & Acessibilidade',
     pref_theme: 'Modo de Tema',
     pref_theme_dark: 'Modo Escuro (Glow)',
@@ -259,6 +267,14 @@ export const translations = {
     upd_auto_label: 'Automatically update when a new version is available',
     upd_check_btn: 'Check for Updates',
     upd_install_btn: 'Update Now',
+
+    pwa_title: 'Install App to Device',
+    pwa_desc: 'Install Loja Finance on your phone or desktop with a locked canonical WebAPK ID to prevent duplicate or broken shortcuts.',
+    pwa_url_label: 'Canonical App Link:',
+    pwa_id_label: 'WebAPK / Manifest ID:',
+    pwa_btn_copy: 'Copy Share Link',
+    pwa_btn_reset: 'Reset WebAPK Cache',
+    pwa_btn_install: 'Install to Device',
 
     pref_title: 'UI Preferences & Accessibility',
     pref_theme: 'Theme Mode',

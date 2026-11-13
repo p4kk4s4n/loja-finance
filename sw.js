@@ -1,4 +1,4 @@
-const APP_VERSION = '2.0.0';
+const APP_VERSION = '2.0.1';
 const CACHE_NAME = `loja-finance-v${APP_VERSION}`;
 
 const APP_SHELL_ASSETS = [
@@ -6,6 +6,8 @@ const APP_SHELL_ASSETS = [
   './index.html',
   './manifest.json',
   './icons/icon.svg',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
   './css/tokens.css',
   './css/layout.css',
   './css/components.css',
