@@ -29,7 +29,7 @@
       <div class="brand">
         <div class="brand-icon"><i class="fa-solid fa-chart-line"></i></div>
         <div class="brand-name">Loja Finance</div>
-        <span id="header-version-pill" class="version-pill">v2.0.1</span>
+        <span id="header-version-pill" class="version-pill">v2.0.2</span>
       </div>
 
       <div class="user-info">
@@ -42,16 +42,16 @@
     </header>
 
     <nav>
-      <button type="button" class="nav-btn nav-log-btn active" data-tab="submit">
+      <button type="button" class="nav-btn active" data-tab="submit">
         <i class="fa-solid fa-pen-to-square"></i> <span data-i18n="nav_log_daily">Log Daily</span>
       </button>
-      <button type="button" class="nav-btn nav-log-btn" data-tab="expense">
+      <button type="button" class="nav-btn" data-tab="expense">
         <i class="fa-solid fa-receipt"></i> <span data-i18n="nav_log_expense">Log Expense</span>
       </button>
       <button type="button" class="nav-btn" data-tab="dashboard">
         <i class="fa-solid fa-gauge-high"></i> <span data-i18n="nav_dashboard">Dashboard</span>
       </button>
-      <button type="button" class="nav-btn" data-tab="portfolio">
+      <button id="nav-btn-portfolio" type="button" class="nav-btn" data-tab="portfolio">
         <i class="fa-solid fa-briefcase"></i> <span data-i18n="nav_portfolio">Portfolio</span>
       </button>
       <button type="button" class="nav-btn" data-tab="history">
@@ -60,7 +60,6 @@
       <button id="nav-btn-settings" type="button" class="nav-btn" data-tab="settings">
         <i class="fa-solid fa-sliders"></i> <span data-i18n="nav_settings">Settings</span>
       </button>
-      <div class="nav-indicator"></div>
     </nav>
 
     <main>
@@ -231,7 +230,10 @@
         </div>
 
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
-          <h2 data-i18n="dash_title" style="font-family:var(--font-display); font-weight:700; font-size:1.7rem;">Business Analytics</h2>
+          <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+            <h2 data-i18n="dash_title" style="font-family:var(--font-display); font-weight:700; font-size:1.7rem;">Business Analytics</h2>
+            <span id="dashboard-scope-badge" class="badge" style="display:none;"></span>
+          </div>
           <button id="mobile-filter-btn" type="button" class="btn-secondary" style="display:none;">
             <i class="fa-solid fa-filter"></i> Filters
           </button>
@@ -348,217 +350,7 @@
 
       <!-- SETTINGS TAB -->
       <div id="tab-settings" class="tab-pane">
-        <!-- Businesses -->
-        <div class="glass-card">
-          <div class="glass-card-header">
-            <h2 class="glass-card-title"><i class="fa-solid fa-store" style="color:var(--accent);"></i> <span data-i18n="set_biz_title">Manage Businesses &amp; Income Streams</span></h2>
-          </div>
-          <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1.25rem;" data-i18n="set_biz_desc"></p>
-          <div id="settings-businesses-container" class="calc-container" style="margin-bottom:1.25rem;"></div>
-          <button id="btn-add-business" type="button" class="btn-secondary" style="width:100%; justify-content:center; margin-bottom:1rem;">
-            <i class="fa-solid fa-plus"></i> <span data-i18n="set_biz_add">Add New Business</span>
-          </button>
-          <div style="display:flex; justify-content:flex-end;">
-            <button id="btn-save-businesses" type="button" class="btn-submit"><i class="fa-solid fa-save"></i> <span data-i18n="set_biz_save">Save Businesses</span></button>
-          </div>
-        </div>
-
-        <!-- Team Roster -->
-        <div class="glass-card">
-          <div class="glass-card-header">
-            <h2 class="glass-card-title"><i class="fa-solid fa-users-gear" style="color:var(--success);"></i> <span data-i18n="set_title">Team Settings &amp; Profit Splits</span></h2>
-            <span class="badge" id="split-validation-status" style="padding:0.4rem 0.8rem;">Partner Splits: 100% OK</span>
-          </div>
-          <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1.25rem;" data-i18n="set_desc"></p>
-          <div class="table-container" style="margin-bottom:1.5rem;">
-            <table>
-              <thead>
-                <tr>
-                  <th data-i18n="set_tbl_name">Name</th>
-                  <th data-i18n="set_tbl_store">Store</th>
-                  <th data-i18n="set_tbl_role">Role</th>
-                  <th data-i18n="set_tbl_split">Split %</th>
-                  <th data-i18n="set_tbl_salary">Salary / Wage</th>
-                  <th data-i18n="set_tbl_freq">Pay Freq</th>
-                  <th data-i18n="set_tbl_payday">Pay Day</th>
-                  <th data-i18n="set_tbl_pin">PIN</th>
-                  <th data-i18n="set_tbl_actions">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="settings-roster-tbody"></tbody>
-            </table>
-          </div>
-          <div style="display:flex; justify-content:flex-end;">
-            <button id="btn-save-roster" type="button" class="btn-submit" style="background:linear-gradient(135deg,var(--success),#059669);">
-              <i class="fa-solid fa-floppy-disk"></i> <span data-i18n="set_btn_save">Save Configurations</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Add New Member -->
-        <div class="glass-card">
-          <div class="glass-card-header">
-            <h3 class="glass-card-title"><i class="fa-solid fa-user-plus" style="color:var(--primary);"></i> <span data-i18n="set_add_title">Add Team Member</span></h3>
-          </div>
-          <div class="form-grid">
-            <div class="form-group">
-              <label for="new-member-name" data-i18n="set_add_name">Full Name</label>
-              <input type="text" id="new-member-name" placeholder="e.g. Alice Silva">
-            </div>
-            <div class="form-group">
-              <label for="new-member-role" data-i18n="set_add_role">Business Role</label>
-              <select id="new-member-role">
-                <option value="Partner" data-i18n="set_role_partner">Partner</option>
-                <option value="Employee" selected data-i18n="set_role_employee">Employee</option>
-                <option value="Admin" data-i18n="set_role_admin">Admin</option>
-              </select>
-            </div>
-            <div class="form-group form-grid-full" id="new-member-split-container" style="display:none;">
-              <label data-i18n="set_add_split">Partner Equity Matrix (%)</label>
-              <div id="new-member-equity-grid" style="display:flex; gap:1rem; flex-wrap:wrap; margin-top:0.4rem;"></div>
-            </div>
-            <div class="form-grid-full" id="new-member-salary-container" style="display:flex; gap:1rem; flex-wrap:wrap;">
-              <div class="form-group" style="flex:1; min-width:120px;">
-                <label data-i18n="set_tbl_salary">Fixed Salary / Wage</label>
-                <input type="text" inputmode="decimal" id="new-member-salary" placeholder="0.00">
-              </div>
-              <div class="form-group" style="flex:1; min-width:120px;">
-                <label data-i18n="set_tbl_freq">Pay Frequency</label>
-                <select id="new-member-frequency">
-                  <option value="None" data-i18n="opt_freq_none">Manual</option>
-                  <option value="Daily" data-i18n="opt_freq_daily">Daily</option>
-                  <option value="Weekly" data-i18n="opt_freq_weekly">Weekly</option>
-                  <option value="Monthly" data-i18n="opt_freq_monthly">Monthly</option>
-                </select>
-              </div>
-              <div class="form-group" id="new-member-payday-container" style="flex:1; min-width:120px; display:none;">
-                <label data-i18n="set_tbl_payday">Pay Day</label>
-                <select id="new-member-payday"></select>
-              </div>
-            </div>
-            <div class="form-group">
-              <label for="new-member-store" data-i18n="set_tbl_store">Store Assignment</label>
-              <select id="new-member-store"></select>
-            </div>
-            <div class="form-group">
-              <label for="new-member-pin">Login PIN Code</label>
-              <input type="text" id="new-member-pin" placeholder="1234">
-            </div>
-            <button id="btn-add-member" type="button" class="btn-submit form-grid-full">
-              <i class="fa-solid fa-plus"></i> <span data-i18n="set_add_btn">Add Member to List</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Expense Categories -->
-        <div class="glass-card">
-          <div class="glass-card-header">
-            <h3 class="glass-card-title"><i class="fa-solid fa-tags" style="color:var(--secondary);"></i> <span data-i18n="set_cat_title">Expense Categories</span></h3>
-          </div>
-          <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1.25rem;" data-i18n="set_cat_desc"></p>
-          <div id="settings-categories-container" class="calc-container" style="margin-bottom:1.25rem;"></div>
-          <button id="btn-add-category" type="button" class="btn-secondary" style="width:100%; justify-content:center; margin-bottom:1rem;">
-            <i class="fa-solid fa-plus"></i> <span data-i18n="set_cat_add">Add New Category</span>
-          </button>
-          <div style="display:flex; justify-content:flex-end;">
-            <button id="btn-save-categories" type="button" class="btn-submit"><i class="fa-solid fa-save"></i> <span data-i18n="set_cat_save">Save Categories</span></button>
-          </div>
-        </div>
-
-        <!-- Integrations: Gemini AI & Google Sheets Backup -->
-        <div class="glass-card">
-          <div class="glass-card-header">
-            <h3 class="glass-card-title"><i class="fa-solid fa-plug" style="color:var(--accent);"></i> Gemini AI &amp; Google Sheets Backup</h3>
-          </div>
-          <div class="form-grid">
-            <div class="form-group form-grid-full">
-              <label for="set-gemini-key">Gemini API Key (HTTP-Referrer Restricted)</label>
-              <input type="password" id="set-gemini-key" placeholder="AIza...">
-            </div>
-            <div class="form-group">
-              <label for="set-spreadsheet-id">Backup Google Spreadsheet ID (Optional)</label>
-              <input type="text" id="set-spreadsheet-id" placeholder="1G-TFhcsMCb6v4g19IjGIV6wMccDVXUyjgYJvwi3fO9Q">
-            </div>
-            <div class="form-group">
-              <label for="set-google-client-id">Google OAuth Client ID (For Manual Sync)</label>
-              <input type="text" id="set-google-client-id" placeholder="xxxx.apps.googleusercontent.com">
-            </div>
-            <div class="form-grid-full" style="display:flex; justify-content:flex-end; gap:0.75rem; flex-wrap:wrap;">
-              <button id="btn-sync-sheets-now" type="button" class="btn-secondary">
-                <i class="fa-solid fa-table"></i> Sync to Google Sheets Now
-              </button>
-              <button id="btn-save-integrations" type="button" class="btn-submit">
-                <i class="fa-solid fa-save"></i> Save Integrations
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- App Auto-Update Settings (GitHub Releases) -->
-        <div class="glass-card">
-          <div class="glass-card-header">
-            <h3 class="glass-card-title"><i class="fa-brands fa-github" style="color:var(--primary);"></i> <span data-i18n="upd_title">App Updates (GitHub)</span></h3>
-            <span id="update-status-text" class="badge">Checking...</span>
-          </div>
-          <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1.25rem;" data-i18n="upd_desc"></p>
-          <div class="calc-container" style="margin-bottom:1.25rem;">
-            <div class="calc-row">
-              <span data-i18n="upd_current">Installed Version:</span>
-              <strong id="upd-current-ver">v2.0.1</strong>
-            </div>
-            <div class="calc-row">
-              <span data-i18n="upd_latest">Latest on GitHub:</span>
-              <strong id="upd-latest-ver">v2.0.1</strong>
-            </div>
-            <div class="calc-row">
-              <label class="toggle-switch" for="pref-auto-update">
-                <input type="checkbox" id="pref-auto-update" checked>
-                <span data-i18n="upd_auto_label">Automatically update when a new version is available</span>
-              </label>
-            </div>
-          </div>
-          <div style="display:flex; justify-content:flex-end; gap:0.75rem; flex-wrap:wrap;">
-            <button id="btn-check-updates" type="button" class="btn-secondary">
-              <i class="fa-solid fa-magnifying-glass"></i> <span data-i18n="upd_check_btn">Check for Updates</span>
-            </button>
-            <button id="btn-install-update" type="button" class="btn-submit" style="display:none;">
-              <i class="fa-solid fa-cloud-arrow-down"></i> <span data-i18n="upd_install_btn">Update Now</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Install App to Device (PWA / WebAPK) -->
-        <div class="glass-card" id="install-app-card">
-          <div class="glass-card-header">
-            <h3 class="glass-card-title"><i class="fa-solid fa-mobile-screen-button" style="color:var(--primary);"></i> <span data-i18n="pwa_title">Install App to Device</span></h3>
-            <span id="pwa-install-status" class="badge">Checking...</span>
-          </div>
-          <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1.25rem;" data-i18n="pwa_desc"></p>
-          <div class="calc-container" style="margin-bottom:1rem;">
-            <div class="calc-row">
-              <span data-i18n="pwa_url_label">Canonical App Link:</span>
-              <strong id="pwa-canonical-url" style="font-size:0.82rem; word-break:break-all; text-align:right;"></strong>
-            </div>
-            <div class="calc-row">
-              <span data-i18n="pwa_id_label">WebAPK App ID:</span>
-              <strong id="pwa-manifest-id" style="font-size:0.82rem; word-break:break-all; text-align:right;"></strong>
-            </div>
-          </div>
-          <p id="pwa-install-hint" style="font-size:0.82rem; color:var(--text-secondary); margin-bottom:1.25rem; line-height:1.45;"></p>
-          <div style="display:flex; justify-content:flex-end; gap:0.75rem; flex-wrap:wrap;">
-            <button id="btn-copy-app-link" type="button" class="btn-secondary">
-              <i class="fa-solid fa-share-nodes"></i> <span data-i18n="pwa_btn_copy">Copy Share Link</span>
-            </button>
-            <button id="btn-reset-pwa-cache" type="button" class="btn-secondary">
-              <i class="fa-solid fa-arrows-rotate"></i> <span data-i18n="pwa_btn_reset">Reset WebAPK Cache</span>
-            </button>
-            <button id="btn-install-pwa" type="button" class="btn-submit">
-              <i class="fa-solid fa-download"></i> <span data-i18n="pwa_btn_install">Install to Device</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Device UI Preferences -->
+        <!-- 1. Device UI Preferences (Top for All Roles) -->
         <div class="glass-card">
           <div class="glass-card-header">
             <h3 class="glass-card-title"><i class="fa-solid fa-wand-magic-sparkles" style="color:var(--secondary);"></i> <span data-i18n="pref_title">UI Preferences &amp; Accessibility</span></h3>
@@ -605,13 +397,224 @@
             </div>
           </div>
         </div>
+
+        <!-- 2. App Auto-Update Settings (Immediately Below Preferences for All Roles) -->
+        <div class="glass-card">
+          <div class="glass-card-header">
+            <h3 class="glass-card-title"><i class="fa-brands fa-github" style="color:var(--primary);"></i> <span data-i18n="upd_title">App Updates (GitHub)</span></h3>
+            <span id="update-status-text" class="badge">Checking...</span>
+          </div>
+          <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1.25rem;" data-i18n="upd_desc"></p>
+          <div class="calc-container" style="margin-bottom:1.25rem;">
+            <div class="calc-row">
+              <span data-i18n="upd_current">Installed Version:</span>
+              <strong id="upd-current-ver">v2.0.2</strong>
+            </div>
+            <div class="calc-row">
+              <span data-i18n="upd_latest">Latest on GitHub:</span>
+              <strong id="upd-latest-ver">v2.0.2</strong>
+            </div>
+            <div class="calc-row">
+              <label class="toggle-switch" for="pref-auto-update">
+                <input type="checkbox" id="pref-auto-update" checked>
+                <span data-i18n="upd_auto_label">Automatically update when a new version is available</span>
+              </label>
+            </div>
+          </div>
+          <div style="display:flex; justify-content:flex-end; gap:0.75rem; flex-wrap:wrap;">
+            <button id="btn-check-updates" type="button" class="btn-secondary">
+              <i class="fa-solid fa-magnifying-glass"></i> <span data-i18n="upd_check_btn">Check for Updates</span>
+            </button>
+            <button id="btn-install-update" type="button" class="btn-submit" style="display:none;">
+              <i class="fa-solid fa-cloud-arrow-down"></i> <span data-i18n="upd_install_btn">Update Now</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 3. Install App to Device (PWA / WebAPK for All Roles) -->
+        <div class="glass-card" id="install-app-card">
+          <div class="glass-card-header">
+            <h3 class="glass-card-title"><i class="fa-solid fa-mobile-screen-button" style="color:var(--primary);"></i> <span data-i18n="pwa_title">Install App to Device</span></h3>
+            <span id="pwa-install-status" class="badge">Checking...</span>
+          </div>
+          <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1.25rem;" data-i18n="pwa_desc"></p>
+          <div class="calc-container" style="margin-bottom:1rem;">
+            <div class="calc-row">
+              <span data-i18n="pwa_url_label">Canonical App Link:</span>
+              <strong id="pwa-canonical-url" style="font-size:0.82rem; word-break:break-all; text-align:right;"></strong>
+            </div>
+            <div class="calc-row">
+              <span data-i18n="pwa_id_label">WebAPK App ID:</span>
+              <strong id="pwa-manifest-id" style="font-size:0.82rem; word-break:break-all; text-align:right;"></strong>
+            </div>
+          </div>
+          <p id="pwa-install-hint" style="font-size:0.82rem; color:var(--text-secondary); margin-bottom:1.25rem; line-height:1.45;"></p>
+          <div style="display:flex; justify-content:flex-end; gap:0.75rem; flex-wrap:wrap;">
+            <button id="btn-copy-app-link" type="button" class="btn-secondary">
+              <i class="fa-solid fa-share-nodes"></i> <span data-i18n="pwa_btn_copy">Copy Share Link</span>
+            </button>
+            <button id="btn-reset-pwa-cache" type="button" class="btn-secondary">
+              <i class="fa-solid fa-arrows-rotate"></i> <span data-i18n="pwa_btn_reset">Reset WebAPK Cache</span>
+            </button>
+            <button id="btn-install-pwa" type="button" class="btn-submit">
+              <i class="fa-solid fa-download"></i> <span data-i18n="pwa_btn_install">Install to Device</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 4. Admin-Only Management Sections -->
+        <div id="settings-admin-section" style="display:none;">
+          <!-- Businesses -->
+          <div class="glass-card">
+            <div class="glass-card-header">
+              <h2 class="glass-card-title"><i class="fa-solid fa-store" style="color:var(--accent);"></i> <span data-i18n="set_biz_title">Manage Businesses &amp; Income Streams</span></h2>
+            </div>
+            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1.25rem;" data-i18n="set_biz_desc"></p>
+            <div id="settings-businesses-container" class="calc-container" style="margin-bottom:1.25rem;"></div>
+            <button id="btn-add-business" type="button" class="btn-secondary" style="width:100%; justify-content:center; margin-bottom:1rem;">
+              <i class="fa-solid fa-plus"></i> <span data-i18n="set_biz_add">Add New Business</span>
+            </button>
+            <div style="display:flex; justify-content:flex-end;">
+              <button id="btn-save-businesses" type="button" class="btn-submit"><i class="fa-solid fa-save"></i> <span data-i18n="set_biz_save">Save Businesses</span></button>
+            </div>
+          </div>
+
+          <!-- Team Roster -->
+          <div class="glass-card">
+            <div class="glass-card-header">
+              <h2 class="glass-card-title"><i class="fa-solid fa-users-gear" style="color:var(--success);"></i> <span data-i18n="set_title">Team Settings &amp; Profit Splits</span></h2>
+              <span class="badge" id="split-validation-status" style="padding:0.4rem 0.8rem;">Partner Splits: 100% OK</span>
+            </div>
+            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1.25rem;" data-i18n="set_desc"></p>
+            <div class="table-container" style="margin-bottom:1.5rem;">
+              <table>
+                <thead>
+                  <tr>
+                    <th data-i18n="set_tbl_name">Name</th>
+                    <th data-i18n="set_tbl_store">Store</th>
+                    <th data-i18n="set_tbl_role">Role</th>
+                    <th data-i18n="set_tbl_split">Split %</th>
+                    <th data-i18n="set_tbl_salary">Salary / Wage</th>
+                    <th data-i18n="set_tbl_freq">Pay Freq</th>
+                    <th data-i18n="set_tbl_payday">Pay Day</th>
+                    <th data-i18n="set_tbl_pin">PIN</th>
+                    <th data-i18n="set_tbl_actions">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="settings-roster-tbody"></tbody>
+              </table>
+            </div>
+            <div style="display:flex; justify-content:flex-end;">
+              <button id="btn-save-roster" type="button" class="btn-submit" style="background:linear-gradient(135deg,var(--success),#059669);">
+                <i class="fa-solid fa-floppy-disk"></i> <span data-i18n="set_btn_save">Save Configurations</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Add New Member -->
+          <div class="glass-card">
+            <div class="glass-card-header">
+              <h3 class="glass-card-title"><i class="fa-solid fa-user-plus" style="color:var(--primary);"></i> <span data-i18n="set_add_title">Add Team Member</span></h3>
+            </div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="new-member-name" data-i18n="set_add_name">Full Name</label>
+                <input type="text" id="new-member-name" placeholder="e.g. Alice Silva">
+              </div>
+              <div class="form-group">
+                <label for="new-member-role" data-i18n="set_add_role">Business Role</label>
+                <select id="new-member-role">
+                  <option value="Partner" data-i18n="set_role_partner">Partner</option>
+                  <option value="Employee" selected data-i18n="set_role_employee">Employee</option>
+                  <option value="Admin" data-i18n="set_role_admin">Admin</option>
+                </select>
+              </div>
+              <div class="form-group form-grid-full" id="new-member-split-container" style="display:none;">
+                <label data-i18n="set_add_split">Partner Equity Matrix (%)</label>
+                <div id="new-member-equity-grid" style="display:flex; gap:1rem; flex-wrap:wrap; margin-top:0.4rem;"></div>
+              </div>
+              <div class="form-grid-full" id="new-member-salary-container" style="display:flex; gap:1rem; flex-wrap:wrap;">
+                <div class="form-group" style="flex:1; min-width:120px;">
+                  <label data-i18n="set_tbl_salary">Fixed Salary / Wage</label>
+                  <input type="text" inputmode="decimal" id="new-member-salary" placeholder="0.00">
+                </div>
+                <div class="form-group" style="flex:1; min-width:120px;">
+                  <label data-i18n="set_tbl_freq">Pay Frequency</label>
+                  <select id="new-member-frequency">
+                    <option value="None" data-i18n="opt_freq_none">Manual</option>
+                    <option value="Daily" data-i18n="opt_freq_daily">Daily</option>
+                    <option value="Weekly" data-i18n="opt_freq_weekly">Weekly</option>
+                    <option value="Monthly" data-i18n="opt_freq_monthly">Monthly</option>
+                  </select>
+                </div>
+                <div class="form-group" id="new-member-payday-container" style="flex:1; min-width:120px; display:none;">
+                  <label data-i18n="set_tbl_payday">Pay Day</label>
+                  <select id="new-member-payday"></select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="new-member-store" data-i18n="set_tbl_store">Store Assignment</label>
+                <select id="new-member-store"></select>
+              </div>
+              <div class="form-group">
+                <label for="new-member-pin">Login PIN Code</label>
+                <input type="text" id="new-member-pin" placeholder="1234">
+              </div>
+              <button id="btn-add-member" type="button" class="btn-submit form-grid-full">
+                <i class="fa-solid fa-plus"></i> <span data-i18n="set_add_btn">Add Member to List</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Expense Categories -->
+          <div class="glass-card">
+            <div class="glass-card-header">
+              <h3 class="glass-card-title"><i class="fa-solid fa-tags" style="color:var(--secondary);"></i> <span data-i18n="set_cat_title">Expense Categories</span></h3>
+            </div>
+            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1.25rem;" data-i18n="set_cat_desc"></p>
+            <div id="settings-categories-container" class="calc-container" style="margin-bottom:1.25rem;"></div>
+            <button id="btn-add-category" type="button" class="btn-secondary" style="width:100%; justify-content:center; margin-bottom:1rem;">
+              <i class="fa-solid fa-plus"></i> <span data-i18n="set_cat_add">Add New Category</span>
+            </button>
+            <div style="display:flex; justify-content:flex-end;">
+              <button id="btn-save-categories" type="button" class="btn-submit"><i class="fa-solid fa-save"></i> <span data-i18n="set_cat_save">Save Categories</span></button>
+            </div>
+          </div>
+
+          <!-- Integrations: Gemini AI & Google Sheets Backup -->
+          <div class="glass-card">
+            <div class="glass-card-header">
+              <h3 class="glass-card-title"><i class="fa-solid fa-plug" style="color:var(--accent);"></i> Gemini AI &amp; Google Sheets Backup</h3>
+            </div>
+            <div class="form-grid">
+              <div class="form-group form-grid-full">
+                <label for="set-gemini-key">Gemini API Key (HTTP-Referrer Restricted)</label>
+                <input type="password" id="set-gemini-key" placeholder="AIza...">
+              </div>
+              <div class="form-group">
+                <label for="set-spreadsheet-id">Backup Google Spreadsheet ID (Optional)</label>
+                <input type="text" id="set-spreadsheet-id" placeholder="1G-TFhcsMCb6v4g19IjGIV6wMccDVXUyjgYJvwi3fO9Q">
+              </div>
+              <div class="form-group">
+                <label for="set-google-client-id">Google OAuth Client ID (For Manual Sync)</label>
+                <input type="text" id="set-google-client-id" placeholder="xxxx.apps.googleusercontent.com">
+              </div>
+              <div class="form-grid-full" style="display:flex; justify-content:flex-end; gap:0.75rem; flex-wrap:wrap;">
+                <button id="btn-sync-sheets-now" type="button" class="btn-secondary">
+                  <i class="fa-solid fa-table"></i> Sync to Google Sheets Now
+                </button>
+                <button id="btn-save-integrations" type="button" class="btn-submit">
+                  <i class="fa-solid fa-save"></i> Save Integrations
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </main>
   </div>
 
-  <!-- Mobile FAB & Bottom Sheets -->
-  <button id="mobile-fab" type="button" aria-label="Quick Actions"><i class="fa-solid fa-plus"></i></button>
-  <div id="fab-menu-overlay" class="sheet-overlay"></div>
+  <!-- Mobile Filter Sheet -->
   <div id="filter-menu-overlay" class="sheet-overlay"></div>
 
   <div id="filter-bottom-sheet" class="bottom-sheet">
@@ -626,20 +629,6 @@
     <label style="margin-bottom:0.45rem;">Filter by Store</label>
     <div id="mobile-store-filters" style="display:flex; flex-direction:column; gap:0.5rem; margin-bottom:1.25rem;"></div>
     <button id="btn-close-filter-sheet" type="button" class="btn-submit" style="width:100%;">Close</button>
-  </div>
-
-  <div id="fab-bottom-sheet" class="bottom-sheet">
-    <div class="sheet-handle"></div>
-    <button type="button" class="fab-sheet-btn" data-tab="submit">
-      <div class="fab-sheet-icon"><i class="fa-solid fa-cash-register"></i></div>
-      <span data-i18n="nav_log_daily" style="font-weight:600;">Log Daily Sales</span>
-      <i class="fa-solid fa-chevron-right" style="margin-left:auto; color:var(--text-muted);"></i>
-    </button>
-    <button type="button" class="fab-sheet-btn" data-tab="expense">
-      <div class="fab-sheet-icon"><i class="fa-solid fa-receipt"></i></div>
-      <span data-i18n="nav_log_expense" style="font-weight:600;">Log Business Expense</span>
-      <i class="fa-solid fa-chevron-right" style="margin-left:auto; color:var(--text-muted);"></i>
-    </button>
   </div>
 
   <!-- Login / First-Run Modal -->

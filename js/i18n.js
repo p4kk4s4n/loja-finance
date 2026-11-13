@@ -61,6 +61,8 @@ export const translations = {
     dash_calc_title: 'Divisão de Lucros por Sócio',
     dash_calc_desc: 'Divisão proporcional com base no Lucro Líquido e nas porcentagens configuradas nos Ajustes:',
     port_title: 'Desempenho do Portfólio',
+    scope_employee: 'Escopo: Seus Lançamentos',
+    scope_store: 'Escopo: ',
 
     hist_sales_title: 'Registro de Vendas Diárias',
     hist_exp_title: 'Histórico de Despesas Operacionais',
@@ -221,6 +223,8 @@ export const translations = {
     dash_calc_title: 'Partner Profit Shares',
     dash_calc_desc: 'Calculated earnings split based on Net Profit and split percentages configured in Settings:',
     port_title: 'Macro-Portfolio Performance',
+    scope_employee: 'Scope: Your Entries Only',
+    scope_store: 'Scope: ',
 
     hist_sales_title: 'Daily Financial Logs',
     hist_exp_title: 'Business Expenses Ledger',

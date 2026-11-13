@@ -3,8 +3,10 @@ import { state } from './state.js';
 import {
   escapeHtml,
   formatCurrency,
+  getScopedLedgerData,
   getSignedSubmissionAmount,
   hideLoadingScreen,
+  normalizeUserRole,
   parseFlexibleNumber,
   showLoadingScreen,
   showToast,
@@ -59,25 +61,38 @@ function removeSkeletons() {
   });
 }
 
-function getSelectedStoreFilter() {
-  if (state.currentUser?.storeAssignment && state.currentUser.storeAssignment !== 'All Stores') {
-    return state.currentUser.storeAssignment;
-  }
-  return document.getElementById('dashboard-store-filter')?.value || 'All Stores';
-}
-
 export function renderDashboard() {
   removeSkeletons();
 
-  const storeFilter = getSelectedStoreFilter();
+  const requestedStore = document.getElementById('dashboard-store-filter')?.value || 'All Stores';
   const timeFilter = document.getElementById('time-filter')?.value || '30';
+  const scoped = getScopedLedgerData({
+    rawSubmissions: state.rawSubmissions,
+    groupedExpenses: state.groupedExpenses,
+    teamRoster: state.teamRoster,
+    businesses: state.businesses,
+    currentUser: state.currentUser,
+    selectedStore: requestedStore
+  });
 
-  const storeSubmissions = state.rawSubmissions.filter(
-    (s) => storeFilter === 'All Stores' || (s.store || 'Store 1').trim() === storeFilter
-  );
-  const storeExpenses = state.groupedExpenses.filter(
-    (e) => storeFilter === 'All Stores' || (e.store || 'Store 1').trim() === storeFilter
-  );
+  const scopeBadge = document.getElementById('dashboard-scope-badge');
+  if (scopeBadge) {
+    if (scoped.roleKind === 'employee') {
+      scopeBadge.innerText = t('scope_employee', 'Your Entries Only');
+      scopeBadge.style.display = 'inline-flex';
+    } else if (scoped.effectiveStore !== 'All Stores') {
+      scopeBadge.innerText = `${t('scope_store', 'Scope: ')}${scoped.effectiveStore}`;
+      scopeBadge.style.display = 'inline-flex';
+    } else {
+      scopeBadge.style.display = 'none';
+    }
+  }
+
+  const partnerPanel = document.getElementById('partner-split-panel');
+  if (partnerPanel) partnerPanel.style.display = scoped.roleKind === 'employee' ? 'none' : 'block';
+
+  const storeSubmissions = scoped.scopedSubmissions;
+  const storeExpenses = scoped.scopedExpenses;
 
   let filteredSubmissions = [...storeSubmissions];
   let filteredExpenses = [...storeExpenses];
@@ -95,7 +110,7 @@ export function renderDashboard() {
   let totalRevenue = 0;
   let card1Total = 0;
   const bizProfit = {};
-  state.businesses.forEach((b) => {
+  scoped.visibleBusinesses.forEach((b) => {
     bizProfit[b.name] = 0;
   });
 
@@ -129,19 +144,18 @@ export function renderDashboard() {
   document.getElementById('kpi-netprofit').innerText = formatCurrency(netProfit);
   document.getElementById('kpi-cards').innerText = formatCurrency(card1Total);
 
-  renderPartnerSharesList(netProfit, bizProfit);
+  renderPartnerSharesList(netProfit, bizProfit, scoped.visiblePartners);
   renderDashboardChart(filteredSubmissions, filteredExpenses);
-  renderPortfolioChart(filteredSubmissions, filteredExpenses);
+  renderPortfolioChart(filteredSubmissions, filteredExpenses, scoped.visibleBusinesses);
   renderHistoryTables(storeSubmissions, storeExpenses);
 }
 
-function renderPartnerSharesList(netProfit, bizProfit) {
+function renderPartnerSharesList(netProfit, bizProfit, partners) {
   const container = document.getElementById('partner-shares-output-container');
   if (!container) return;
   container.innerHTML = '';
 
-  const partners = state.teamRoster.filter((m) => m.role === 'Partner');
-  if (partners.length === 0) {
+  if (!partners || partners.length === 0) {
     container.innerHTML = `<div style="color:var(--text-muted); text-align:center; padding:1rem; font-size:0.85rem;"><i class="fa-solid fa-circle-exclamation"></i> ${escapeHtml(t('txt_no_partners'))}</div>`;
     return;
   }
@@ -264,13 +278,14 @@ function renderDashboardChart(submissions, expenses) {
   });
 }
 
-function renderPortfolioChart(submissions, expenses) {
+function renderPortfolioChart(submissions, expenses, visibleBusinesses = state.businesses) {
   const ctx = document.getElementById('portfolio-chart');
   if (!ctx || typeof Chart === 'undefined') return;
   if (portfolioChartInstance) portfolioChartInstance.destroy();
+  if (!visibleBusinesses || visibleBusinesses.length === 0) return;
 
   const bizMap = {};
-  state.businesses.forEach((b) => {
+  visibleBusinesses.forEach((b) => {
     bizMap[b.name] = { rev: 0, exp: 0 };
   });
 

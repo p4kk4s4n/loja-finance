@@ -240,3 +240,80 @@ export function groupExpenseDocs(docs) {
     return dCmp !== 0 ? dCmp : (b.timestamp || '').localeCompare(a.timestamp || '');
   });
 }
+
+export function normalizeUserRole(role) {
+  const r = (role || '').toString().trim().toLowerCase();
+  if (r === 'admin' || r === 'administrador') return 'admin';
+  if (r === 'partner' || r === 'sócio' || r === 'socio') return 'partner';
+  return 'employee';
+}
+
+export function getEffectiveStoreFilter(currentUser, requestedStore = 'All Stores') {
+  const assigned = (currentUser?.storeAssignment || '').trim();
+  if (assigned && assigned !== 'All Stores') return assigned;
+  return requestedStore || 'All Stores';
+}
+
+export function getScopedLedgerData({
+  rawSubmissions = [],
+  groupedExpenses = [],
+  teamRoster = [],
+  businesses = [],
+  currentUser = null,
+  selectedStore = 'All Stores'
+}) {
+  const roleKind = normalizeUserRole(currentUser?.role);
+  const effectiveStore = getEffectiveStoreFilter(currentUser, selectedStore);
+  const selfName = stripRoleSuffix(currentUser?.name).toLowerCase();
+
+  const matchesScope = (row) => {
+    const rowStore = (row.store || 'Store 1').trim();
+    if (effectiveStore !== 'All Stores' && rowStore !== effectiveStore) return false;
+    if (roleKind === 'employee') {
+      if (!selfName) return false;
+      return stripRoleSuffix(row.submitter).toLowerCase() === selfName;
+    }
+    return true;
+  };
+
+  const scopedSubmissions = rawSubmissions.filter(matchesScope);
+  const scopedExpenses = groupedExpenses.filter(matchesScope);
+
+  const visibleBusinesses =
+    roleKind === 'employee'
+      ? []
+      : effectiveStore === 'All Stores'
+        ? businesses
+        : businesses.filter((b) => (b.name || '').trim() === effectiveStore);
+
+  let visiblePartners = [];
+  if (roleKind !== 'employee') {
+    const allPartners = teamRoster.filter((m) => normalizeUserRole(m.role) === 'partner');
+    if (effectiveStore === 'All Stores') {
+      visiblePartners = allPartners.map((p) => ({ ...p, equity: { ...(p.equity || {}) } }));
+    } else {
+      visiblePartners = allPartners
+        .filter((p) => {
+          const hasEquity = parseFlexibleNumber(p.equity?.[effectiveStore]) > 0;
+          const assignedHere = (p.storeAssignment || '').trim() === effectiveStore;
+          return hasEquity || assignedHere;
+        })
+        .map((p) => {
+          const pct = parseFlexibleNumber(p.equity?.[effectiveStore]) || 0;
+          return {
+            ...p,
+            equity: pct > 0 ? { [effectiveStore]: pct } : {}
+          };
+        });
+    }
+  }
+
+  return {
+    roleKind,
+    effectiveStore,
+    scopedSubmissions,
+    scopedExpenses,
+    visibleBusinesses,
+    visiblePartners
+  };
+}

@@ -5,6 +5,7 @@ import {
   escapeHtml,
   formatMemberNameWithRole,
   hideLoadingScreen,
+  normalizeUserRole,
   parseFlexibleNumber,
   showLoadingScreen,
   showToast,
@@ -172,22 +173,31 @@ export function populateStoreDropdowns() {
   if (dashFilter) dashFilter.innerHTML = `<option value="All Stores">${escapeHtml(t('opt_all_stores', 'All Stores'))}</option>${optionsHTML}`;
   if (newMemberStore) newMemberStore.innerHTML = `<option value="All Stores">${escapeHtml(t('opt_all_stores', 'All Stores'))}</option>${optionsHTML}`;
 
-  if (state.currentUser?.storeAssignment && state.currentUser.storeAssignment !== 'All Stores') {
-    if (storeSelect) storeSelect.value = state.currentUser.storeAssignment;
-    if (expStore) expStore.value = state.currentUser.storeAssignment;
-    if (dashFilter) dashFilter.value = state.currentUser.storeAssignment;
+  const lockedStore =
+    state.currentUser?.storeAssignment && state.currentUser.storeAssignment !== 'All Stores'
+      ? state.currentUser.storeAssignment
+      : '';
+
+  if (lockedStore) {
+    if (storeSelect) storeSelect.value = lockedStore;
+    if (expStore) expStore.value = lockedStore;
+    if (dashFilter) dashFilter.value = lockedStore;
   }
 
   const mobileFilters = document.getElementById('mobile-store-filters');
   if (mobileFilters) {
-    mobileFilters.innerHTML =
-      `<button type="button" class="nav-btn" data-mobile-store="All Stores" style="justify-content:center; border:1px solid var(--panel-border);">${escapeHtml(t('opt_all_stores', 'All Stores'))}</button>` +
-      state.businesses
-        .map(
-          (b) =>
-            `<button type="button" class="nav-btn" data-mobile-store="${escapeHtml(b.name)}" style="justify-content:center; border:1px solid var(--panel-border);">${escapeHtml(b.name)}</button>`
-        )
-        .join('');
+    if (lockedStore) {
+      mobileFilters.innerHTML = `<button type="button" class="nav-btn" data-mobile-store="${escapeHtml(lockedStore)}" style="justify-content:center; border:1px solid var(--panel-border);">${escapeHtml(lockedStore)}</button>`;
+    } else {
+      mobileFilters.innerHTML =
+        `<button type="button" class="nav-btn" data-mobile-store="All Stores" style="justify-content:center; border:1px solid var(--panel-border);">${escapeHtml(t('opt_all_stores', 'All Stores'))}</button>` +
+        state.businesses
+          .map(
+            (b) =>
+              `<button type="button" class="nav-btn" data-mobile-store="${escapeHtml(b.name)}" style="justify-content:center; border:1px solid var(--panel-border);">${escapeHtml(b.name)}</button>`
+          )
+          .join('');
+    }
   }
 
   if (storeSelect?.value) renderDynamicStreams(storeSelect.value);
@@ -215,6 +225,7 @@ export function renderSettingsBusinesses() {
 }
 
 async function saveBusinessesData() {
+  if (normalizeUserRole(state.currentUser?.role) !== 'admin') return;
   showLoadingScreen(state.currentLanguage === 'pt' ? 'Salvando Empresas...' : 'Saving Businesses...');
   const newBiz = [];
   state.businesses.forEach((_, idx) => {
@@ -252,6 +263,7 @@ export function renderSettingsCategories() {
 }
 
 async function saveCategoriesData() {
+  if (normalizeUserRole(state.currentUser?.role) !== 'admin') return;
   const newCats = state.globalExpenseCategories
     .map((_, idx) => document.getElementById(`set-cat-name-${idx}`)?.value.trim())
     .filter(Boolean);
@@ -545,6 +557,7 @@ function addMemberToRosterList() {
 }
 
 async function saveTeamRoster() {
+  if (normalizeUserRole(state.currentUser?.role) !== 'admin') return;
   if (!validateSettingsSplits()) {
     showToast(t('txt_invalid_splits'), true);
     return;
@@ -578,6 +591,7 @@ export function renderIntegrationInputs() {
 }
 
 async function saveIntegrations() {
+  if (normalizeUserRole(state.currentUser?.role) !== 'admin') return;
   const geminiApiKey = document.getElementById('set-gemini-key')?.value.trim() || '';
   const spreadsheetId = document.getElementById('set-spreadsheet-id')?.value.trim() || '';
   const googleClientId = document.getElementById('set-google-client-id')?.value.trim() || '';

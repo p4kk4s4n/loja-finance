@@ -72,19 +72,9 @@ nav {
   justify-content: center;
   gap: 0.5rem;
   background: var(--input-bg);
-  padding: 0.4rem;
+  padding: 0.45rem 0.75rem;
   border-bottom: 1px solid var(--panel-border);
   flex-wrap: wrap;
-}
-
-.nav-indicator {
-  position: absolute;
-  bottom: 0;
-  height: 3px;
-  background: var(--primary);
-  border-radius: 3px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 0 10px var(--primary);
 }
 
 .nav-btn {
@@ -93,14 +83,35 @@ nav {
   color: var(--text-secondary);
   font-family: var(--font-display);
   font-weight: 600;
-  padding: 0.6rem 1.15rem;
+  padding: 0.55rem 1.05rem;
   font-size: 0.92rem;
-  border-radius: 20px;
+  border-radius: 14px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  transition: all var(--transition-fast);
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.nav-btn span {
+  position: relative;
+  display: inline-block;
+  padding-bottom: 4px;
+}
+
+.nav-btn span::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--primary);
+  box-shadow: 0 0 8px var(--primary-glow);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .nav-btn:hover {
@@ -109,9 +120,12 @@ nav {
 }
 
 .nav-btn.active {
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
-  color: #fff;
-  box-shadow: 0 4px 12px var(--primary-glow);
+  background: var(--primary-glow);
+  color: var(--text-primary);
+}
+
+.nav-btn.active span::after {
+  transform: scaleX(1);
 }
 
 main {
@@ -206,28 +220,7 @@ main {
   gap: 1.5rem;
 }
 
-/* FAB & Mobile Bottom Sheets */
-#mobile-fab {
-  display: none;
-  position: fixed;
-  bottom: calc(5rem + env(safe-area-inset-bottom, 0));
-  right: 1.5rem;
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent), var(--primary));
-  color: #fff;
-  font-size: 1.5rem;
-  border: none;
-  box-shadow: 0 4px 20px var(--primary-glow);
-  z-index: 1001;
-  cursor: pointer;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.2s ease;
-}
-#mobile-fab:active { transform: scale(0.9); }
-
+/* Mobile Bottom Sheets */
 .sheet-overlay {
   display: none;
   position: fixed;
@@ -284,8 +277,6 @@ main {
     transform: translateY(-100%);
   }
 
-  .nav-log-btn { display: none !important; }
-  #mobile-fab { display: flex; }
   #desktop-filters { display: none !important; }
   #mobile-filter-btn { display: inline-flex !important; }
 
@@ -299,30 +290,35 @@ main {
     -webkit-backdrop-filter: blur(20px);
     border-top: 1px solid var(--panel-border);
     border-bottom: none;
-    justify-content: space-between;
-    padding: 0.45rem 0.5rem calc(0.45rem + env(safe-area-inset-bottom, 0));
+    justify-content: flex-start;
+    gap: 0.25rem;
+    padding: 0.45rem 0.5rem calc(0.5rem + env(safe-area-inset-bottom, 0));
     z-index: 1000;
     flex-wrap: nowrap;
     overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
   }
+  nav::-webkit-scrollbar { display: none; }
 
   .nav-btn {
     flex-direction: column;
     gap: 0.25rem;
-    padding: 0.45rem 0;
-    font-size: 0.7rem;
+    padding: 0.4rem 0.65rem;
+    font-size: 0.72rem;
     border-radius: 12px;
-    background: transparent !important;
-    box-shadow: none !important;
-    flex: 1;
-    min-width: 0;
+    flex: 0 0 auto;
+    min-width: 76px;
+    white-space: nowrap;
   }
 
-  .nav-btn.active { color: var(--primary); }
-  .nav-btn i { font-size: 1.2rem; }
-  .nav-indicator { top: 0; bottom: auto; }
+  .nav-btn.active {
+    background: var(--primary-glow);
+    color: var(--text-primary);
+  }
+  .nav-btn i { font-size: 1.15rem; }
 
-  main { padding: 1rem 1rem 6.5rem; }
+  main { padding: 1rem 1rem 6rem; touch-action: pan-y; }
 
   .form-grid { grid-template-columns: 1fr; gap: 1rem; }
   .form-grid-full { grid-column: span 1; }

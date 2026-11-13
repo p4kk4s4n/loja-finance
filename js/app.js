@@ -1,6 +1,6 @@
 // Main ES Module Entry Point: Routing, Session Lifecycle, Real-Time Wiring & Mobile Gestures
 import { state } from './state.js';
-import { getTodayISO, stripRoleSuffix } from './utils.js';
+import { getTodayISO, normalizeUserRole, stripRoleSuffix } from './utils.js';
 import { translatePageLayout } from './i18n.js';
 import {
   attemptLogin,
@@ -27,37 +27,31 @@ import {
   updateDateBadgeSubtitle
 } from './ui-settings.js';
 
-function positionNavIndicator(activeBtn) {
-  const indicator = document.querySelector('.nav-indicator');
-  if (!activeBtn || !indicator) return;
-  indicator.style.width = `${activeBtn.offsetWidth}px`;
-  indicator.style.transform = `translateX(${activeBtn.offsetLeft}px)`;
+function isNavTabVisible(btn) {
+  return Boolean(btn && btn.style.display !== 'none' && (!btn.isConnected || window.getComputedStyle(btn).display !== 'none'));
 }
 
 export function switchTab(tabName) {
-  const updateDOM = () => {
-    const navBtns = document.querySelectorAll('.nav-btn[data-tab]');
-    navBtns.forEach((b) => b.classList.remove('active'));
-    const activeBtn = Array.from(navBtns).find((b) => b.dataset.tab === tabName);
-    if (activeBtn) {
-      activeBtn.classList.add('active');
-      positionNavIndicator(activeBtn);
-    }
-
-    document.querySelectorAll('.tab-pane').forEach((pane) => pane.classList.remove('active'));
-    document.getElementById(`tab-${tabName}`)?.classList.add('active');
-  };
-
-  if (document.startViewTransition) {
-    document.startViewTransition(updateDOM);
-  } else {
-    updateDOM();
+  const navBtns = Array.from(document.querySelectorAll('.nav-btn[data-tab]'));
+  let targetBtn = navBtns.find((b) => b.dataset.tab === tabName);
+  if (!isNavTabVisible(targetBtn) || !document.getElementById(`tab-${tabName}`)) {
+    tabName = 'submit';
+    targetBtn = navBtns.find((b) => b.dataset.tab === tabName) || targetBtn;
   }
-}
 
-function toggleFabMenu() {
-  document.getElementById('fab-bottom-sheet')?.classList.toggle('open');
-  document.getElementById('fab-menu-overlay')?.classList.toggle('open');
+  navBtns.forEach((b) => b.classList.remove('active'));
+  if (targetBtn) {
+    targetBtn.classList.add('active');
+  }
+
+  document.querySelectorAll('.tab-pane').forEach((pane) => pane.classList.remove('active'));
+  document.getElementById(`tab-${tabName}`)?.classList.add('active');
+
+  if (targetBtn && typeof targetBtn.scrollIntoView === 'function') {
+    requestAnimationFrame(() => {
+      targetBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    });
+  }
 }
 
 function toggleFilterMenu() {
@@ -96,11 +90,21 @@ async function applyLoginState() {
       if (el) el.disabled = Boolean(locked);
     });
 
-    const roleLower = (user.role || '').toLowerCase();
-    const isPriv = roleLower === 'partner' || roleLower === 'admin' || roleLower === 'administrador' || roleLower === 'sócio';
-    document.getElementById('nav-btn-settings').style.display = isPriv ? 'inline-flex' : 'none';
+    const roleKind = normalizeUserRole(user.role);
+    const isAdmin = roleKind === 'admin';
+    const canViewPortfolio = roleKind !== 'employee';
+
+    const settingsNavBtn = document.getElementById('nav-btn-settings');
+    if (settingsNavBtn) settingsNavBtn.style.display = 'inline-flex';
+
+    const portfolioNavBtn = document.getElementById('nav-btn-portfolio');
+    if (portfolioNavBtn) portfolioNavBtn.style.display = canViewPortfolio ? 'inline-flex' : 'none';
+
     const partnerPanel = document.getElementById('partner-split-panel');
-    if (partnerPanel) partnerPanel.style.display = isPriv ? 'block' : 'none';
+    if (partnerPanel) partnerPanel.style.display = canViewPortfolio ? 'block' : 'none';
+
+    const adminSettingsEl = document.getElementById('settings-admin-section');
+    if (adminSettingsEl) adminSettingsEl.style.display = isAdmin ? '' : 'none';
 
     translatePageLayout(state.currentLanguage);
   };
@@ -108,29 +112,44 @@ async function applyLoginState() {
   if (document.startViewTransition) document.startViewTransition(updateDOM);
   else updateDOM();
 
+  if (normalizeUserRole(user.role) === 'employee' && document.getElementById('tab-portfolio')?.classList.contains('active')) {
+    switchTab('submit');
+  }
+
+  const isAdminUser = normalizeUserRole(user.role) === 'admin';
   populateStoreDropdowns();
-  renderSettingsBusinesses();
-  renderSettingsCategories();
-  syncRosterFromLive(true);
-  renderIntegrationInputs();
+  if (isAdminUser) {
+    renderSettingsBusinesses();
+    renderSettingsCategories();
+    syncRosterFromLive(true);
+    renderIntegrationInputs();
+  }
   showSkeletons();
 
   await subscribeRealtimeData({
     onStoresUpdated: () => {
       populateStoreDropdowns();
-      renderSettingsBusinesses();
-      syncRosterFromLive(false);
+      if (normalizeUserRole(state.currentUser?.role) === 'admin') {
+        renderSettingsBusinesses();
+        syncRosterFromLive(false);
+      }
       renderDashboard();
     },
     onCategoriesUpdated: () => {
       populateMasterCategoryDropdown();
-      renderSettingsCategories();
+      if (normalizeUserRole(state.currentUser?.role) === 'admin') {
+        renderSettingsCategories();
+      }
     },
     onConfigUpdated: () => {
-      renderIntegrationInputs();
+      if (normalizeUserRole(state.currentUser?.role) === 'admin') {
+        renderIntegrationInputs();
+      }
     },
     onRosterUpdated: () => {
-      syncRosterFromLive(false);
+      if (normalizeUserRole(state.currentUser?.role) === 'admin') {
+        syncRosterFromLive(false);
+      }
       renderDashboard();
     },
     onLedgerUpdated: () => {
@@ -145,14 +164,6 @@ function bindGlobalGesturesAndNav() {
   });
 
   document.getElementById('btn-logout')?.addEventListener('click', logout);
-  document.getElementById('mobile-fab')?.addEventListener('click', toggleFabMenu);
-  document.getElementById('fab-menu-overlay')?.addEventListener('click', toggleFabMenu);
-  document.querySelectorAll('.fab-sheet-btn[data-tab]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      toggleFabMenu();
-      switchTab(btn.dataset.tab);
-    });
-  });
 
   document.getElementById('mobile-filter-btn')?.addEventListener('click', toggleFilterMenu);
   document.getElementById('filter-menu-overlay')?.addEventListener('click', toggleFilterMenu);
@@ -168,22 +179,13 @@ function bindGlobalGesturesAndNav() {
 
   document.getElementById('mobile-store-filters')?.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-mobile-store]');
-    if (!btn) return;
+    if (!btn || btn.disabled) return;
     document.getElementById('dashboard-store-filter').value = btn.dataset.mobileStore;
     renderDashboard();
     toggleFilterMenu();
   });
 
-  // Resize nav indicator smoothly
-  window.addEventListener('resize', () => {
-    const activeBtn = document.querySelector('.nav-btn[data-tab].active');
-    const indicator = document.querySelector('.nav-indicator');
-    if (activeBtn && indicator) {
-      indicator.style.transition = 'none';
-      positionNavIndicator(activeBtn);
-      setTimeout(() => (indicator.style.transition = ''), 50);
-    }
-  });
+  bindSwipeNavigation();
 
   // Collapsible mobile header
   let lastScrollY = window.scrollY;
@@ -270,14 +272,92 @@ function bindGlobalGesturesAndNav() {
   });
 }
 
+function isAnyModalOrSheetOpen() {
+  return Boolean(document.querySelector('dialog[open], .bottom-sheet.open, .bottom-sheet-overlay.open'));
+}
+
+function bindSwipeNavigation() {
+  const mainEl = document.querySelector('main');
+  if (!mainEl) return;
+
+  let startX = 0;
+  let startY = 0;
+  let startTime = 0;
+  let tracking = false;
+
+  mainEl.addEventListener(
+    'touchstart',
+    (e) => {
+      if (e.touches.length !== 1 || isAnyModalOrSheetOpen()) {
+        tracking = false;
+        return;
+      }
+      if (e.target.closest('input, select, textarea, canvas, [data-no-swipe]')) {
+        tracking = false;
+        return;
+      }
+      const tableBox = e.target.closest('.table-container');
+      if (tableBox && tableBox.scrollWidth > tableBox.clientWidth + 2) {
+        tracking = false;
+        return;
+      }
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      startTime = Date.now();
+      tracking = true;
+    },
+    { passive: true }
+  );
+
+  mainEl.addEventListener(
+    'touchcancel',
+    () => {
+      tracking = false;
+    },
+    { passive: true }
+  );
+
+  mainEl.addEventListener(
+    'touchend',
+    (e) => {
+      if (!tracking) return;
+      tracking = false;
+      if (e.changedTouches.length !== 1 || isAnyModalOrSheetOpen()) return;
+      if (Date.now() - startTime > 600) return;
+
+      const dx = e.changedTouches[0].clientX - startX;
+      const dy = e.changedTouches[0].clientY - startY;
+      if (Math.abs(dx) < 56 || Math.abs(dx) <= Math.abs(dy) * 1.5) return;
+
+      const visibleTabs = Array.from(document.querySelectorAll('nav .nav-btn[data-tab]'))
+        .filter((btn) => isNavTabVisible(btn))
+        .map((btn) => btn.dataset.tab);
+      if (visibleTabs.length < 2) return;
+
+      const activeBtn = document.querySelector('nav .nav-btn[data-tab].active');
+      const currentTab = activeBtn?.dataset.tab || '';
+      const currentIdx = visibleTabs.indexOf(currentTab);
+      if (currentIdx === -1) return;
+
+      const targetIdx = dx < 0 ? currentIdx + 1 : currentIdx - 1;
+      if (targetIdx >= 0 && targetIdx < visibleTabs.length) {
+        switchTab(visibleTabs[targetIdx]);
+      }
+    },
+    { passive: true }
+  );
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   loadPreferences(() => {
     if (state.currentUser) {
       populateMasterCategoryDropdown();
       populateStoreDropdowns();
-      syncRosterFromLive(false);
-      renderSettingsBusinesses();
-      renderSettingsCategories();
+      if (normalizeUserRole(state.currentUser.role) === 'admin') {
+        syncRosterFromLive(false);
+        renderSettingsBusinesses();
+        renderSettingsCategories();
+      }
       renderDashboard();
     }
   });
@@ -294,7 +374,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     refreshPwaInstallUI();
     if (state.currentUser) {
       populateMasterCategoryDropdown();
-      renderSettingsRoster();
+      if (normalizeUserRole(state.currentUser.role) === 'admin') {
+        renderSettingsRoster();
+      }
       renderDashboard();
     }
   });
@@ -313,6 +395,5 @@ document.addEventListener('DOMContentLoaded', async () => {
   setOnLoginSuccess(applyLoginState);
 
   window.dispatchEvent(new Event('resize'));
-  await initUpdater();
-  await initializeAuthModal();
+  await Promise.all([initializeAuthModal(), initUpdater()]);
 });

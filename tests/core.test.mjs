@@ -7,7 +7,10 @@ import {
   formatMemberNameWithRole,
   computePartnerEquityValidation,
   doesMemberMatchPayday,
-  groupExpenseDocs
+  groupExpenseDocs,
+  normalizeUserRole,
+  getEffectiveStoreFilter,
+  getScopedLedgerData
 } from '../js/utils.js';
 import { isNewerVersion, detectGithubRepoFromUrl } from '../js/updater.js';
 
@@ -83,4 +86,82 @@ test('groupExpenseDocs aggregates multi-line items sharing a groupId', () => {
   assert.equal(grouped[0].amount, 170);
   assert.equal(grouped[0].category, 'Supplies, Marketing');
   assert.equal(grouped[0].description, 'Paper | Flyers');
+});
+
+test('normalizeUserRole and getEffectiveStoreFilter enforce role and store assignments', () => {
+  assert.equal(normalizeUserRole('Administrador'), 'admin');
+  assert.equal(normalizeUserRole('Admin'), 'admin');
+  assert.equal(normalizeUserRole('Sócio'), 'partner');
+  assert.equal(normalizeUserRole('Partner'), 'partner');
+  assert.equal(normalizeUserRole('Funcionário'), 'employee');
+  assert.equal(normalizeUserRole(''), 'employee');
+
+  assert.equal(getEffectiveStoreFilter({ storeAssignment: 'Porteira Velho' }, 'All Stores'), 'Porteira Velho');
+  assert.equal(getEffectiveStoreFilter({ storeAssignment: 'Porteira Velho' }, 'Sua Loja'), 'Porteira Velho');
+  assert.equal(getEffectiveStoreFilter({ storeAssignment: 'All Stores' }, 'Sua Loja'), 'Sua Loja');
+  assert.equal(getEffectiveStoreFilter({ storeAssignment: 'All Stores' }, 'All Stores'), 'All Stores');
+});
+
+test('getScopedLedgerData locks Funcionário to self and single-store Sócio to assigned store', () => {
+  const businesses = [{ name: 'Porteira Velho' }, { name: 'Sua Loja' }];
+  const teamRoster = [
+    { name: 'Thais (Partner)', role: 'Partner', storeAssignment: 'All Stores', equity: { 'Porteira Velho': 0.45, 'Sua Loja': 0.45 } },
+    { name: 'Leiliane (Partner)', role: 'Sócio', storeAssignment: 'Porteira Velho', equity: { 'Porteira Velho': 0.45 } },
+    { name: 'Bruna (Partner)', role: 'Partner', storeAssignment: 'Sua Loja', equity: { 'Sua Loja': 0.5 } },
+    { name: 'Sonya (Employee)', role: 'Employee', storeAssignment: 'Porteira Velho', equity: {} }
+  ];
+  const rawSubmissions = [
+    { id: 's1', store: 'Porteira Velho', submitter: 'Sonya (Employee)', amount: 100 },
+    { id: 's2', store: 'Porteira Velho', submitter: 'Leiliane (Partner)', amount: 250 },
+    { id: 's3', store: 'Sua Loja', submitter: 'Bruna (Partner)', amount: 400 }
+  ];
+  const groupedExpenses = [
+    { id: 'e1', store: 'Porteira Velho', submitter: 'Sonya', amount: 20 },
+    { id: 'e2', store: 'Porteira Velho', submitter: 'Leiliane', amount: 50 },
+    { id: 'e3', store: 'Sua Loja', submitter: 'Bruna', amount: 80 }
+  ];
+
+  const empScope = getScopedLedgerData({
+    rawSubmissions,
+    groupedExpenses,
+    teamRoster,
+    businesses,
+    currentUser: { name: 'Sonya (Employee)', role: 'Funcionário', storeAssignment: 'Porteira Velho' },
+    selectedStore: 'All Stores'
+  });
+  assert.equal(empScope.roleKind, 'employee');
+  assert.equal(empScope.effectiveStore, 'Porteira Velho');
+  assert.deepEqual(empScope.scopedSubmissions.map((r) => r.id), ['s1']);
+  assert.deepEqual(empScope.scopedExpenses.map((r) => r.id), ['e1']);
+  assert.equal(empScope.visibleBusinesses.length, 0);
+  assert.equal(empScope.visiblePartners.length, 0);
+
+  const lockedPartnerScope = getScopedLedgerData({
+    rawSubmissions,
+    groupedExpenses,
+    teamRoster,
+    businesses,
+    currentUser: { name: 'Leiliane (Partner)', role: 'Sócio', storeAssignment: 'Porteira Velho' },
+    selectedStore: 'Sua Loja'
+  });
+  assert.equal(lockedPartnerScope.roleKind, 'partner');
+  assert.equal(lockedPartnerScope.effectiveStore, 'Porteira Velho');
+  assert.deepEqual(lockedPartnerScope.scopedSubmissions.map((r) => r.id), ['s1', 's2']);
+  assert.deepEqual(lockedPartnerScope.scopedExpenses.map((r) => r.id), ['e1', 'e2']);
+  assert.deepEqual(lockedPartnerScope.visibleBusinesses.map((b) => b.name), ['Porteira Velho']);
+  assert.deepEqual(lockedPartnerScope.visiblePartners.map((p) => p.name), ['Thais (Partner)', 'Leiliane (Partner)']);
+  assert.deepEqual(lockedPartnerScope.visiblePartners[0].equity, { 'Porteira Velho': 0.45 });
+
+  const allStoresPartner = getScopedLedgerData({
+    rawSubmissions,
+    groupedExpenses,
+    teamRoster,
+    businesses,
+    currentUser: { name: 'Thais (Partner)', role: 'Partner', storeAssignment: 'All Stores' },
+    selectedStore: 'All Stores'
+  });
+  assert.equal(allStoresPartner.effectiveStore, 'All Stores');
+  assert.equal(allStoresPartner.scopedSubmissions.length, 3);
+  assert.equal(allStoresPartner.visibleBusinesses.length, 2);
+  assert.equal(allStoresPartner.visiblePartners.length, 3);
 });

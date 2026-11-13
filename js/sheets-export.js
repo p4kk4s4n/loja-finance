@@ -1,9 +1,27 @@
 // CSV offline export & optional Admin-only Google Identity Services OAuth sync to Google Sheets
 import { state } from './state.js';
-import { getSignedSubmissionAmount, showLoadingScreen, hideLoadingScreen, showToast, stripRoleSuffix } from './utils.js';
+import {
+  getScopedLedgerData,
+  getSignedSubmissionAmount,
+  hideLoadingScreen,
+  normalizeUserRole,
+  showLoadingScreen,
+  showToast,
+  stripRoleSuffix
+} from './utils.js';
 
 export function exportHistoryCSV() {
   const pt = state.currentLanguage === 'pt';
+  const requestedStore = document.getElementById('dashboard-store-filter')?.value || 'All Stores';
+  const { scopedSubmissions, scopedExpenses } = getScopedLedgerData({
+    rawSubmissions: state.rawSubmissions,
+    groupedExpenses: state.groupedExpenses,
+    teamRoster: state.teamRoster,
+    businesses: state.businesses,
+    currentUser: state.currentUser,
+    selectedStore: requestedStore
+  });
+
   const rows = [
     pt
       ? 'Tipo,Data,Usuario,Loja,CategoriaOuFluxo,FormaPagamento,ValorAssinado,NotasOuDescricao'
@@ -12,7 +30,7 @@ export function exportHistoryCSV() {
 
   const q = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
 
-  for (const r of state.rawSubmissions) {
+  for (const r of scopedSubmissions) {
     const signed = getSignedSubmissionAmount(r.entryType, r.amount);
     rows.push(
       ['Sales', r.date, stripRoleSuffix(r.submitter), r.store, r.entryType, '', signed, r.notes || '']
@@ -21,7 +39,7 @@ export function exportHistoryCSV() {
     );
   }
 
-  for (const e of state.groupedExpenses) {
+  for (const e of scopedExpenses) {
     rows.push(
       [
         'Expense',
@@ -95,6 +113,10 @@ async function writeSheetRange(spreadsheetId, token, range, values) {
 }
 
 export async function syncSnapshotToGoogleSheets() {
+  if (normalizeUserRole(state.currentUser?.role) !== 'admin') {
+    showToast('Admin access required.', true);
+    return;
+  }
   const { spreadsheetId, googleClientId } = state.sheetsConfig || {};
   if (!spreadsheetId || !googleClientId) {
     showToast(
