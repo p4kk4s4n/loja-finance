@@ -1,0 +1,33 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Require Firebase Authentication (satisfied by Anonymous Auth at app boot)
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    match /config/{docId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /teamMembers/{memberId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /dailySubmissions/{docId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /expenses/{docId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /receipts/{receiptId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /payrollRuns/{runId} {
+      allow read, write: if isSignedIn();
+    }
+  }
+}

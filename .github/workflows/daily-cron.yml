@@ -1,0 +1,27 @@
+name: Daily Automated Payroll & Google Sheets Sync
+
+on:
+  schedule:
+    - cron: '0 6 * * *' # Runs daily at 06:00 UTC (03:00 BRT)
+  workflow_dispatch:
+
+jobs:
+  payroll-and-backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Script Dependencies
+        run: npm install --omit=dev
+
+      - name: Run Payroll & Optional Sheets Backup
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          GOOGLE_SHEETS_CREDENTIALS: ${{ secrets.GOOGLE_SHEETS_CREDENTIALS }}
+          SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
+          PAYROLL_TIMEZONE: America/Sao_Paulo
+        run: node scripts/payroll-and-sync.mjs

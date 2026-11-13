@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Loja Finance — Business Operations Dashboard</title>
+
+  <link rel="icon" type="image/svg+xml" href="./icons/icon.svg">
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#6366f1">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <link rel="stylesheet" href="./css/tokens.css">
+  <link rel="stylesheet" href="./css/layout.css">
+  <link rel="stylesheet" href="./css/components.css">
+</head>
+<body>
+  <div class="app-container">
+    <header>
+      <div class="brand">
+        <div class="brand-icon"><i class="fa-solid fa-chart-line"></i></div>
+        <div class="brand-name">Loja Finance</div>
+        <span id="header-version-pill" class="version-pill">v2.0.0</span>
+      </div>
+
+      <div class="user-info">
+        <span id="header-user-name"><i class="fa-solid fa-user"></i> Loading...</span>
+        <span id="header-user-store" class="badge">Store</span>
+        <button id="btn-logout" type="button" class="nav-btn" style="padding:0.4rem 0.8rem; font-size:0.8rem;">
+          <i class="fa-solid fa-right-from-bracket"></i> Logout
+        </button>
+      </div>
+    </header>
+
+    <nav>
+      <button type="button" class="nav-btn nav-log-btn active" data-tab="submit">
+        <i class="fa-solid fa-pen-to-square"></i> <span data-i18n="nav_log_daily">Log Daily</span>
+      </button>
+      <button type="button" class="nav-btn nav-log-btn" data-tab="expense">
+        <i class="fa-solid fa-receipt"></i> <span data-i18n="nav_log_expense">Log Expense</span>
+      </button>
+      <button type="button" class="nav-btn" data-tab="dashboard">
+        <i class="fa-solid fa-gauge-high"></i> <span data-i18n="nav_dashboard">Dashboard</span>
+      </button>
+      <button type="button" class="nav-btn" data-tab="portfolio">
+        <i class="fa-solid fa-briefcase"></i> <span data-i18n="nav_portfolio">Portfolio</span>
+      </button>
+      <button type="button" class="nav-btn" data-tab="history">
+        <i class="fa-solid fa-clock-rotate-left"></i> <span data-i18n="nav_history">History Logs</span>
+      </button>
+      <button id="nav-btn-settings" type="button" class="nav-btn" data-tab="settings">
+        <i class="fa-solid fa-sliders"></i> <span data-i18n="nav_settings">Settings</span>
+      </button>
+      <div class="nav-indicator"></div>
+    </nav>
+
+    <main>
+      <div id="update-banner" class="update-banner">
+        <div style="display:flex; align-items:center; gap:0.75rem;">
+          <i class="fa-solid fa-cloud-arrow-down" style="color:var(--primary); font-size:1.2rem;"></i>
+          <span id="update-banner-text" style="font-weight:600;">Update available</span>
+        </div>
+        <button id="btn-banner-update" type="button" class="btn-submit" style="padding:0.45rem 1rem; font-size:0.85rem;">
+          <i class="fa-solid fa-rotate"></i> <span data-i18n="upd_install_btn">Update Now</span>
+        </button>
+      </div>
+
+      <!-- SUBMIT DAILY SALES TAB -->
+      <div id="tab-submit" class="tab-pane active">
+        <div class="glass-card">
+          <div class="glass-card-header">
+            <h2 class="glass-card-title">
+              <i class="fa-solid fa-cash-register" style="color:var(--primary);"></i>
+              <span data-i18n="daily_title">Daily Financial Submission</span>
+            </h2>
+            <div id="submission-date-label" style="font-size:0.9rem; color:var(--text-secondary);"></div>
+          </div>
+
+          <form id="finance-form">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+              <h4 style="margin:0; font-family:var(--font-display); color:var(--text-secondary);">Register Settlement</h4>
+              <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                <input type="file" id="daily-receipt-upload" accept="image/*" style="display:none;" capture="environment">
+                <button type="button" class="btn-secondary" onclick="document.getElementById('daily-receipt-upload').click()">
+                  <i class="fa-solid fa-camera"></i> <span id="lbl-upload-daily">Upload Z-Report</span>
+                </button>
+                <button type="button" class="btn-submit" id="btn-scan-daily-ai" style="padding:0.5rem 1rem; font-size:0.85rem; background:linear-gradient(135deg,#10b981,#06b6d4); display:none;">
+                  <i class="fa-solid fa-wand-magic-sparkles"></i> Scan with AI
+                </button>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="store-select" data-i18n="daily_store">Store Location</label>
+                <select id="store-select" required></select>
+              </div>
+              <div class="form-group">
+                <label for="submitter" data-i18n="daily_submitter">Submitted By</label>
+                <input type="text" id="submitter" disabled required>
+              </div>
+              <div class="form-group">
+                <label for="entry-date" data-i18n="daily_date">Working Date</label>
+                <input type="date" id="entry-date" required>
+              </div>
+
+              <hr class="form-grid-full" style="border:0; border-top:1px solid var(--panel-border);">
+              <div id="dynamic-streams-container" class="form-grid form-grid-full"></div>
+              <hr class="form-grid-full" style="border:0; border-top:1px solid var(--panel-border);">
+
+              <div class="form-group">
+                <label for="cash-in" data-i18n="daily_cash_in">Cash Received (R$)</label>
+                <input type="text" inputmode="decimal" id="cash-in" placeholder="0.00">
+              </div>
+              <div class="form-group">
+                <label for="cash-out" data-i18n="daily_cash_out">Cash Paid Out / Small Expenses (R$)</label>
+                <input type="text" inputmode="decimal" id="cash-out" placeholder="0.00">
+              </div>
+              <div class="form-group">
+                <label for="fees-taxes" data-i18n="daily_fees">Taxes &amp; Card Processing Fees (R$)</label>
+                <input type="text" inputmode="decimal" id="fees-taxes" placeholder="0.00">
+              </div>
+              <div class="form-group form-grid-full">
+                <label for="notes" data-i18n="daily_notes">Notes / Operating Expenses Detail</label>
+                <textarea id="notes" rows="2" required></textarea>
+              </div>
+
+              <div class="form-grid-full calc-row">
+                <div>
+                  <h4 data-i18n="daily_summary_title" style="font-family:var(--font-display); margin-bottom:0.2rem;">Live Sales Summary</h4>
+                  <p data-i18n="daily_summary_desc" style="font-size:0.8rem; color:var(--text-secondary);">Calculated: Digital Streams + Cash Net</p>
+                </div>
+                <span id="live-total" style="font-family:var(--font-display); font-size:1.65rem; font-weight:700; color:var(--accent);">R$ 0,00</span>
+              </div>
+
+              <button type="submit" class="btn-submit form-grid-full" id="submit-btn">
+                <i class="fa-solid fa-paper-plane"></i> <span data-i18n="daily_submit_btn">Submit Daily Financials</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- LOG EXPENSE TAB -->
+      <div id="tab-expense" class="tab-pane">
+        <div class="glass-card">
+          <div class="glass-card-header">
+            <h2 class="glass-card-title">
+              <i class="fa-solid fa-file-invoice-dollar" style="color:var(--secondary);"></i>
+              <span data-i18n="exp_title">Log Business Expense</span>
+            </h2>
+          </div>
+
+          <form id="expense-form">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+              <h4 style="margin:0; font-family:var(--font-display); color:var(--text-secondary);">Expense Details</h4>
+              <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                <input type="file" id="expense-receipt-upload" accept="image/*" style="display:none;" capture="environment">
+                <button type="button" class="btn-secondary" onclick="document.getElementById('expense-receipt-upload').click()">
+                  <i class="fa-solid fa-camera"></i> <span id="lbl-upload-receipt">Upload Receipt</span>
+                </button>
+                <button type="button" class="btn-submit" id="btn-scan-ai" style="padding:0.5rem 1rem; font-size:0.85rem; background:linear-gradient(135deg,#a855f7,#6366f1); display:none;">
+                  <i class="fa-solid fa-wand-magic-sparkles"></i> Scan with AI
+                </button>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="expense-store" data-i18n="exp_store">Store Location</label>
+                <select id="expense-store" required></select>
+              </div>
+              <div class="form-group">
+                <label for="expense-submitter" data-i18n="exp_submitter">Paid By</label>
+                <input type="text" id="expense-submitter" disabled required>
+              </div>
+              <div class="form-group">
+                <label for="expense-date" data-i18n="exp_date">Expense Date</label>
+                <input type="date" id="expense-date" required>
+              </div>
+              <div class="form-group">
+                <label for="expense-master-category" data-i18n="exp_master_cat">Expense Category</label>
+                <select id="expense-master-category" required></select>
+              </div>
+              <div class="form-group">
+                <label for="expense-method" data-i18n="exp_method">Payment Method</label>
+                <select id="expense-method" required>
+                  <option value="" disabled selected data-i18n="exp_method_placeholder">Select Payment Method</option>
+                  <option value="Bank Transfer" data-i18n="method_bank">Bank Transfer / PIX</option>
+                  <option value="Card" data-i18n="method_card">Business Credit Card</option>
+                  <option value="Cash Drawer" data-i18n="method_drawer">Cash Drawer</option>
+                </select>
+              </div>
+            </div>
+
+            <div style="margin-top:1.5rem;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                <label style="margin:0;">Itemized Lines</label>
+                <button id="btn-add-expense-row" type="button" class="btn-secondary" style="padding:0.35rem 0.75rem;">
+                  <i class="fa-solid fa-plus"></i> Add Row
+                </button>
+              </div>
+              <div id="expense-lines-container"></div>
+            </div>
+
+            <div style="margin-top:1.25rem; text-align:right;">
+              <h3 style="font-family:var(--font-display);">Total: <span id="expense-total-calc" style="color:var(--primary);">R$ 0,00</span></h3>
+            </div>
+
+            <button type="submit" class="btn-submit" id="expense-submit-btn" style="width:100%; margin-top:1.25rem; background:linear-gradient(135deg,var(--secondary),var(--primary));">
+              <i class="fa-solid fa-receipt"></i> <span data-i18n="exp_submit_btn">Submit Expense Record</span>
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- DASHBOARD TAB -->
+      <div id="tab-dashboard" class="tab-pane">
+        <div id="ptr-indicator" style="display:flex; justify-content:center; align-items:center; height:0; overflow:hidden; transition:height 0.2s, opacity 0.2s; opacity:0; color:var(--primary);">
+          <i class="fa-solid fa-arrow-down" id="ptr-icon"></i>
+          <span id="ptr-text" style="margin-left:0.5rem; font-size:0.85rem; font-weight:600;">Pull to refresh</span>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+          <h2 data-i18n="dash_title" style="font-family:var(--font-display); font-weight:700; font-size:1.7rem;">Business Analytics</h2>
+          <button id="mobile-filter-btn" type="button" class="btn-secondary" style="display:none;">
+            <i class="fa-solid fa-filter"></i> Filters
+          </button>
+          <div id="desktop-filters" style="display:flex; align-items:center; gap:0.75rem;">
+            <label for="time-filter" style="margin:0; white-space:nowrap;" data-i18n="dash_period">Period:</label>
+            <select id="time-filter" style="width:auto; padding:0.5rem 0.9rem; font-size:0.85rem;">
+              <option value="7" data-i18n="dash_opt_7">Last 7 Entries</option>
+              <option value="30" selected data-i18n="dash_opt_30">Last 30 Days</option>
+              <option value="all" data-i18n="dash_opt_all">All Time Records</option>
+            </select>
+            <label for="dashboard-store-filter" style="margin:0 0 0 0.5rem; white-space:nowrap;" data-i18n="dash_store_filter">Store:</label>
+            <select id="dashboard-store-filter" style="width:auto; padding:0.5rem 0.9rem; font-size:0.85rem;"></select>
+          </div>
+        </div>
+
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-icon-box rev"><i class="fa-solid fa-wallet"></i></div>
+            <div class="metric-info">
+              <span class="metric-label" data-i18n="dash_kpi_rev">Total Revenue</span>
+              <span class="metric-value" id="kpi-revenue">0</span>
+            </div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon-box exp"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+            <div class="metric-info">
+              <span class="metric-label" data-i18n="dash_kpi_exp">Operating Expenses</span>
+              <span class="metric-value" id="kpi-expenses" style="color:var(--danger);">0</span>
+            </div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon-box net"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+            <div class="metric-info">
+              <span class="metric-label" data-i18n="dash_kpi_profit">Net Profit</span>
+              <span class="metric-value" id="kpi-netprofit" style="color:var(--success);">0</span>
+            </div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon-box card"><i class="fa-solid fa-credit-card"></i></div>
+            <div class="metric-info">
+              <span class="metric-label" data-i18n="dash_kpi_cards">Total Card &amp; PIX</span>
+              <span class="metric-value" id="kpi-cards">0</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="glass-card">
+            <div class="glass-card-header">
+              <h3 class="glass-card-title"><i class="fa-solid fa-chart-line" style="color:var(--primary);"></i> <span data-i18n="dash_chart_title">Financial Trends</span></h3>
+            </div>
+            <div style="position:relative; height:300px; width:100%;">
+              <canvas id="finance-chart"></canvas>
+            </div>
+          </div>
+
+          <div class="glass-card" id="partner-split-panel">
+            <div class="glass-card-header">
+              <h3 class="glass-card-title"><i class="fa-solid fa-calculator" style="color:var(--accent);"></i> <span data-i18n="dash_calc_title">Partner Profit Shares</span></h3>
+            </div>
+            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1rem;" data-i18n="dash_calc_desc"></p>
+            <div id="partner-shares-output-container" class="calc-container"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PORTFOLIO TAB -->
+      <div id="tab-portfolio" class="tab-pane">
+        <div class="glass-card">
+          <div class="glass-card-header">
+            <h3 class="glass-card-title"><i class="fa-solid fa-briefcase" style="color:var(--primary);"></i> <span data-i18n="port_title">Macro-Portfolio Performance</span></h3>
+          </div>
+          <div style="position:relative; height:480px; width:100%;">
+            <canvas id="portfolio-chart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- HISTORY TAB -->
+      <div id="tab-history" class="tab-pane">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+          <h2 style="font-family:var(--font-display); font-weight:700; font-size:1.7rem;" data-i18n="nav_history">History Logs</h2>
+          <button id="btn-export-csv" type="button" class="btn-secondary">
+            <i class="fa-solid fa-file-csv"></i> <span data-i18n="btn_export_all">Export CSV (All Reports)</span>
+          </button>
+        </div>
+
+        <div class="glass-card">
+          <div class="glass-card-header">
+            <h2 class="glass-card-title"><i class="fa-solid fa-clock-rotate-left" style="color:var(--primary);"></i> <span data-i18n="hist_sales_title">Daily Financial Logs</span></h2>
+            <div style="font-size:0.85rem; color:var(--text-secondary);"><span data-i18n="hist_count">Entries:</span> <span id="history-count" style="font-weight:700; color:var(--accent);">0</span></div>
+          </div>
+          <div class="table-container">
+            <table id="history-table">
+              <thead><tr id="hist-daily-th"></tr></thead>
+              <tbody id="history-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="glass-card">
+          <div class="glass-card-header">
+            <h2 class="glass-card-title"><i class="fa-solid fa-receipt" style="color:var(--secondary);"></i> <span data-i18n="hist_exp_title">Business Expenses Ledger</span></h2>
+            <div style="font-size:0.85rem; color:var(--text-secondary);"><span data-i18n="hist_count">Entries:</span> <span id="history-expenses-count" style="font-weight:700; color:var(--secondary);">0</span></div>
+          </div>
+          <div class="table-container">
+            <table id="history-expenses-table">
+              <thead><tr id="hist-exp-th"></tr></thead>
+              <tbody id="history-expenses-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS TAB -->
+      <div id="tab-settings" class="tab-pane">
+        <!-- Businesses -->
+        <div class="glass-card">
+          <div class="glass-card-header">
+            <h2 class="glass-card-title"><i class="fa-solid fa-store" style="color:var(--accent);"></i> <span data-i18n="set_biz_title">Manage Businesses &amp; Income Streams</span></h2>
+          </div>
+          <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1.25rem;" data-i18n="set_biz_desc"></p>
+          <div id="settings-businesses-container" class="calc-container" style="margin-bottom:1.25rem;"></div>
+          <button id="btn-add-business" type="button" class="btn-secondary" style="width:100%; justify-content:center; margin-bottom:1rem;">
+            <i class="fa-solid fa-plus"></i> <span data-i18n="set_biz_add">Add New Business</span>
+          </button>
+          <div style="display:flex; justify-content:flex-end;">
+            <button id="btn-save-businesses" type="button" class="btn-submit"><i class="fa-solid fa-save"></i> <span data-i18n="set_biz_save">Save Businesses</span></button>
+          </div>
+        </div>
+
+        <!-- Team Roster -->
+        <div class="glass-card">
+          <div class="glass-card-header">
+            <h2 class="glass-card-title"><i class="fa-solid fa-users-gear" style="color:var(--success);"></i> <span data-i18n="set_title">Team Settings &amp; Profit Splits</span></h2>
+            <span class="badge" id="split-validation-status" style="padding:0.4rem 0.8rem;">Partner Splits: 100% OK</span>
+          </div>
+          <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1.25rem;" data-i18n="set_desc"></p>
+          <div class="table-container" style="margin-bottom:1.5rem;">
+            <table>
+              <thead>
+                <tr>
+                  <th data-i18n="set_tbl_name">Name</th>
+                  <th data-i18n="set_tbl_store">Store</th>
+                  <th data-i18n="set_tbl_role">Role</th>
+                  <th data-i18n="set_tbl_split">Split %</th>
+                  <th data-i18n="set_tbl_salary">Salary / Wage</th>
+                  <th data-i18n="set_tbl_freq">Pay Freq</th>
+                  <th data-i18n="set_tbl_payday">Pay Day</th>
+                  <th data-i18n="set_tbl_pin">PIN</th>
+                  <th data-i18n="set_tbl_actions">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="settings-roster-tbody"></tbody>
+            </table>
+          </div>
+          <div style="display:flex; justify-content:flex-end;">
+            <button id="btn-save-roster" type="button" class="btn-submit" style="background:linear-gradient(135deg,var(--success),#059669);">
+              <i class="fa-solid fa-floppy-disk"></i> <span data-i18n="set_btn_save">Save Configurations</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Add New Member -->
+        <div class="glass-card">
+          <div class="glass-card-header">
+            <h3 class="glass-card-title"><i class="fa-solid fa-user-plus" style="color:var(--primary);"></i> <span data-i18n="set_add_title">Add Team Member</span></h3>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="new-member-name" data-i18n="set_add_name">Full Name</label>
+              <input type="text" id="new-member-name" placeholder="e.g. Alice Silva">
+            </div>
+            <div class="form-group">
+              <label for="new-member-role" data-i18n="set_add_role">Business Role</label>
+              <select id="new-member-role">
+                <option value="Partner" data-i18n="set_role_partner">Partner</option>
+                <option value="Employee" selected data-i18n="set_role_employee">Employee</option>
+                <option value="Admin" data-i18n="set_role_admin">Admin</option>
+              </select>
+            </div>
+            <div class="form-group form-grid-full" id="new-member-split-container" style="display:none;">
+              <label data-i18n="set_add_split">Partner Equity Matrix (%)</label>
+              <div id="new-member-equity-grid" style="display:flex; gap:1rem; flex-wrap:wrap; margin-top:0.4rem;"></div>
+            </div>
+            <div class="form-grid-full" id="new-member-salary-container" style="display:flex; gap:1rem; flex-wrap:wrap;">
+              <div class="form-group" style="flex:1; min-width:120px;">
+                <label data-i18n="set_tbl_salary">Fixed Salary / Wage</label>
+                <input type="text" inputmode="decimal" id="new-member-salary" placeholder="0.00">
+              </div>
+              <div class="form-group" style="flex:1; min-width:120px;">
+                <label data-i18n="set_tbl_freq">Pay Frequency</label>
+                <select id="new-member-frequency">
+                  <option value="None" data-i18n="opt_freq_none">Manual</option>
+                  <option value="Daily" data-i18n="opt_freq_daily">Daily</option>
+                  <option value="Weekly" data-i18n="opt_freq_weekly">Weekly</option>
+                  <option value="Monthly" data-i18n="opt_freq_monthly">Monthly</option>
+                </select>
+              </div>
+              <div class="form-group" id="new-member-payday-container" style="flex:1; min-width:120px; display:none;">
+                <label data-i18n="set_tbl_payday">Pay Day</label>
+                <select id="new-member-payday"></select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="new-member-store" data-i18n="set_tbl_store">Store Assignment</label>
+              <select id="new-member-store"></select>
+            </div>
+            <div class="form-group">
+              <label for="new-member-pin">Login PIN Code</label>
+              <input type="text" id="new-member-pin" placeholder="1234">
+            </div>
+            <button id="btn-add-member" type="button" class="btn-submit form-grid-full">
+              <i class="fa-solid fa-plus"></i> <span data-i18n="set_add_btn">Add Member to List</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Expense Categories -->
+        <div class="glass-card">
+          <div class="glass-card-header">
+            <h3 class="glass-card-title"><i class="fa-solid fa-tags" style="color:var(--secondary);"></i> <span data-i18n="set_cat_title">Expense Categories</span></h3>
+          </div>
+          <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1.25rem;" data-i18n="set_cat_desc"></p>
+          <div id="settings-categories-container" class="calc-container" style="margin-bottom:1.25rem;"></div>
+          <button id="btn-add-category" type="button" class="btn-secondary" style="width:100%; justify-content:center; margin-bottom:1rem;">
+            <i class="fa-solid fa-plus"></i> <span data-i18n="set_cat_add">Add New Category</span>
+          </button>
+          <div style="display:flex; justify-content:flex-end;">
+            <button id="btn-save-categories" type="button" class="btn-submit"><i class="fa-solid fa-save"></i> <span data-i18n="set_cat_save">Save Categories</span></button>
+          </div>
+        </div>
+
+        <!-- Integrations: Gemini AI & Google Sheets Backup -->
+        <div class="glass-card">
+          <div class="glass-card-header">
+            <h3 class="glass-card-title"><i class="fa-solid fa-plug" style="color:var(--accent);"></i> Gemini AI &amp; Google Sheets Backup</h3>
+          </div>
+          <div class="form-grid">
+            <div class="form-group form-grid-full">
+              <label for="set-gemini-key">Gemini API Key (HTTP-Referrer Restricted)</label>
+              <input type="password" id="set-gemini-key" placeholder="AIza...">
+            </div>
+            <div class="form-group">
+              <label for="set-spreadsheet-id">Backup Google Spreadsheet ID (Optional)</label>
+              <input type="text" id="set-spreadsheet-id" placeholder="1G-TFhcsMCb6v4g19IjGIV6wMccDVXUyjgYJvwi3fO9Q">
+            </div>
+            <div class="form-group">
+              <label for="set-google-client-id">Google OAuth Client ID (For Manual Sync)</label>
+              <input type="text" id="set-google-client-id" placeholder="xxxx.apps.googleusercontent.com">
+            </div>
+            <div class="form-grid-full" style="display:flex; justify-content:flex-end; gap:0.75rem; flex-wrap:wrap;">
+              <button id="btn-sync-sheets-now" type="button" class="btn-secondary">
+                <i class="fa-solid fa-table"></i> Sync to Google Sheets Now
+              </button>
+              <button id="btn-save-integrations" type="button" class="btn-submit">
+                <i class="fa-solid fa-save"></i> Save Integrations
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- App Auto-Update Settings (GitHub Releases) -->
+        <div class="glass-card">
+          <div class="glass-card-header">
+            <h3 class="glass-card-title"><i class="fa-brands fa-github" style="color:var(--primary);"></i> <span data-i18n="upd_title">App Updates (GitHub)</span></h3>
+            <span id="update-status-text" class="badge">Checking...</span>
+          </div>
+          <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1.25rem;" data-i18n="upd_desc"></p>
+          <div class="calc-container" style="margin-bottom:1.25rem;">
+            <div class="calc-row">
+              <span data-i18n="upd_current">Installed Version:</span>
+              <strong id="upd-current-ver">v2.0.0</strong>
+            </div>
+            <div class="calc-row">
+              <span data-i18n="upd_latest">Latest on GitHub:</span>
+              <strong id="upd-latest-ver">v2.0.0</strong>
+            </div>
+            <div class="calc-row">
+              <label class="toggle-switch" for="pref-auto-update">
+                <input type="checkbox" id="pref-auto-update" checked>
+                <span data-i18n="upd_auto_label">Automatically update when a new version is available</span>
+              </label>
+            </div>
+          </div>
+          <div style="display:flex; justify-content:flex-end; gap:0.75rem; flex-wrap:wrap;">
+            <button id="btn-check-updates" type="button" class="btn-secondary">
+              <i class="fa-solid fa-magnifying-glass"></i> <span data-i18n="upd_check_btn">Check for Updates</span>
+            </button>
+            <button id="btn-install-update" type="button" class="btn-submit" style="display:none;">
+              <i class="fa-solid fa-cloud-arrow-down"></i> <span data-i18n="upd_install_btn">Update Now</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Device UI Preferences -->
+        <div class="glass-card">
+          <div class="glass-card-header">
+            <h3 class="glass-card-title"><i class="fa-solid fa-wand-magic-sparkles" style="color:var(--secondary);"></i> <span data-i18n="pref_title">UI Preferences &amp; Accessibility</span></h3>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="pref-theme" data-i18n="pref_theme">Theme Mode</label>
+              <select id="pref-theme">
+                <option value="dark" selected data-i18n="pref_theme_dark">Dark Mode (Glow)</option>
+                <option value="light" data-i18n="pref_theme_light">Light Mode (Classic Slate)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="pref-palette" data-i18n="pref_palette">Color Accent Palette</label>
+              <select id="pref-palette">
+                <option value="indigo" selected data-i18n="pref_palette_indigo">Classic Indigo &amp; Violet</option>
+                <option value="emerald" data-i18n="pref_palette_emerald">Neon Emerald &amp; Mint</option>
+                <option value="sunset" data-i18n="pref_palette_sunset">Sunset Coral &amp; Rose</option>
+                <option value="cyberpunk" data-i18n="pref_palette_cyberpunk">Cyberpunk Neon Cyan &amp; Pink</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="pref-fontsize" data-i18n="pref_fontsize">Font Size Scale</label>
+              <select id="pref-fontsize">
+                <option value="80" data-i18n="pref_fontsize_sm">80% (Small)</option>
+                <option value="90" data-i18n="pref_fontsize_compact">90% (Compact)</option>
+                <option value="100" selected data-i18n="pref_fontsize_normal">100% (Normal)</option>
+                <option value="110" data-i18n="pref_fontsize_md">110% (Medium)</option>
+                <option value="120" data-i18n="pref_fontsize_lg">120% (Large)</option>
+                <option value="130" data-i18n="pref_fontsize_xl">130% (Extra Large)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="pref-lang" data-i18n="pref_lang">Idioma / Language</label>
+              <select id="pref-lang">
+                <option value="pt" selected>Português (Brasil)</option>
+                <option value="en">English (US)</option>
+              </select>
+            </div>
+            <div class="form-grid-full" style="display:flex; justify-content:flex-end;">
+              <button id="btn-save-prefs" type="button" class="btn-submit">
+                <i class="fa-solid fa-circle-check"></i> <span data-i18n="pref_btn_save">Save Preferences</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Mobile FAB & Bottom Sheets -->
+  <button id="mobile-fab" type="button" aria-label="Quick Actions"><i class="fa-solid fa-plus"></i></button>
+  <div id="fab-menu-overlay" class="sheet-overlay"></div>
+  <div id="filter-menu-overlay" class="sheet-overlay"></div>
+
+  <div id="filter-bottom-sheet" class="bottom-sheet">
+    <div class="sheet-handle"></div>
+    <h3 style="text-align:center; font-family:var(--font-display); margin-bottom:1.25rem;">Filter Dashboard</h3>
+    <label style="margin-bottom:0.45rem;">Select Time Period</label>
+    <div style="display:flex; flex-direction:column; gap:0.5rem; margin-bottom:1.25rem;">
+      <button type="button" class="nav-btn" data-mobile-period="7" style="justify-content:center; border:1px solid var(--panel-border);">Last 7 Entries</button>
+      <button type="button" class="nav-btn" data-mobile-period="30" style="justify-content:center; border:1px solid var(--panel-border);">Last 30 Days</button>
+      <button type="button" class="nav-btn" data-mobile-period="all" style="justify-content:center; border:1px solid var(--panel-border);">All Time Records</button>
+    </div>
+    <label style="margin-bottom:0.45rem;">Filter by Store</label>
+    <div id="mobile-store-filters" style="display:flex; flex-direction:column; gap:0.5rem; margin-bottom:1.25rem;"></div>
+    <button id="btn-close-filter-sheet" type="button" class="btn-submit" style="width:100%;">Close</button>
+  </div>
+
+  <div id="fab-bottom-sheet" class="bottom-sheet">
+    <div class="sheet-handle"></div>
+    <button type="button" class="fab-sheet-btn" data-tab="submit">
+      <div class="fab-sheet-icon"><i class="fa-solid fa-cash-register"></i></div>
+      <span data-i18n="nav_log_daily" style="font-weight:600;">Log Daily Sales</span>
+      <i class="fa-solid fa-chevron-right" style="margin-left:auto; color:var(--text-muted);"></i>
+    </button>
+    <button type="button" class="fab-sheet-btn" data-tab="expense">
+      <div class="fab-sheet-icon"><i class="fa-solid fa-receipt"></i></div>
+      <span data-i18n="nav_log_expense" style="font-weight:600;">Log Business Expense</span>
+      <i class="fa-solid fa-chevron-right" style="margin-left:auto; color:var(--text-muted);"></i>
+    </button>
+  </div>
+
+  <!-- Login / First-Run Modal -->
+  <dialog id="login-overlay" class="app-dialog">
+    <div class="glass-card" style="width:100%; text-align:center; padding:2.25rem;">
+      <div class="brand-icon" style="margin:0 auto 1rem; width:56px; height:56px; font-size:1.75rem;">
+        <i class="fa-solid fa-lock"></i>
+      </div>
+      <h2 style="font-family:var(--font-display); margin-bottom:0.4rem;" data-i18n="login_title">Loja Finance</h2>
+
+      <!-- Firebase Not Configured Helper -->
+      <div id="firebase-setup-box" style="display:none; text-align:left; margin-top:1rem;">
+        <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.75rem;">
+          Paste your Firebase Web Config JSON (from Firebase Console &rarr; Project Settings) to connect this browser, or commit it into <code>js/firebase-config.js</code>:
+        </p>
+        <textarea id="firebase-config-paste" rows="5" placeholder='{ "apiKey": "...", "authDomain": "...", "projectId": "...", "appId": "..." }'></textarea>
+        <button id="btn-save-firebase-config" type="button" class="btn-submit" style="width:100%; margin-top:0.85rem;">Connect Firebase</button>
+      </div>
+
+      <!-- First-Run Empty Database Bootstrap -->
+      <div id="first-admin-box" style="display:none; text-align:left; margin-top:1rem;">
+        <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.85rem;">
+          Empty Firestore database detected. Create your initial Admin PIN (or run <code>scripts/migrate-from-sheets.mjs</code>):
+        </p>
+        <div class="form-group" style="margin-bottom:0.75rem;">
+          <label for="bootstrap-admin-name">Admin Name</label>
+          <input type="text" id="bootstrap-admin-name" placeholder="e.g. Joseph">
+        </div>
+        <div class="form-group">
+          <label for="bootstrap-admin-pin">Admin PIN (min 4 chars)</label>
+          <input type="password" id="bootstrap-admin-pin" placeholder="****">
+        </div>
+        <button id="btn-bootstrap-admin" type="button" class="btn-submit" style="width:100%; margin-top:1rem;">Create Admin &amp; Initialize</button>
+      </div>
+
+      <!-- Standard PIN Login -->
+      <div id="pin-login-box">
+        <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:1.5rem;" data-i18n="login_subtitle">Enter your PIN to access</p>
+        <div class="form-group" style="text-align:left; margin-bottom:0.75rem;">
+          <label for="login-pin" data-i18n="login_pin_label">Personal PIN Code</label>
+          <input type="password" id="login-pin" placeholder="****" autofocus style="text-align:center; font-size:1.5rem; letter-spacing:0.5em;" maxlength="10">
+        </div>
+        <button id="login-btn" type="button" class="btn-submit" style="width:100%; margin-top:0.5rem;" data-i18n="login_btn">Login</button>
+      </div>
+
+      <div id="login-error" style="color:var(--danger); font-size:0.85rem; margin-top:0.85rem; min-height:1.2em;"></div>
+    </div>
+  </dialog>
+
+  <!-- Receipt Preview Modal -->
+  <dialog id="receipt-modal" class="app-dialog">
+    <div class="glass-card" style="padding:1.25rem; text-align:center;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+        <h3 class="glass-card-title" style="font-size:1rem;"><i class="fa-solid fa-image"></i> Receipt Preview</h3>
+        <button id="btn-close-receipt-modal" type="button" class="btn-secondary" style="padding:0.35rem 0.75rem;">
+          <i class="fa-solid fa-xmark"></i> Close
+        </button>
+      </div>
+      <img id="receipt-modal-img" src="" alt="Receipt" style="max-width:100%; max-height:75vh; border-radius:12px; object-fit:contain;">
+    </div>
+  </dialog>
+
+  <div class="loading-overlay" id="loading-overlay">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loading-text">Processing...</div>
+  </div>
+  <div id="toast-container"></div>
+
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>

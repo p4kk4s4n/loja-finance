@@ -1,0 +1,4415 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <base target="_top">
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  
+  <!-- Inject Custom Styling -->
+      <link rel="manifest" href='data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Loja%20Finance%22%2C%22short_name%22%3A%22LojaFinance%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230b071e%22%2C%22theme_color%22%3A%22%236366f1%22%7D'>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+/* CSS Reset & Variables */
+:root {
+  --bg-primary: #0b071e;
+  --bg-secondary: #120d2d;
+  --panel-bg: rgba(25, 20, 52, 0.45);
+  --panel-border: rgba(255, 255, 255, 0.08);
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --input-bg: rgba(255, 255, 255, 0.05);
+  --input-border: rgba(255, 255, 255, 0.1);
+  --input-bg-focus: rgba(255, 255, 255, 0.08);
+  
+  --gradient-1: rgba(99, 102, 241, 0.15);
+  --gradient-2: rgba(217, 70, 239, 0.1);
+  --gradient-3: rgba(6, 182, 212, 0.05);
+
+  --primary: #6366f1;
+  --primary-glow: rgba(99, 102, 241, 0.15);
+  --secondary: #d946ef;
+  --accent: #06b6d4;
+  
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  
+  --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  
+  --transition-fast: 0.2s ease;
+  --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  
+  --shadow-sm: 0 2px 8px -1px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 16px -6px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+}
+
+/* Theme overrides */
+html.theme-light {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #f1f5f9;
+  --panel-bg: rgba(255, 255, 255, 0.7);
+  --panel-border: rgba(15, 23, 42, 0.08);
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --input-bg: rgba(0, 0, 0, 0.03);
+  --input-border: rgba(0, 0, 0, 0.1);
+  --input-bg-focus: rgba(0, 0, 0, 0.05);
+  
+  --gradient-1: rgba(99, 102, 241, 0.06);
+  --gradient-2: rgba(217, 70, 239, 0.04);
+  --gradient-3: rgba(6, 182, 212, 0.02);
+}
+
+/* Palette overrides */
+html.palette-indigo {
+  --primary: #6366f1;
+  --primary-glow: rgba(99, 102, 241, 0.15);
+  --secondary: #d946ef;
+  --accent: #06b6d4;
+}
+
+html.palette-emerald {
+  --primary: #10b981;
+  --primary-glow: rgba(16, 185, 129, 0.15);
+  --secondary: #059669;
+  --accent: #34d399;
+}
+
+html.palette-sunset {
+  --primary: #f97316;
+  --primary-glow: rgba(249, 115, 22, 0.15);
+  --secondary: #f43f5e;
+  --accent: #fb7185;
+}
+
+html.palette-cyberpunk {
+  --primary: #00f0ff;
+  --primary-glow: rgba(0, 240, 255, 0.15);
+  --secondary: #ff007f;
+  --accent: #ab00ff;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-primary);
+  background-image: 
+    radial-gradient(at 0% 0%, var(--gradient-1) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, var(--gradient-2) 0px, transparent 50%),
+    radial-gradient(at 50% 50%, var(--gradient-3) 0px, transparent 50%);
+  background-attachment: fixed;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color var(--transition-normal), color var(--transition-normal);
+}
+
+/* App Layout */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+header {
+  background: rgba(11, 7, 30, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--panel-border);
+  padding: 1.25rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  transition: transform 0.3s ease, padding 0.3s ease, height 0.3s ease;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.brand-icon {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  color: white;
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+}
+
+.brand-name {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  background: linear-gradient(to right, var(--text-primary), #cbd5e1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Navigation */
+nav {
+  position: relative;
+  display: flex;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0.35rem;
+  border-radius: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.nav-indicator {
+  position: absolute;
+  bottom: -4px;
+  height: 4px;
+  background: var(--primary);
+  border-radius: 4px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 10px var(--primary);
+}
+
+.nav-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-family: var(--font-display);
+  font-weight: 600;
+  padding: 0.6rem 1.25rem;
+  font-size: 0.95rem;
+  border-radius: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all var(--transition-fast);
+}
+
+.nav-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.nav-btn.active {
+  background: linear-gradient(135deg, var(--primary), rgba(99, 102, 241, 0.7));
+  color: white;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+/* Main View Frame */
+main {
+  flex: 1;
+  padding: 2rem;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.tab-pane {
+  display: none;
+  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tab-pane.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Glass Panels */
+.glass-card {
+  background: var(--panel-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  box-shadow: var(--shadow-md);
+  margin-bottom: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+}
+
+.glass-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.glass-card-title {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Forms & Fields */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+.form-grid-full {
+  grid-column: span 2;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+label {
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.025em;
+}
+
+input[type="text"],
+input[inputmode="decimal"],
+input[type="date"],
+select,
+textarea {
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  transition: all var(--transition-fast);
+  outline: none;
+}
+
+input[type="text"]:focus,
+input[inputmode="decimal"]:focus,
+input[type="date"]:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+  background: var(--input-bg-focus);
+}
+
+select option {
+  background: var(--panel-bg, #1e1b4b);
+  color: var(--text-primary, #f8fafc);
+}
+
+/* Photo Upload Wrapper */
+.photo-upload-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.01);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  position: relative;
+  min-height: 180px;
+}
+
+.photo-upload-container:hover {
+  border-color: var(--primary);
+  background: rgba(99, 102, 241, 0.04);
+}
+
+.photo-upload-container.has-image {
+  border-style: solid;
+  border-color: var(--success);
+}
+
+.photo-upload-container input[type="file"] {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+}
+
+.upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: center;
+  pointer-events: none;
+}
+
+.upload-icon {
+  font-size: 2rem;
+  color: var(--text-secondary);
+  transition: color var(--transition-fast);
+}
+
+.photo-upload-container:hover .upload-icon {
+  color: var(--primary);
+}
+
+.upload-text {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.upload-text span {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.image-preview-wrapper {
+  width: 100%;
+  height: 100%;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+}
+
+.image-preview {
+  max-width: 100%;
+  max-height: 130px;
+  border-radius: var(--radius-sm);
+  object-fit: contain;
+  box-shadow: var(--shadow-sm);
+}
+
+.remove-image-btn {
+  margin-top: 0.5rem;
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  border-radius: 12px;
+  cursor: pointer;
+  z-index: 5;
+  transition: all var(--transition-fast);
+}
+
+.remove-image-btn:hover {
+  background: var(--danger);
+  color: white;
+}
+
+/* Expense Line Item Grid */
+.expense-line {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.expense-line .exp-line-cat { flex: 1.5; min-width: 0; width: 100%; }
+.expense-line .exp-line-amt { flex: 1; min-width: 0; width: 100%; }
+.expense-line .exp-line-desc { flex: 2.5; min-width: 0; width: 100%; }
+.expense-line button { flex: 0 0 auto; width: 44px; display: flex; align-items: center; justify-content: center; }
+
+/* Dashboard Metrics */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.metric-card {
+  background: var(--panel-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-normal), border-color var(--transition-fast);
+}
+
+.metric-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.metric-icon-box {
+  width: 50px;
+  height: 50px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.metric-icon-box.rev { background: rgba(99, 102, 241, 0.15); color: var(--primary); }
+.metric-icon-box.card { background: rgba(217, 70, 239, 0.15); color: var(--secondary); }
+.metric-icon-box.cash { background: rgba(6, 182, 212, 0.15); color: var(--accent); }
+.metric-icon-box.net { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+
+.metric-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.metric-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+.metric-value {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 0.15rem;
+}
+
+/* Charts and Grid Layouts */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+/* Partner Split Calculator */
+.calc-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.calc-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.calc-partner-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.calc-partner-share {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* Roster Settings Inputs */
+input.roster-input {
+  width: 90px;
+  padding: 0.4rem 0.6rem;
+  text-align: center;
+  background: rgba(11, 7, 30, 0.5);
+  border: 1px solid var(--panel-border);
+  color: #fff;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+input.roster-input:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+
+/* History Logs Table */
+.table-container {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+th {
+  background: rgba(255, 255, 255, 0.03);
+  padding: 1rem;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  border-bottom: 2px solid var(--panel-border);
+}
+
+td {
+  padding: 1rem;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--panel-border);
+  vertical-align: middle;
+}
+
+tr:hover td {
+  background: rgba(255, 255, 255, 0.01);
+}
+
+/* Badges & Buttons */
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badge-partner { background: rgba(99, 102, 241, 0.15); color: #a5b4fc; }
+.badge-employee { background: rgba(245, 158, 11, 0.15); color: #fde68a; }
+
+/* Category Badges */
+.badge-category {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+}
+.badge-category.supplies { background: rgba(139, 92, 246, 0.15); color: #c084fc; }
+.badge-category.rent { background: rgba(99, 102, 241, 0.15); color: #93c5fd; }
+.badge-category.utilities { background: rgba(6, 182, 212, 0.15); color: #67e8f9; }
+.badge-category.salaries { background: rgba(16, 185, 129, 0.15); color: #6ee7b7; }
+.badge-category.marketing { background: rgba(245, 158, 11, 0.15); color: #fde68a; }
+.badge-category.other { background: rgba(100, 116, 139, 0.15); color: #cbd5e1; }
+
+.receipt-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  background: rgba(6, 182, 212, 0.12);
+  color: #22d3ee;
+  border: 1px solid rgba(6, 182, 212, 0.2);
+  font-size: 0.8rem;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all var(--transition-fast);
+}
+
+.receipt-btn:hover {
+  background: var(--accent);
+  color: var(--bg-primary);
+  box-shadow: 0 0 12px rgba(6, 182, 212, 0.4);
+}
+
+.receipt-btn-missing {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.btn-action-delete {
+  background: rgba(239, 68, 68, 0.12);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-action-delete:hover {
+  background: var(--danger);
+  color: white;
+}
+
+#split-validation-status.invalid {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* Primary Action Buttons */
+.btn-submit {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+}
+
+.btn-submit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(217, 70, 239, 0.4);
+}
+
+.btn-submit:active {
+  transform: translateY(0);
+}
+
+.btn-submit:disabled {
+  background: var(--text-muted);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Modal and Status Loading Indicators */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(11, 7, 30, 0.8);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-left-color: var(--secondary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 1.15rem;
+}
+
+/* Dynamic Toast Notifications */
+.toast {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.5rem;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  position: relative;
+  overflow: hidden;
+  pointer-events: auto;
+  border: 1px solid rgba(255,255,255,0.1);
+  transform: translateX(120%);
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s;
+}
+
+.toast.show {
+  transform: translateX(0);
+}
+
+.toast.hiding {
+  transform: translateX(120%);
+  opacity: 0;
+}
+
+@media(max-width: 768px) {
+  #toast-container {
+    bottom: 80px !important; /* Above nav bar */
+    left: 20px;
+    align-items: stretch;
+  }
+  .toast {
+    transform: translateY(120%);
+  }
+  .toast.show {
+    transform: translateY(0);
+  }
+  .toast.hiding {
+    transform: translateY(120%);
+  }
+}
+
+.toast-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 4px;
+  background: var(--success);
+  width: 100%;
+  transform-origin: left;
+  animation: toastProgress linear forwards;
+}
+
+@keyframes toastProgress {
+  to { transform: scaleX(0); }
+}
+
+.toast.error {
+  border-color: rgba(239, 68, 68, 0.3);
+}
+.toast.error .toast-icon { color: var(--danger); }
+.toast.error .toast-progress { background: var(--danger); }
+
+.toast.success {
+  border-color: rgba(16, 185, 129, 0.3);
+}
+.toast.success .toast-icon { color: var(--success); }
+.toast.success .toast-progress { background: var(--success); }
+
+.toast.info {
+  border-color: rgba(99, 102, 241, 0.3);
+}
+.toast.info .toast-icon { color: var(--primary); }
+.toast.info .toast-progress { background: var(--primary); }
+.toast-icon {
+  font-size: 1.25rem;
+}
+
+.toast.error .toast-icon { color: var(--danger); }
+
+/* Inline Duplicate Button (history rows) */
+.btn-duplicate {
+  background: transparent;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  color: var(--primary);
+  padding: 0.3rem 0.65rem;
+  border-radius: 15px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.btn-duplicate:hover {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: var(--primary);
+  color: #fff;
+}
+.btn-duplicate:active {
+  transform: scale(0.95);
+}
+.td-duplicate-action {
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* Responsive adjustments */
+@media(max-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media(max-width: 768px) {
+  header {
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem 1rem 0.5rem;
+    align-items: center;
+    text-align: center;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    position: sticky; /* Make sticky again on mobile so we can transform it */
+    top: 0;
+  }
+  
+  header.header--collapsed {
+    transform: translateY(-100%);
+  }
+  
+  .brand {
+    justify-content: center;
+  }
+  
+  .nav-log-btn { display: none !important; }
+  
+  #mobile-fab { display: flex; }
+  
+  #desktop-filters { display: none !important; }
+  #mobile-filter-btn { display: flex !important; }
+  
+  nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 0;
+    border: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    justify-content: space-between;
+    padding: 0.5rem 0.5rem calc(0.5rem + env(safe-area-inset-bottom, 0));
+    z-index: 1000;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+  
+  .nav-btn {
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 0.5rem 0;
+    font-size: 0.7rem;
+    border-radius: 12px;
+    background: transparent !important;
+    flex: 1;
+    min-width: 0; /* Prevents overflow */
+    position: relative;
+  }
+  
+  .nav-indicator {
+    top: 0;
+    bottom: auto;
+    height: 3px;
+    border-radius: 0 0 4px 4px;
+    box-shadow: 0 2px 10px var(--primary);
+  }
+
+  .nav-btn.active {
+    color: var(--primary);
+  }
+  
+  .nav-btn.active i {
+    transform: scale(1.15);
+  }
+
+  .nav-btn i {
+    font-size: 1.25rem;
+    margin: 0 !important;
+    transition: transform 0.2s ease;
+  }
+  
+  main {
+    padding: 1rem 1rem 6.5rem 1rem;
+  }
+  
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .form-grid-full {
+    grid-column: span 1;
+  }
+  
+  input, select, button, .exp-line-cat, .exp-line-amt, .exp-line-desc {
+    min-height: 44px; /* Minimum Apple Touch Target Size */
+  }
+  
+  .glass-card {
+    padding: 1rem;
+  }
+  
+  .glass-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  /* Stack Expense itemized lines for mobile */
+  .expense-line {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    background: rgba(255,255,255,0.02);
+    padding: 1rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.05);
+    margin-bottom: 0.75rem;
+  }
+  
+  /* Swipeable History Cards */
+  #history-table, #history-expenses-table {
+    display: flex !important;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 1rem;
+    padding-bottom: 1rem;
+    -webkit-overflow-scrolling: touch;
+    width: 100vw;
+    margin-left: -1rem; /* Full bleed on mobile */
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  #history-table thead, #history-expenses-table thead {
+    display: none;
+  }
+  #history-tbody, #history-expenses-tbody {
+    display: flex;
+    gap: 1rem;
+  }
+  /* Duplicate button: inline on each history card */
+  #history-tbody tr, #history-expenses-tbody tr {
+    display: flex;
+    flex-direction: column;
+    scroll-snap-align: center;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 16px;
+    padding: 1.25rem;
+    min-width: 280px;
+    max-width: 85vw;
+  }
+  .td-duplicate-action {
+    display: flex !important;
+    justify-content: center !important;
+    padding-top: 0.75rem !important;
+    border-top: 1px solid rgba(255,255,255,0.06) !important;
+    margin-top: 0.25rem;
+  }
+  #history-tbody td, #history-expenses-tbody td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: none;
+    padding: 0.5rem 0;
+    text-align: right;
+  }
+  #history-tbody td::before, #history-expenses-tbody td::before {
+    content: attr(data-label);
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-right: 1rem;
+    text-align: left;
+  }
+  
+  .expense-line > * {
+    width: 100% !important; /* Override inline styles */
+  }
+  
+  /* Override the dynamic input grid for daily sales */
+  .dynamic-stream-container {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  .dynamic-stream-container > label {
+    width: 100% !important;
+    margin-bottom: 0.25rem;
+  }
+}
+
+  /* --- PHASE 1 ENHANCEMENTS --- */
+  
+  /* 1. Instant Form Validation via :has() */
+  form:has(input:invalid, select:invalid, textarea:invalid) button[type="submit"] {
+    opacity: 0.4;
+    pointer-events: none;
+    filter: grayscale(80%);
+    transform: scale(0.98);
+  }
+
+  /* 2. Content-Visibility for Table Performance */
+  .glass-table tbody tr {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 64px;
+  }
+
+  /* 3. CSS Scroll-Driven Animations for History Rows */
+  @supports (animation-timeline: view()) {
+    .glass-table tbody tr {
+      animation: reveal-row linear both;
+      animation-timeline: view();
+      animation-range: entry 5% cover 15%;
+    }
+
+    @keyframes reveal-row {
+      from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.97);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+  }
+  
+  /* --- PHASE 3 ENHANCEMENTS --- */
+  
+  /* Native Dialog Styling */
+  dialog#login-overlay {
+    border: none;
+    background: transparent;
+    padding: 0;
+    margin: auto;
+    width: 90%;
+    max-width: 400px;
+    outline: none;
+  }
+  dialog#login-overlay::backdrop {
+    background: var(--bg-primary);
+    backdrop-filter: blur(12px);
+  }
+
+  /* Container Queries */
+  .tab-pane {
+    container-type: inline-size;
+  }
+  .metrics-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+  }
+  @container (max-width: 1024px) {
+    .metrics-grid {
+      grid-template-columns: repeat(2, 1fr) !important;
+    }
+  }
+  @container (max-width: 600px) {
+    .metrics-grid {
+      grid-template-columns: 1fr !important;
+    }
+  }
+  /* FAB Styles */
+  #mobile-fab {
+    display: none;
+    position: fixed;
+    bottom: calc(5rem + env(safe-area-inset-bottom, 0));
+    right: 1.5rem;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--primary));
+    color: #fff;
+    font-size: 1.5rem;
+    border: none;
+    box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+    z-index: 1001;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  #mobile-fab:active { transform: scale(0.9); }
+
+  #fab-menu-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 2000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  #fab-bottom-sheet {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    bottom: -100%;
+    left: 0;
+    right: 0;
+    padding: 2rem 1.5rem calc(2rem + env(safe-area-inset-bottom, 0));
+    border-radius: 24px 24px 0 0;
+    z-index: 2001;
+    transition: bottom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    background: rgba(15, 23, 42, 0.95);
+  }
+  #fab-bottom-sheet.open { bottom: 0; }
+  #fab-menu-overlay.open { display: block; opacity: 1; }
+
+  .fab-sheet-btn {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.05);
+    color: var(--text-primary);
+    font-size: 1rem;
+    cursor: pointer;
+    text-align: left;
+  }
+  .fab-sheet-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: var(--accent);
+  }
+  /* Skeleton Loaders */
+  @keyframes shimmer {
+    0% { background-position: -200px 0; }
+    100% { background-position: calc(200px + 100%) 0; }
+  }
+  .skeleton {
+    background-color: rgba(255,255,255,0.05);
+    background-image: linear-gradient(90deg, rgba(255,255,255,0.01) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.01) 100%);
+    background-size: 200px 100%;
+    background-repeat: no-repeat;
+    border-radius: 8px;
+    animation: shimmer 1.5s infinite linear;
+    color: transparent !important;
+  }
+  .skeleton * {
+    visibility: hidden;
+  }
+  </style>
+
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Header/Navigation -->
+    <header>
+      <div class="brand">
+        <div class="brand-icon">
+          <i class="fa-solid fa-chart-line"></i>
+        </div>
+        <div class="brand-name">Loja Finance</div>
+      </div>
+      
+      <div class="user-info" style="display: flex; align-items: center; gap: 1rem; color: var(--text-secondary); font-size: 0.9rem;">
+        <span id="header-user-name"><i class="fa-solid fa-user"></i> Loading...</span>
+        <span id="header-user-store" class="badge" style="background: rgba(255,255,255,0.1);">Store</span>
+        <button onclick="logout()" class="nav-btn" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+      </div>
+      
+    </header>
+
+    <!-- Bottom Navigation Bar (outside header to guarantee position:fixed works on mobile) -->
+    <nav>
+      <button class="nav-btn nav-log-btn active" onclick="switchTab('submit')">
+        <i class="fa-solid fa-pen-to-square"></i> <span data-i18n="nav_log_daily">Log Daily</span>
+      </button>
+      <button class="nav-btn nav-log-btn" onclick="switchTab('expense')">
+        <i class="fa-solid fa-receipt"></i> <span data-i18n="nav_log_expense">Log Expense</span>
+      </button>
+      <button class="nav-btn" onclick="switchTab('dashboard')">
+        <i class="fa-solid fa-gauge-high"></i> <span data-i18n="nav_dashboard">Dashboard</span>
+      </button>
+      <button class="nav-btn" onclick="switchTab('portfolio')">
+        <i class="fa-solid fa-briefcase"></i> <span>Portfolio</span>
+      </button>
+      <button class="nav-btn" onclick="switchTab('history')">
+        <i class="fa-solid fa-clock-rotate-left"></i> <span data-i18n="nav_history">History Logs</span>
+      </button>
+      <button id="nav-btn-settings" class="nav-btn" onclick="switchTab('settings')">
+        <i class="fa-solid fa-sliders"></i> <span data-i18n="nav_settings">Settings</span>
+      </button>
+      <div class="nav-indicator"></div>
+    </nav>
+
+    <!-- Main Content Panel -->
+    <main>
+      
+      <!-- SUBMIT DAILY SALES TAB -->
+      <div id="tab-submit" class="tab-pane active">
+        <div class="glass-card">
+          <div class="glass-card-header">
+            <h2 class="glass-card-title">
+              <i class="fa-solid fa-cash-register" style="color: var(--primary);"></i> <span data-i18n="daily_title">Daily Financial Submission</span>
+            </h2>
+            <div class="date-badge" id="submission-date-label" style="font-size: 0.9rem; color: var(--text-secondary);"></div>
+          </div>
+          <form id="finance-form" onsubmit="handleFormSubmit(event)">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap: wrap; gap: 0.5rem;">
+              <h4 style="margin:0; font-family:var(--font-display); color:var(--text-secondary);">Register Settlement</h4>
+              <div>
+                <input type="file" id="daily-receipt-upload" accept="image/*" style="display:none;" onchange="handleDailyReceiptSelect(event)" capture="environment">
+                <button type="button" class="btn-submit" onclick="document.getElementById('daily-receipt-upload').click()" style="padding:0.5rem 1rem; font-size:0.85rem; background: rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);">
+                  <i class="fa-solid fa-camera"></i> <span id="lbl-upload-daily">Upload Z-Report</span>
+                </button>
+                <button type="button" class="btn-submit" id="btn-scan-daily-ai" onclick="scanDailyReceiptAI()" style="padding:0.5rem 1rem; font-size:0.85rem; background: linear-gradient(135deg, #10b981, #06b6d4); margin-left:0.5rem; display:none;">
+                  <i class="fa-solid fa-wand-magic-sparkles"></i> Scan with AI
+                </button>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              
+              <!-- Store Location -->
+              <div class="form-group">
+                <label for="store-select" data-i18n="daily_store">Store Location</label>
+                <select id="store-select" required>
+                  <option value="Store 1" id="opt-store1">Store 1</option>
+                  <option value="Store 2" id="opt-store2">Store 2</option>
+                </select>
+              </div>
+
+              <!-- Submitter -->
+              <div class="form-group">
+                <label for="submitter" data-i18n="daily_submitter">Submitted By</label>
+                <input type="text" id="submitter" disabled style="background: rgba(255,255,255,0.05); color: var(--text-muted);" required>
+              </div>
+              
+              <!-- Date of entry -->
+              <div class="form-group">
+                <label for="entry-date" data-i18n="daily_date">Working Date</label>
+                <input type="date" id="entry-date" required>
+              </div>
+
+              <hr class="form-grid-full" style="border: 0; border-top: 1px solid var(--panel-border); margin: 0.5rem 0;">
+              
+              <div id="dynamic-streams-container" class="form-grid form-grid-full" style="gap: 1.5rem;">
+                <!-- Dynamically generated income streams based on selected business -->
+              </div>
+
+              <hr class="form-grid-full" style="border: 0; border-top: 1px solid var(--panel-border); margin: 0.5rem 0;">
+
+              <!-- CASH IN -->
+              <div class="form-group">
+                <label for="cash-in" data-i18n="daily_cash_in">Cash Received (R$)</label>
+                <input type="text" inputmode="decimal" step="0.01" min="0" id="cash-in" placeholder="0.00" oninput="calculateLiveTotal()">
+              </div>
+
+              <!-- CASH OUT -->
+              <div class="form-group">
+                <label for="cash-out" data-i18n="daily_cash_out">Cash Paid Out / Small Expenses (R$)</label>
+                <input type="text" inputmode="decimal" step="0.01" min="0" id="cash-out" placeholder="0.00" oninput="calculateLiveTotal()">
+              </div>
+              
+              <!-- FEES & TAXES -->
+              <div class="form-group">
+                <label for="fees-taxes" data-i18n="daily_fees">Taxes & Card Processing Fees (R$)</label>
+                <input type="text" inputmode="decimal" step="0.01" min="0" id="fees-taxes" placeholder="0.00" oninput="calculateLiveTotal()">
+              </div>
+
+              <!-- NOTES -->
+              <div class="form-group form-grid-full">
+                <label for="notes" data-i18n="daily_notes">Notes / Operating Expenses Detail</label>
+                <textarea id="notes" rows="2" placeholder="..." required></textarea>
+              </div>
+
+              <!-- LIVE REVENUE SUMMARY DISPLAY -->
+              <div class="form-grid-full" style="background: rgba(255,255,255,0.02); padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--panel-border); display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <h4 data-i18n="daily_summary_title" style="font-family: var(--font-display); font-size: 1.05rem; margin-bottom: 0.25rem;">Live Sales Summary</h4>
+                  <p data-i18n="daily_summary_desc" style="font-size: 0.8rem; color: var(--text-secondary);">Calculated: Card 1 + Card 2 + Cash Net</p>
+                </div>
+                <div style="text-align: right;">
+                  <span id="live-total" style="font-family: var(--font-display); font-size: 1.75rem; font-weight: 700; color: var(--accent);">0</span>
+                </div>
+              </div>
+
+              <!-- SUBMIT ACTION -->
+              <button type="submit" class="btn-submit form-grid-full" id="submit-btn">
+                <i class="fa-solid fa-paper-plane"></i> <span data-i18n="daily_submit_btn">Submit Daily Financials</span>
+              </button>
+
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- LOG EXPENSE TAB -->
+      <div id="tab-expense" class="tab-pane">
+        <div class="glass-card">
+          <div class="glass-card-header">
+            <h2 class="glass-card-title">
+              <i class="fa-solid fa-file-invoice-dollar" style="color: var(--secondary);"></i> <span data-i18n="exp_title">Log Business Expense</span>
+            </h2>
+          </div>
+          
+          <form id="expense-form" onsubmit="handleExpenseSubmit(event)">
+            
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap: wrap; gap: 0.5rem;">
+              <h4 style="margin:0; font-family:var(--font-display); color:var(--text-secondary);">Expense Details</h4>
+              <div>
+                <input type="file" id="expense-receipt-upload" accept="image/*" style="display:none;" onchange="handleExpenseReceiptSelect(event)" capture="environment">
+                <button type="button" class="btn-submit" onclick="document.getElementById('expense-receipt-upload').click()" style="padding:0.5rem 1rem; font-size:0.85rem; background: rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);">
+                  <i class="fa-solid fa-camera"></i> <span id="lbl-upload-receipt">Upload Receipt</span>
+                </button>
+                <button type="button" class="btn-submit" id="btn-scan-ai" onclick="scanReceiptAI()" style="padding:0.5rem 1rem; font-size:0.85rem; background: linear-gradient(135deg, #a855f7, #6366f1); margin-left:0.5rem; display:none;">
+                  <i class="fa-solid fa-wand-magic-sparkles"></i> Scan with AI
+                </button>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              
+              <!-- Store Location -->
+              <div class="form-group">
+                <label for="expense-store" data-i18n="exp_store">Store Location</label>
+                <select id="expense-store" required>
+                  <option value="Store 1" id="exp-opt-store1">Store 1</option>
+                  <option value="Store 2" id="exp-opt-store2">Store 2</option>
+                </select>
+              </div>
+
+              <!-- Submitter -->
+              <div class="form-group">
+                <label for="expense-submitter" data-i18n="exp_submitter">Paid By</label>
+                <input type="text" id="expense-submitter" disabled style="background: rgba(255,255,255,0.05); color: var(--text-muted);" required>
+              </div>
+              
+              <!-- Date -->
+              <div class="form-group">
+                <label for="expense-date" data-i18n="exp_date">Expense Date</label>
+                <input type="date" id="expense-date" required>
+              </div>
+
+              <!-- Master Category -->
+              <div class="form-group">
+                <label for="expense-master-category" data-i18n="exp_master_cat">Expense Category</label>
+                <select id="expense-master-category" required onchange="toggleItemizedMode()">
+                  <!-- Populated by JS -->
+                </select>
+              </div>
+              
+              <!-- Payment Method -->
+              <div class="form-group">
+                <label for="expense-method" data-i18n="exp_method">Payment Method</label>
+                <select id="expense-method" required>
+                  <option value="" disabled selected data-i18n="exp_method_placeholder">Select Payment Method</option>
+                  <option value="Bank Transfer" data-i18n="method_bank">Bank Transfer / PIX</option>
+                  <option value="Card" data-i18n="method_card">Business Credit Card</option>
+                  <option value="Cash Drawer" data-i18n="method_drawer">Cash Drawer</option>
+                </select>
+              </div>
+
+            </div>
+            
+            <!-- Dynamic Line Items -->
+            <div style="margin-top: 1.5rem;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.5rem;">
+                <label style="color:var(--text-secondary); margin:0;">Itemized Lines</label>
+                <button type="button" onclick="addExpenseLine()" style="background:none; border:none; color:var(--primary); cursor:pointer; font-size:0.85rem;"><i class="fa-solid fa-plus"></i> Add Row</button>
+              </div>
+              <div id="expense-lines-container"></div>
+            </div>
+            
+            <div style="margin-top:1.5rem; text-align:right;">
+              <h3 style="margin:0; font-family:var(--font-display);">Total: <span id="expense-total-calc" style="color:var(--primary);">R$ 0.00</span></h3>
+            </div>
+
+            <!-- SUBMIT EXPENSE -->
+            <button type="submit" class="btn-submit form-grid-full" id="expense-submit-btn" style="background: linear-gradient(135deg, var(--secondary), var(--primary)); margin-top: 1.5rem; width:100%;">
+              <i class="fa-solid fa-receipt"></i> <span data-i18n="exp_submit_btn">Submit Expense Record</span>
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- DASHBOARD TAB -->
+      <div id="tab-dashboard" class="tab-pane">
+        <div id="ptr-indicator" style="display: flex; justify-content: center; align-items: center; height: 0; overflow: hidden; transition: height 0.2s, opacity 0.2s; opacity: 0; color: var(--primary);">
+          <i class="fa-solid fa-arrow-down" id="ptr-icon" style="transition: transform 0.2s;"></i> <span id="ptr-text" style="margin-left: 0.5rem; font-size: 0.85rem; font-weight: 600;">Pull to refresh</span>
+        </div>
+
+        <!-- Dashboard Period Filter -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+          <h2 data-i18n="dash_title" style="font-family: var(--font-display); font-weight: 700; font-size: 1.75rem;">Business Analytics</h2>
+          <button id="mobile-filter-btn" class="nav-btn" onclick="toggleFilterMenu()" style="display: none; padding: 0.5rem 1rem; border-radius: 20px; background: rgba(255,255,255,0.05);">
+            <i class="fa-solid fa-filter"></i> Filters
+          </button>
+          <div id="desktop-filters" style="display: flex; align-items: center; gap: 0.75rem;">
+            <label for="time-filter" style="margin: 0;" data-i18n="dash_period">Period:</label>
+            <select id="time-filter" onchange="filterDashboardData()" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+              <option value="7" data-i18n="dash_opt_7">Last 7 Entries</option>
+              <option value="30" selected data-i18n="dash_opt_30">Last 30 Days</option>
+              <option value="all" data-i18n="dash_opt_all">All Time Records</option>
+            </select>
+            <label for="dashboard-store-filter" style="margin: 0; margin-left: 1rem;" data-i18n="dash_store_filter">Store:</label>
+            <select id="dashboard-store-filter" onchange="fetchDashboardData()" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+              <option value="All Stores" data-i18n="opt_all_stores">All Stores</option>
+              <option value="Store 1" id="filter-opt-store1">Store 1</option>
+              <option value="Store 2" id="filter-opt-store2">Store 2</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Metric KPI Cards -->
+        <div class="metrics-grid">
+          
+          <!-- Card 1: Total Revenue -->
+          <div class="metric-card">
+            <div class="metric-icon-box rev">
+              <i class="fa-solid fa-wallet"></i>
+            </div>
+            <div class="metric-info">
+              <span class="metric-label" data-i18n="dash_kpi_rev">Total Revenue</span>
+              <span class="metric-value" id="kpi-revenue">0</span>
+            </div>
+          </div>
+
+          <!-- Card 2: Operating Expenses -->
+          <div class="metric-card">
+            <div class="metric-icon-box rev" style="background: rgba(244, 63, 94, 0.15); color: var(--danger);">
+              <i class="fa-solid fa-file-invoice-dollar"></i>
+            </div>
+            <div class="metric-info">
+              <span class="metric-label" data-i18n="dash_kpi_exp">Operating Expenses</span>
+              <span class="metric-value" id="kpi-expenses" style="color: #fca5a5;">0</span>
+            </div>
+          </div>
+
+          <!-- Card 3: Net Profit -->
+          <div class="metric-card">
+            <div class="metric-icon-box net">
+              <i class="fa-solid fa-hand-holding-dollar"></i>
+            </div>
+            <div class="metric-info">
+              <span class="metric-label" data-i18n="dash_kpi_profit">Net Profit</span>
+              <span class="metric-value" id="kpi-netprofit" style="color: var(--success);">0</span>
+            </div>
+          </div>
+
+          <!-- Card 4: Total Card Sales (Stone + Rede) -->
+          <div class="metric-card">
+            <div class="metric-icon-box card">
+              <i class="fa-solid fa-credit-card"></i>
+            </div>
+            <div class="metric-info">
+              <span class="metric-label" data-i18n="dash_kpi_cards">Total Card & PIX</span>
+              <span class="metric-value" id="kpi-cards">0</span>
+            </div>
+          </div>
+
+        </div>
+
+                  <!-- Grid Layout for Charts & Calculator -->
+          <div class="dashboard-grid">
+            
+            <!-- Financial Chart Panel -->
+            <div class="glass-card">
+              <div class="glass-card-header">
+                <h3 class="glass-card-title"><i class="fa-solid fa-chart-line" style="color: var(--primary);"></i> <span data-i18n="dash_chart_title">Financial Trends</span></h3>
+              </div>
+              <div class="glass-card-body" style="position: relative; height: 300px; width: 100%;">
+                <canvas id="finance-chart"></canvas>
+              </div>
+            </div>
+  
+            <!-- Partner Share Panel -->
+          <div class="glass-card" id="partner-split-panel">
+            <div class="glass-card-header">
+              <h3 class="glass-card-title"><i class="fa-solid fa-calculator" style="color: var(--accent);"></i> <span data-i18n="dash_calc_title">Partner Profit Shares</span></h3>
+            </div>
+            
+            <div class="calc-container">
+              <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;" data-i18n="dash_calc_desc">
+                Calculated earnings split based on Net Profit and settings percentages:
+              </p>
+              
+              <!-- Partner Shares list generated dynamically -->
+              <div id="partner-shares-output-container" class="calc-container" style="gap: 0.75rem;">
+                <!-- Filled dynamically via JS -->
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- MACRO PORTFOLIO TAB -->
+      <div id="tab-portfolio" class="tab-pane">
+        <div class="glass-card">
+          <div class="glass-card-header">
+            <h3 class="glass-card-title"><i class="fa-solid fa-briefcase" style="color: var(--primary);"></i> <span data-i18n="port_title">Macro-Portfolio Performance</span></h3>
+          </div>
+          <div class="glass-card-body" style="position: relative; height: 500px; width: 100%;">
+            <canvas id="portfolio-chart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- HISTORY TAB -->
+      <div id="tab-history" class="tab-pane">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+          <h2 style="font-family: var(--font-display); font-weight: 700; font-size: 1.75rem;" data-i18n="nav_history">History Logs</h2>
+          <button onclick="exportHistoryCSV()" class="nav-btn" style="padding: 0.5rem 1rem; background: var(--gradient-1); border: 1px solid var(--primary); border-radius: 20px;">
+            <i class="fa-solid fa-file-csv"></i> <span data-i18n="btn_export_all">Export CSV (All Reports)</span>
+          </button>
+        </div>
+        
+        <!-- Daily Submissions Ledger -->
+        <div class="glass-card">
+          <div class="glass-card-header">
+            <h2 class="glass-card-title">
+              <i class="fa-solid fa-clock-rotate-left" style="color: var(--primary);"></i> <span data-i18n="hist_sales_title">Daily Financial Logs</span>
+            </h2>
+            <div style="display:flex; align-items:center; gap: 1rem;">
+              <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                <span data-i18n="hist_count">Entries:</span> <span id="history-count" style="font-weight: 700; color: var(--accent);">0</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr id="hist-daily-th">
+                  <!-- Translatables done via JS dynamically for headers -->
+                </tr>
+              </thead>
+              <tbody id="history-tbody">
+                <!-- Dynamically generated rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Expenses Ledger -->
+        <div class="glass-card">
+          <div class="glass-card-header">
+            <h2 class="glass-card-title">
+              <i class="fa-solid fa-receipt" style="color: var(--secondary);"></i> <span data-i18n="hist_exp_title">Business Expenses Ledger</span>
+            </h2>
+            <div style="font-size: 0.85rem; color: var(--text-secondary);">
+              <span data-i18n="hist_count">Entries:</span> <span id="history-expenses-count" style="font-weight: 700; color: var(--secondary);">0</span>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr id="hist-exp-th">
+                  <!-- Translatables done via JS dynamically for headers -->
+                </tr>
+              </thead>
+              <tbody id="history-expenses-tbody">
+                <!-- Dynamically generated rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS TAB -->
+      <div id="tab-settings" class="tab-pane">
+        
+        <!-- Manage Businesses Settings -->
+        <div class="glass-card">
+          <div class="glass-card-header">
+            <h2 class="glass-card-title">
+              <i class="fa-solid fa-store" style="color: var(--accent);"></i> <span data-i18n="set_biz_title">Manage Businesses & Income Streams</span>
+            </h2>
+          </div>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.5rem;" data-i18n="set_biz_desc">
+            Define your businesses and their specific payment streams (e.g., Stone, Rede, PIX). Cash In/Out are included automatically.
+          </p>
+          <div id="settings-businesses-container" style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem;">
+            <!-- Dynamically populated via JS -->
+          </div>
+          
+          <button onclick="addNewBusinessField()" class="nav-btn" style="background: rgba(255,255,255,0.05); margin-bottom: 1.5rem; width: 100%; justify-content: center;">
+            <i class="fa-solid fa-plus"></i> <span data-i18n="set_biz_add">Add New Business</span>
+          </button>
+
+          <div class="form-grid-full" style="display: flex; justify-content: flex-end;">
+            <button class="btn-submit" onclick="saveBusinessesData()" style="background: linear-gradient(135deg, var(--accent), var(--primary)); margin:0;">
+              <i class="fa-solid fa-save"></i> <span data-i18n="set_biz_save">Save Businesses</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Team Members List -->
+        <div class="glass-card">
+          <div class="glass-card-header">
+            <h2 class="glass-card-title">
+              <i class="fa-solid fa-users-gear" style="color: var(--success);"></i> <span data-i18n="set_title">Team Settings & Profit Splits</span>
+            </h2>
+            <span class="badge" id="split-validation-status" style="background: rgba(16, 185, 129, 0.15); color: #a7f3d0; font-size: 0.85rem; padding: 0.4rem 0.8rem;">
+              Partner Splits: 100% OK
+            </span>
+          </div>
+
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.5rem;" data-i18n="set_desc">
+            Manage partners and employees...
+          </p>
+
+          <div class="table-container" style="margin-bottom: 2rem;">
+            <table>
+              <thead>
+                <tr id="set-roster-th">
+                  <th data-i18n="set_tbl_name">Name</th>
+                  <th data-i18n="set_tbl_store">Store</th>
+                  <th data-i18n="set_tbl_role">Role</th>
+                  <th data-i18n="set_tbl_split">Split %</th>
+                  <th data-i18n="set_tbl_salary">Salary / Wage</th>
+                  <th data-i18n="set_tbl_freq">Pay Freq</th>
+                  <th data-i18n="set_tbl_payday">Pay Day</th>
+                  <th data-i18n="set_tbl_pin">PIN</th>
+                  <th data-i18n="set_tbl_actions">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="settings-roster-tbody">
+                <!-- Dynamically populated roster -->
+              </tbody>
+            </table>
+          </div>
+
+          <div class="form-grid-full" style="display: flex; justify-content: flex-end; gap: 1rem;">
+            <button class="btn-submit" onclick="saveTeamRoster()" style="margin: 0; background: linear-gradient(135deg, var(--success), #059669); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">
+              <i class="fa-solid fa-floppy-disk"></i> <span data-i18n="set_btn_save">Save Settings & Splits</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Add New Member Box -->
+        <div class="glass-card" style="margin-top: 2rem;">
+          <div class="glass-card-header">
+            <h3 class="glass-card-title"><i class="fa-solid fa-user-plus" style="color: var(--primary);"></i> <span data-i18n="set_add_title">Add Team Member</span></h3>
+          </div>
+          
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="new-member-name" data-i18n="set_add_name">Full Name</label>
+              <input type="text" id="new-member-name" placeholder="e.g. Alice Silva">
+            </div>
+            
+            <div class="form-group">
+              <label for="new-member-role" data-i18n="set_add_role">Business Role</label>
+              <select id="new-member-role" onchange="toggleNewSplitInput(this.value)">
+                <option value="Partner" data-i18n="set_role_partner">Partner (Receives Split %)</option>
+                <option value="Employee" selected data-i18n="set_role_employee">Employee (Fixed Wage / Commission)</option>
+                <option value="Admin" data-i18n="set_role_admin">Admin (System Access)</option>
+              </select>
+            </div>
+
+            <div class="form-group form-grid-full" id="new-member-split-container" style="display: none; flex-direction:column;">
+              <label data-i18n="set_add_split">Partner Equity Matrix (%)</label>
+              <div id="new-member-equity-grid" style="display:flex; gap:1rem; flex-wrap:wrap; margin-top:0.5rem;"></div>
+            </div>
+            
+            <div class="form-grid-full" id="new-member-salary-container" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+              <div class="form-group" style="flex:1; min-width: 120px;">
+                <label data-i18n="set_tbl_salary">Fixed Salary / Wage</label>
+                <input type="text" inputmode="decimal" id="new-member-salary" placeholder="0.00" step="0.01">
+              </div>
+              <div class="form-group" style="flex:1; min-width: 120px;">
+                <label data-i18n="set_tbl_freq">Pay Frequency</label>
+                <select id="new-member-frequency" onchange="togglePayDayPicker('new-member-payday-container', this.value)">
+                  <option value="None" data-i18n="opt_freq_none">Manual</option>
+                  <option value="Daily" data-i18n="opt_freq_daily">Daily</option>
+                  <option value="Weekly" data-i18n="opt_freq_weekly">Weekly</option>
+                  <option value="Monthly" data-i18n="opt_freq_monthly">Monthly</option>
+                </select>
+              </div>
+              <div class="form-group" id="new-member-payday-container" style="flex:1; min-width: 120px; display: none;">
+                <label data-i18n="set_tbl_payday">Pay Day</label>
+                <select id="new-member-payday">
+                  <!-- Options injected by togglePayDayPicker() -->
+                </select>
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label>Store Assignment</label>
+              <select id="new-member-store" onchange="toggleNewSplitInput(document.getElementById('new-member-role').value)">
+                <option value="All Stores" data-i18n="opt_all_stores">All Stores</option>
+                <option value="Store 1">Store 1</option>
+                <option value="Store 2">Store 2</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label>Login PIN Code</label>
+              <input type="text" id="new-member-pin" placeholder="1234">
+            </div>
+            
+            <button onclick="addMemberToRosterList()" class="btn-submit form-grid-full" style="margin-top: 1rem; background: linear-gradient(135deg, var(--primary), var(--accent));">
+              <i class="fa-solid fa-plus"></i> <span data-i18n="set_add_btn">Add Member to List</span>
+            </button>
+          </div>
+        </div>
+        <!-- Expense Categories Section -->
+        <div class="glass-card" style="margin-top: 2rem;">
+          <div class="glass-card-header">
+            <h3 class="glass-card-title">
+              <i class="fa-solid fa-tags" style="color: var(--secondary);"></i> <span data-i18n="set_cat_title">Expense Categories</span>
+            </h3>
+          </div>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.5rem;" data-i18n="set_cat_desc">
+            Manage the categories available when logging expenses. Default options will be translated automatically.
+          </p>
+          <div id="settings-categories-container" style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem;">
+            <!-- Dynamically populated via JS -->
+          </div>
+          <button onclick="addNewCategoryField()" class="nav-btn" style="background: rgba(255,255,255,0.05); margin-bottom: 1.5rem; width: 100%; justify-content: center;">
+            <i class="fa-solid fa-plus"></i> <span data-i18n="set_cat_add">Add New Category</span>
+          </button>
+          <div class="form-grid-full" style="display: flex; justify-content: flex-end;">
+            <button class="btn-submit" onclick="saveCategoriesData()" style="background: linear-gradient(135deg, var(--accent), var(--primary)); margin:0;">
+              <i class="fa-solid fa-save"></i> <span data-i18n="set_cat_save">Save Categories</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- UI Preferences Section -->
+        <div class="glass-card" style="margin-top: 2rem;">
+          <div class="glass-card-header">
+            <h3 class="glass-card-title"><i class="fa-solid fa-wand-magic-sparkles" style="color: var(--secondary);"></i> <span data-i18n="pref_title">UI Preferences & Accessibility</span></h3>
+          </div>
+          
+          <div class="form-grid">
+            <!-- Theme Selection -->
+            <div class="form-group">
+              <label for="pref-theme" data-i18n="pref_theme">Theme Mode</label>
+              <select id="pref-theme" onchange="applyPreferencesFromForm()">
+                <option value="dark" selected data-i18n="pref_theme_dark">Dark Mode (Glow)</option>
+                <option value="light" data-i18n="pref_theme_light">Light Mode (Classic Slate)</option>
+              </select>
+            </div>
+            
+            <!-- Color Palette Selection -->
+            <div class="form-group">
+              <label for="pref-palette" data-i18n="pref_palette">Color Accent Palette</label>
+              <select id="pref-palette" onchange="applyPreferencesFromForm()">
+                <option value="indigo" selected data-i18n="pref_palette_indigo">Classic Indigo & Violet</option>
+                <option value="emerald" data-i18n="pref_palette_emerald">Neon Emerald & Mint</option>
+                <option value="sunset" data-i18n="pref_palette_sunset">Sunset Coral & Rose</option>
+                <option value="cyberpunk" data-i18n="pref_palette_cyberpunk">Cyberpunk Neon Cyan & Pink</option>
+              </select>
+            </div>
+
+            <!-- Font Size Adjuster -->
+            <div class="form-group">
+              <label for="pref-fontsize" data-i18n="pref_fontsize">Font Size Scale</label>
+              <select id="pref-fontsize" onchange="applyPreferencesFromForm()">
+                <option value="80" data-i18n="pref_fontsize_sm">80% (Small)</option>
+                <option value="90" data-i18n="pref_fontsize_compact">90% (Compact)</option>
+                <option value="100" selected data-i18n="pref_fontsize_normal">100% (Normal)</option>
+                <option value="110" data-i18n="pref_fontsize_md">110% (Medium)</option>
+                <option value="120" data-i18n="pref_fontsize_lg">120% (Large)</option>
+                <option value="130" data-i18n="pref_fontsize_xl">130% (Extra Large)</option>
+              </select>
+            </div>
+
+            <!-- Language Selection -->
+            <div class="form-group">
+              <label for="pref-lang" data-i18n="pref_lang">Idioma / Language</label>
+              <select id="pref-lang" onchange="applyPreferencesFromForm()">
+                <option value="pt" selected>Português (Brasil)</option>
+                <option value="en">English (US)</option>
+              </select>
+            </div>
+            
+            <div class="form-group form-grid-full" style="display:flex; justify-content: flex-end; margin-top: 1rem;">
+              <button onclick="savePreferences()" class="btn-submit" style="margin: 0; width:auto; padding: 0.85rem 2rem; background: linear-gradient(135deg, var(--primary), var(--secondary));">
+                <i class="fa-solid fa-circle-check"></i> <span data-i18n="pref_btn_save">Save Preferences</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+    <!-- FAB (Floating Action Button) - Visible on Mobile -->
+    <button id="mobile-fab" onclick="toggleFabMenu()">
+      <i class="fa-solid fa-plus"></i>
+    </button>
+
+    <!-- Menus Overlays -->
+    <div id="fab-menu-overlay" onclick="toggleFabMenu()"></div>
+    <div id="filter-menu-overlay" onclick="toggleFilterMenu()" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); z-index:2000; opacity:0; transition:opacity 0.3s ease;"></div>
+    
+    <!-- Filter Bottom Sheet -->
+    <div id="filter-bottom-sheet" class="glass-card" style="display:flex; flex-direction:column; position:fixed; bottom:-100%; left:0; right:0; padding:2rem 1.5rem calc(2rem + env(safe-area-inset-bottom, 0)); border-radius:24px 24px 0 0; z-index:2001; transition:bottom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); background:rgba(15, 23, 42, 0.95);">
+      <div style="width: 40px; height: 5px; background: rgba(255,255,255,0.2); border-radius: 5px; margin: 0 auto 1.5rem auto;"></div>
+      <h3 style="text-align:center; font-family:var(--font-display); margin-bottom:1.5rem;">Filter Dashboard</h3>
+      
+      <label style="margin-bottom:0.5rem; color:var(--text-secondary);">Select Time Period</label>
+      <div style="display:flex; flex-direction:column; gap:0.5rem; margin-bottom:1.5rem;">
+        <button class="nav-btn" onclick="document.getElementById('time-filter').value='7'; filterDashboardData(); toggleFilterMenu();" style="justify-content:center; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);">Last 7 Entries</button>
+        <button class="nav-btn" onclick="document.getElementById('time-filter').value='30'; filterDashboardData(); toggleFilterMenu();" style="justify-content:center; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);">Last 30 Days</button>
+        <button class="nav-btn" onclick="document.getElementById('time-filter').value='all'; filterDashboardData(); toggleFilterMenu();" style="justify-content:center; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);">All Time Records</button>
+      </div>
+      
+      <label style="margin-bottom:0.5rem; color:var(--text-secondary);">Filter by Store</label>
+      <div id="mobile-store-filters" style="display:flex; flex-direction:column; gap:0.5rem; margin-bottom:1.5rem;">
+        <!-- Populated dynamically via populateStoreDropdowns() -->
+      </div>
+      <button class="btn-submit" onclick="toggleFilterMenu()" style="width:100%; margin:0;">Close</button>
+    </div>
+    <div id="fab-bottom-sheet" class="glass-card">
+      <div style="width: 40px; height: 5px; background: rgba(255,255,255,0.2); border-radius: 5px; margin: 0 auto 1.5rem auto;"></div>
+      <button class="fab-sheet-btn" onclick="toggleFabMenu(); switchTab('submit')">
+        <div class="fab-sheet-icon"><i class="fa-solid fa-cash-register"></i></div>
+        <span data-i18n="nav_log_daily" style="font-weight: 600;">Log Daily Sales</span>
+        <i class="fa-solid fa-chevron-right" style="margin-left:auto; color:var(--text-muted);"></i>
+      </button>
+      <button class="fab-sheet-btn" onclick="toggleFabMenu(); switchTab('expense')">
+        <div class="fab-sheet-icon"><i class="fa-solid fa-receipt"></i></div>
+        <span data-i18n="nav_log_expense" style="font-weight: 600;">Log Business Expense</span>
+        <i class="fa-solid fa-chevron-right" style="margin-left:auto; color:var(--text-muted);"></i>
+      </button>
+    </div>
+
+    </main>
+  </div>
+
+  <!-- Login Overlay -->
+  <dialog id="login-overlay">
+      <div class="glass-card" style="width: 100%; text-align: center; padding: 3rem;">
+      <div class="brand-icon" style="margin: 0 auto 1rem auto; width: 60px; height: 60px; font-size: 2rem;">
+        <i class="fa-solid fa-lock"></i>
+      </div>
+      <h2 style="font-family: var(--font-display); margin-bottom: 0.5rem;" data-i18n="login_title">Loja Finance</h2>
+      <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 2rem;" data-i18n="login_subtitle">Enter your PIN to access</p>
+      
+      <div class="form-group" style="text-align: left; margin-bottom: 1rem;">
+        <label data-i18n="login_pin_label">Personal PIN Code</label>
+        <input type="password" id="login-pin" placeholder="****" autofocus style="text-align: center; font-size: 1.5rem; letter-spacing: 0.5em;" maxlength="10">
+      </div>
+      <div id="login-error" style="color: #fca5a5; font-size: 0.85rem; margin-bottom: 1rem; min-height: 1.2em;"></div>
+      
+      <button id="login-btn" class="btn-submit" style="width: 100%; margin: 0;" data-i18n="login_btn">Login</button>
+      </div>
+    </dialog>
+  
+    <!-- Loading Animation Frame -->
+  <div class="loading-overlay" id="loading-overlay">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loading-text">Processing...</div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" style="position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 10000; pointer-events: none;"></div>
+
+  <!-- Inject client javascript logic -->
+  <script>
+// Global variables
+let currentUser = null;
+let businesses = [];
+let globalExpenseCategories = [];
+let submittersLoaded = false;
+let currentLanguage = 'pt'; // Default to Portuguese
+
+let uploadedImages = {};
+
+// Local copy of team roster for Settings UI
+let localTeamRoster = [];
+
+// Dictionary of translations
+const translations = {          pt: {
+      // Navigation
+      nav_log_daily: "Registrar Vendas",
+      nav_log_expense: "Lançar Despesa",
+      nav_dashboard: "Painel de Lucros",
+      nav_history: "Histórico Geral",
+      nav_settings: "Ajustes",
+      
+      // Daily Form
+      daily_title: "Fechamento de Caixa Diário",
+      daily_date: "Data do Caixa",
+      daily_submitter: "Lançado Por",
+      daily_submitter_placeholder: "Selecione o Sócio ou Funcionário",
+      daily_card1_val: "Máquina Stone (Cartão 1) - Total de Vendas (R$)",
+      daily_card1_photo: "Foto do Comprovante Stone",
+      daily_photo_tap: "Toque para Tirar Foto ou Enviar",
+      daily_card2_val: "Máquina Rede (Cartão 2) - Total de Vendas (R$)",
+      daily_card2_photo: "Foto do Comprovante Rede",
+      daily_cash_in: "Dinheiro Recebido (R$)",
+      daily_cash_out: "Dinheiro Retirado / Pequenas Despesas (R$)",
+      daily_notes: "Observações / Detalhes de Despesas do Caixa",
+      daily_notes_placeholder: "Descreva retiradas do caixa (ex: comprou material de limpeza), descontos ou ajustes...",
+      daily_summary_title: "Resumo de Vendas (Hoje)",
+      daily_summary_desc: "Calculado: Cartão 1 + Cartão 2 + Dinheiro Líquido",
+      daily_submit_btn: "Enviar Movimento Diário",
+      
+      // Expense Form
+      exp_title: "Lançar Despesa Operacional",
+      exp_submitter: "Pago Por",
+      exp_submitter_placeholder: "Selecione o Responsável",
+      exp_date: "Data da Despesa",
+      exp_category: "Categoria",
+      exp_category_placeholder: "Selecione a Categoria",
+      exp_master_cat: "Categoria da Despesa",
+      exp_cat_itemized: "Detalhado (Múltiplas Categorias)",
+      exp_amount: "Valor Pago (R$)",
+      exp_method: "Forma de Pagamento",
+      exp_method_placeholder: "Selecione a Forma",
+      exp_desc: "Descrição / Observações",
+      exp_desc_placeholder: "Especifique o que foi comprado, nota fiscal, etc.",
+      exp_submit_btn: "Enviar Registro de Despesa",
+      
+      // Expense categories
+      cat_supplies: "Suprimentos / Estoque",
+      cat_rent: "Aluguel / Espaço",
+      cat_utilities: "Contas (Luz, Água, Net)",
+      cat_salaries: "Salários / Comissões",
+      cat_marketing: "Marketing / Anúncios",
+      cat_other: "Outras Despesas",
+      
+      // Payment methods
+      method_bank: "Transferência Bancária / PIX",
+      method_card: "Cartão de Crédito Empresarial",
+      method_drawer: "Caixa Físico / Dinheiro",
+      
+      // Dashboard
+      dash_title: "Análise do Negócio",
+      dash_period: "Período:",
+      dash_opt_7: "Últimos 7 Lançamentos",
+      dash_opt_30: "Últimos 30 Dias",
+      dash_opt_all: "Todo o Histórico",
+      dash_kpi_rev: "Receita Total",
+      dash_kpi_exp: "Despesas Operacionais",
+      dash_kpi_profit: "Lucro Líquido",
+      dash_kpi_cards: "Total Vendas Cartão",
+      dash_chart_title: "Evolução de Faturamento & Lucro",
+      dash_calc_title: "Divisão de Lucros por Sócio",
+      dash_calc_desc: "Divisão proporcional com base no Lucro Líquido e nas porcentagens configuradas nos Ajustes:",
+      
+      // History
+      hist_sales_title: "Registro de Vendas Diárias",
+      hist_exp_title: "Histórico de Despesas Operacionais",
+      hist_count: "Registros:",
+      btn_export_all: "Exportar CSV (Tudo)",
+      
+      // Settings
+      set_title: "Configuração do Time & Divisão de Lucros",
+      set_desc: "Gerencie sócios e funcionários. As listas de formulários se adaptam automaticamente. Nota: Porcentagens de Sócios devem somar exatamente 100% para salvar. Funcionários ficam com 0%.",
+      set_btn_save: "Salvar Configurações",
+      set_role_partner: "Sócio",
+      set_role_employee: "Funcionário",
+      set_role_admin: "Administrador",
+      set_add_member: "Adicionar Membro da Equipe",
+      set_btn_cancel: "Cancelar Edição",
+      set_add_title: "Adicionar Membro da Equipe",
+      set_add_name: "Nome Completo",
+      set_tbl_name: "Nome",
+      set_tbl_store: "Loja",
+      set_tbl_role: "Cargo",
+      set_tbl_split: "Participação %",
+      set_tbl_salary: "Salário / Fixo",
+      set_tbl_freq: "Pagamento",
+      set_tbl_payday: "Dia de Pagamento",
+      set_tbl_pin: "PIN",
+      set_tbl_actions: "Ações",
+      opt_freq_none: "Manual",
+      opt_freq_daily: "Diário",
+      opt_freq_weekly: "Semanal",
+      opt_freq_monthly: "Mensal",
+      set_add_role: "Cargo / Função",
+      set_biz_title: "Gerenciar Empresas e Fontes de Receita",
+      set_biz_desc: "Defina suas empresas e fluxos de pagamento (ex: Stone, PIX). Entradas e Saídas em Dinheiro são incluídas automaticamente.",
+      set_biz_add: "Adicionar Nova Empresa",
+      set_biz_save: "Salvar Empresas",
+      set_cat_title: "Categorias de Despesas",
+      set_cat_desc: "Gerencie as categorias disponíveis ao lançar despesas. As opções padrão serão traduzidas automaticamente.",
+      set_cat_add: "Adicionar Nova Categoria",
+      set_cat_save: "Salvar Categorias",
+      
+      txt_partner_badge: "Sócio",
+      txt_employee_badge: "Funcionário",
+      txt_no_records: "Nenhum registro encontrado. Envie o caixa diário para visualizar.",
+      txt_no_expenses: "Nenhuma despesa registrada. Adicione despesas para visualizar.",
+      txt_no_partners: "Nenhum parceiro configurado nos Ajustes.",
+      opt_all_stores: "Todas as Lojas",
+      
+      // Alerts & Buttons
+      status_processing: "Processando...",
+      toast_success: "Fechamento diário registrado com sucesso!",
+      toast_exp_success: "Despesa lançada com sucesso!",
+      toast_saved: "Preferências salvas com sucesso!",
+      toast_roster_saved: "Configurações da equipe salvas com sucesso!",
+      btn_view_receipt: "Ver Comprovante",
+      txt_no_image: "Sem imagem",
+      btn_remove: "Remover",
+      btn_duplicate: "Duplicar",
+      txt_invalid_splits: "A soma da divisão dos sócios deve ser exatamente 100%.",
+      txt_no_partners_warning: "Nenhum Sócio configurado",
+      txt_valid_splits: "Divisão de Sócios: 100% OK",
+      
+      // Login Overlay
+    login_title: "Loja Finance",
+    login_subtitle: "Digite seu PIN para acessar",
+    login_pin_label: "PIN Pessoal",
+    login_btn: "Entrar",
+    login_authenticating: "Autenticando...",
+    login_err_empty: "Por favor, insira seu PIN.",
+    login_err_invalid: "PIN Inválido."
+  },en: {
+    // Navigation
+    nav_log_daily: "Log Daily",
+    nav_log_expense: "Log Expense",
+    nav_dashboard: "Dashboard",
+    nav_history: "History Logs",
+    nav_settings: "Settings",
+    
+    // Daily Form
+    daily_title: "Daily Financial Submission",
+    daily_date: "Working Date",
+    daily_submitter: "Submitted By",
+    daily_submitter_placeholder: "Select Partner or Employee",
+    daily_card1_val: "Stone Machine (Card 1) - Total Sales (R$)",
+    daily_card1_photo: "Stone Machine Receipt Photo",
+    daily_photo_tap: "Tap to Take Photo or Upload",
+    daily_card2_val: "Rede Machine (Card 2) - Total Sales (R$)",
+    daily_card2_photo: "Rede Machine Receipt Photo",
+    daily_cash_in: "Cash Received (R$)",
+    daily_cash_out: "Cash Paid Out / Small Expenses (R$)",
+    daily_notes: "Notes / Operating Expenses Detail",
+    daily_notes_placeholder: "Describe cash payouts (e.g. bought cleaner), discounts, or card machine adjustments...",
+    daily_summary_title: "Live Sales Summary",
+    daily_summary_desc: "Calculated: Card 1 + Card 2 + Cash Net",
+    daily_submit_btn: "Submit Daily Financials",
+    
+    // Expense Form
+    exp_title: "Log Business Expense",
+    exp_submitter: "Paid By",
+    exp_submitter_placeholder: "Select Submitter",
+    exp_date: "Expense Date",
+    exp_category: "Category",
+    exp_category_placeholder: "Select Category",
+    exp_master_cat: "Expense Category",
+    exp_cat_itemized: "Itemized (Multiple Categories)",
+    exp_amount: "Amount Paid (R$)",
+    exp_method: "Payment Method",
+    exp_method_placeholder: "Select Payment Method",
+    exp_desc: "Description / Notes",
+    exp_desc_placeholder: "Specify items bought, invoice reference, etc.",
+    exp_submit_btn: "Submit Expense Record",
+    
+    // Expense categories
+    cat_supplies: "Supplies / Stock",
+    cat_rent: "Rent / Office Space",
+    cat_utilities: "Utilities (Power, Water, Net)",
+    cat_salaries: "Salaries / Commission",
+    cat_marketing: "Marketing / Ads",
+    cat_other: "Other Expenses",
+    
+    // Payment methods
+    method_bank: "Bank Transfer / PIX",
+    method_card: "Business Credit Card",
+    method_drawer: "Cash Drawer",
+    
+    // Dashboard
+    dash_title: "Business Analytics",
+    dash_period: "Period:",
+    dash_opt_7: "Last 7 Entries",
+    dash_opt_30: "Last 30 Days",
+    dash_opt_all: "All Time Records",
+    dash_kpi_rev: "Total Revenue",
+    dash_kpi_exp: "Operating Expenses",
+    dash_kpi_profit: "Net Profit",
+    dash_kpi_cards: "Total Card Sales",
+    dash_chart_title: "Revenue & Net Trends",
+    dash_calc_title: "Partner Profit Shares",
+    dash_calc_desc: "Calculated earnings split based on Net Profit and the split percentages configured in your Settings:",
+    
+    // History
+    hist_sales_title: "Daily Financial Logs",
+    hist_exp_title: "Business Expenses Ledger",
+    hist_count: "Entries:",
+    btn_export_all: "Export CSV (All Reports)",
+    
+    // Settings
+    set_title: "Team Settings & Profit Splits",
+    set_desc: "Manage partners and employees. Submitter dropdown lists in forms will adapt automatically. Note: Partner percentages must total exactly 100% to save. Employees splits are forced to 0%.",
+    set_btn_save: "Save Configurations",
+    set_role_partner: "Partner (Receives Split %)",
+    set_role_employee: "Employee (Fixed Wage)",
+    set_role_admin: "Admin (System Access)",
+    set_add_title: "Add Team Member",
+    set_add_name: "Full Name",
+    set_tbl_name: "Name",
+    set_tbl_store: "Store",
+    set_tbl_role: "Role",
+    set_tbl_split: "Split %",
+    set_tbl_salary: "Salary / Wage",
+    set_tbl_freq: "Pay Freq",
+    set_tbl_payday: "Pay Day",
+    set_tbl_pin: "PIN",
+    set_tbl_actions: "Actions",
+    opt_freq_none: "Manual",
+    opt_freq_daily: "Daily",
+    opt_freq_weekly: "Weekly",
+    opt_freq_monthly: "Monthly",
+    set_add_role: "Business Role",
+    set_add_member: "Add Team Member",
+    set_btn_cancel: "Cancel Edit",
+    set_biz_title: "Manage Businesses & Income Streams",
+    set_biz_desc: "Define your businesses and their specific payment streams (e.g., Stone, Rede, PIX). Cash In/Out are included automatically.",
+    set_biz_add: "Add New Business",
+    set_biz_save: "Save Businesses",
+    set_cat_title: "Expense Categories",
+    set_cat_desc: "Manage the categories available when logging expenses. Default options will be translated automatically.",
+    set_cat_add: "Add New Category",
+    set_cat_save: "Save Categories",
+    set_add_split: "Profit Split Percentage (%)",
+    set_add_btn: "Add Member to List",
+    
+    // UI Prefs
+    pref_title: "UI Preferences & Accessibility",
+    pref_theme: "Theme Mode",
+    pref_theme_dark: "Dark Mode (Glow)",
+    pref_theme_light: "Light Mode (Classic Slate)",
+    pref_palette: "Color Accent Palette",
+        pref_palette_indigo: "Classic Indigo & Violet",
+    
+    // Login Overlay
+    login_title: "Loja Finance",
+    login_subtitle: "Enter your PIN to access",
+    login_pin_label: "Personal PIN Code",
+    login_btn: "Login",
+    login_authenticating: "Authenticating...",
+    login_err_empty: "Please enter your PIN.",
+    login_err_invalid: "Invalid PIN.",
+    pref_palette_emerald: "Neon Emerald & Mint",
+    pref_palette_sunset: "Sunset Coral & Rose",
+    pref_palette_cyberpunk: "Cyberpunk Neon Cyan & Pink",
+    pref_fontsize: "Font Size Scale",
+    pref_fontsize_sm: "80% (Small)",
+    pref_fontsize_compact: "90% (Compact)",
+    pref_fontsize_normal: "100% (Normal)",
+    pref_fontsize_md: "110% (Medium)",
+    pref_fontsize_lg: "120% (Large)",
+    pref_fontsize_xl: "130% (Extra Large)",
+    pref_lang: "Idioma / Language",
+    pref_btn_save: "Save Preferences",
+    
+    // General Alerts & Buttons
+    status_processing: "Processing...",
+    toast_success: "Daily financials recorded successfully!",
+    toast_exp_success: "Expense logged successfully!",
+    toast_saved: "Preferences saved successfully!",
+    toast_roster_saved: "Team settings saved successfully!",
+    btn_view_receipt: "View Receipt",
+    txt_no_image: "No image",
+    btn_remove: "Remove",
+    btn_duplicate: "Duplicate",
+    txt_no_records: "No records found. Submit daily financials to populate.",
+    txt_no_expenses: "No expenses logged. Add expenses to populate.",
+    txt_no_partners: "No partners configured in Settings.",
+      opt_all_stores: "All Stores",
+    txt_invalid_splits: "Partner splits must sum to exactly 100%.",
+    txt_no_partners_warning: "No Partners configured",
+    txt_valid_splits: "Partner Splits: 100% OK",
+    txt_partner_badge: "Partner",
+    txt_employee_badge: "Employee"
+  }
+};
+
+// Initialization on load
+document.addEventListener('DOMContentLoaded', function() {
+    const loginOverlay = document.getElementById('login-overlay');
+    if (loginOverlay && typeof loginOverlay.showModal === 'function') loginOverlay.showModal();
+  loadPreferences();
+  setDefaultDates();
+  // submitter logic now handled by login
+  renderExpenseLines();
+  checkSession();
+  
+  // Set current date subtitle in daily submit view (based on selected language)
+  updateDateBadgeSubtitle();
+  
+  window.addEventListener('resize', () => {
+    const activeBtn = document.querySelector('.nav-btn.active');
+    const indicator = document.querySelector('.nav-indicator');
+    if (activeBtn && indicator) {
+      indicator.style.transition = 'none';
+      indicator.style.width = activeBtn.offsetWidth + 'px';
+      indicator.style.transform = `translateX(${activeBtn.offsetLeft}px)`;
+      setTimeout(() => indicator.style.transition = '', 50);
+    }
+  });
+  
+  // Initialize indicator position
+  window.dispatchEvent(new Event('resize'));
+
+  // Login: Enter key on PIN input triggers login
+  document.getElementById('login-pin').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); attemptLogin(); }
+  });
+
+  // Login: Button click triggers login
+  document.getElementById('login-btn').addEventListener('click', function() {
+    attemptLogin();
+  });
+
+  // Auto-focus the PIN field
+  document.getElementById('login-pin').focus();
+});
+
+function attemptLogin() {
+  const pin = document.getElementById('login-pin').value;
+  const errorDiv = document.getElementById('login-error');
+  errorDiv.innerText = '';
+  
+  if (!pin) {
+    errorDiv.innerText = translations[currentLanguage]['login_err_empty'] || 'Please enter your PIN.';
+    return;
+  }
+  
+  // Disable button to prevent double-clicks
+  document.getElementById('login-btn').disabled = true;
+  document.getElementById('login-btn').innerText = translations[currentLanguage]['login_authenticating'] || 'Authenticating...';
+  
+  google.script.run
+    .withSuccessHandler(function(res) {
+      document.getElementById('login-btn').disabled = false;
+      document.getElementById('login-btn').innerText = translations[currentLanguage]['login_btn'] || 'Login';
+      if (res.success) {
+        currentUser = res.user;
+        businesses = res.businesses;
+        globalExpenseCategories = res.categories || [];
+        sessionStorage.setItem('loja_user', JSON.stringify(currentUser));
+        sessionStorage.setItem('loja_settings', JSON.stringify(businesses));
+        sessionStorage.setItem('loja_categories', JSON.stringify(globalExpenseCategories));
+        
+        applyLoginState();
+      } else {
+        errorDiv.innerText = res.message || translations[currentLanguage]['login_err_invalid'] || 'Invalid PIN.';
+      }
+    })
+    .withFailureHandler(function(err) {
+      document.getElementById('login-btn').disabled = false;
+      document.getElementById('login-btn').innerText = translations[currentLanguage]['login_btn'] || 'Login';
+      errorDiv.innerText = 'Error: ' + err.message;
+    })
+    .authenticateUser(pin);
+}
+
+function logout() {
+  sessionStorage.removeItem('loja_user');
+  sessionStorage.removeItem('loja_settings');
+  location.reload();
+}
+
+function checkSession() {
+  const storedUser = sessionStorage.getItem('loja_user');
+  const storedSettings = sessionStorage.getItem('loja_settings');
+  const storedCategories = sessionStorage.getItem('loja_categories');
+  if (storedUser && storedSettings) {
+    currentUser = JSON.parse(storedUser);
+    businesses = JSON.parse(storedSettings);
+    if (storedCategories) {
+      globalExpenseCategories = JSON.parse(storedCategories);
+    }
+    applyLoginState();
+  }
+}
+
+  function applyLoginState() {
+    console.log('Applying Login State. Current User:', currentUser);
+    
+    const updateLoginDOM = () => {
+      const lo = document.getElementById('login-overlay'); if(lo.hasAttribute('open')) lo.close();
+      document.getElementById('header-user-name').innerHTML = '<i class="fa-solid fa-user"></i> ' + currentUser.name.split(' (')[0];
+      document.getElementById('header-user-store').innerText = currentUser.storeAssignment;
+      document.getElementById('submitter').value = currentUser.name;
+      document.getElementById('expense-submitter').value = currentUser.name;
+      
+      const settingsBtn = document.getElementById('nav-btn-settings');
+      const storeDaily = document.getElementById('store-select');
+      const storeExp = document.getElementById('expense-store');
+      const storeFilter = document.getElementById('dashboard-store-filter');
+      
+      if (currentUser.storeAssignment !== 'All Stores') {
+        storeDaily.value = currentUser.storeAssignment;
+        storeExp.value = currentUser.storeAssignment;
+        storeFilter.value = currentUser.storeAssignment;
+        
+        storeDaily.disabled = true;
+        storeExp.disabled = true;
+        storeFilter.disabled = true;
+      } else {
+        storeDaily.disabled = false;
+        storeExp.disabled = false;
+        storeFilter.disabled = false;
+      }
+      
+      const partnerPanel = document.getElementById('partner-split-panel');
+      if (currentUser.role === 'Partner' || currentUser.role === 'Admin') {
+        settingsBtn.style.display = 'flex';
+        if (partnerPanel) partnerPanel.style.display = 'block';
+      } else {
+        settingsBtn.style.display = 'none';
+        if (partnerPanel) partnerPanel.style.display = 'none';
+      }
+      
+      translatePageLayout(currentLanguage);
+    };
+
+    if (!document.startViewTransition) {
+      updateLoginDOM();
+    } else {
+      document.startViewTransition(() => updateLoginDOM());
+    }
+    
+    // Fetch settings roster independently so Admin can always access it
+    google.script.run
+      .withSuccessHandler(function(rosterData) {
+        localTeamRoster = rosterData || [];
+        renderSettingsRoster();
+      })
+      .getTeamMembers();
+      
+    renderSettingsBusinesses();
+    renderSettingsCategories();
+    populateStoreDropdowns(); // Ensure store dropdowns are dynamically populated!
+    populateMasterCategoryDropdown();
+    fetchDashboardData();
+  }
+
+function renderSettingsBusinesses() {
+  const container = document.getElementById('settings-businesses-container');
+  let html = '';
+  businesses.forEach((biz, idx) => {
+    html += `
+      <div class="calc-row" style="flex-direction: column; align-items: stretch; gap: 0.75rem;">
+        <div style="display: flex; justify-content: space-between;">
+          <input type="text" id="set-biz-name-${idx}" class="roster-input" style="width: 40%; text-align: left;" value="${biz.name}" placeholder="Business Name">
+          <button onclick="removeBusinessField(${idx})" style="background: rgba(239, 68, 68, 0.2); border: none; color: #fca5a5; padding: 0.25rem 0.75rem; border-radius: 6px; cursor: pointer;">Remove</button>
+        </div>
+        <input type="text" id="set-biz-streams-${idx}" class="roster-input" style="width: 100%; text-align: left;" value="${biz.streams}" placeholder="Comma separated streams: Stone, Rede, PIX">
+      </div>
+    `;
+  });
+  container.innerHTML = html;
+}
+
+function addNewBusinessField() {
+  businesses.push({ name: 'New Business', streams: 'Card, PIX' });
+  renderSettingsBusinesses();
+}
+
+function removeBusinessField(idx) {
+  businesses.splice(idx, 1);
+  renderSettingsBusinesses();
+}
+
+function saveBusinessesData() {
+  const loadMsg = (currentLanguage === 'pt') ? 'Salvando Empresas...' : 'Saving Businesses...';
+  showLoadingScreen(loadMsg);
+  
+  const newBiz = [];
+  businesses.forEach((biz, idx) => {
+    const n = document.getElementById('set-biz-name-' + idx).value;
+    const s = document.getElementById('set-biz-streams-' + idx).value;
+    if (n) newBiz.push({ name: n, streams: s });
+  });
+  
+  google.script.run.withSuccessHandler(res => {
+    hideLoadingScreen();
+    if (res.success) {
+      showToast('Businesses updated!', false);
+      businesses = newBiz;
+      sessionStorage.setItem('loja_settings', JSON.stringify(businesses));
+      populateStoreDropdowns();
+    } else {
+      showToast(res.message, true);
+    }
+  }).saveBusinesses(newBiz);
+}
+
+// ----------------------------------------------------
+// EXPENSE CATEGORIES SETTINGS LOGIC
+// ----------------------------------------------------
+function renderSettingsCategories() {
+  const container = document.getElementById('settings-categories-container');
+  if (!container) return;
+  
+  if (globalExpenseCategories.length === 0) {
+    globalExpenseCategories = ['Supplies', 'Rent', 'Utilities', 'Salaries', 'Marketing', 'Other'];
+  }
+  
+  container.innerHTML = globalExpenseCategories.map((cat, idx) => {
+    return `
+      <div style="display:flex; gap:0.5rem; align-items:center;">
+        <input type="text" id="set-cat-name-${idx}" value="${cat}" class="dynamic-stream-input" placeholder="Category Name" style="flex: 1;" required>
+        <button onclick="removeCategoryField(${idx})" class="btn-icon" style="color: var(--danger); background: rgba(239, 68, 68, 0.1); border: none; padding: 0.5rem; border-radius: 8px;">
+          <i class="fa-solid fa-trash"></i>
+        </button>
+      </div>
+    `;
+  }).join('');
+}
+
+function addNewCategoryField() {
+  globalExpenseCategories.push('');
+  renderSettingsCategories();
+}
+
+function removeCategoryField(idx) {
+  globalExpenseCategories.splice(idx, 1);
+  renderSettingsCategories();
+}
+
+function saveCategoriesData() {
+  const loadMsg = (currentLanguage === 'pt') ? 'Salvando Categorias...' : 'Saving Categories...';
+  showLoadingScreen(loadMsg);
+  
+  const newCats = [];
+  globalExpenseCategories.forEach((cat, idx) => {
+    const el = document.getElementById('set-cat-name-' + idx);
+    if (el && el.value.trim()) {
+      newCats.push(el.value.trim());
+    }
+  });
+  
+  if (newCats.length === 0) {
+    hideLoadingScreen();
+    showToast((currentLanguage === 'pt') ? 'Adicione pelo menos uma categoria' : 'Add at least one category', true);
+    return;
+  }
+  
+  google.script.run.withSuccessHandler(res => {
+    hideLoadingScreen();
+    if (res.success) {
+      showToast((currentLanguage === 'pt') ? 'Categorias atualizadas!' : 'Categories updated!', false);
+      globalExpenseCategories = newCats;
+      sessionStorage.setItem('loja_categories', JSON.stringify(globalExpenseCategories));
+      renderSettingsCategories();
+    } else {
+      showToast(res.message, true);
+    }
+  }).saveCategories(newCats);
+}
+
+function setDefaultDates() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  const formattedDate = `${year}-${month}-${day}`;
+  
+  document.getElementById('entry-date').value = formattedDate;
+  document.getElementById('expense-date').value = formattedDate;
+}
+
+// Update Working Date badge subtitle on submission tab
+function updateDateBadgeSubtitle() {
+  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+  const locale = (currentLanguage === 'pt') ? 'pt-BR' : 'en-US';
+  document.getElementById('submission-date-label').innerText = new Date().toLocaleDateString(locale, options);
+}
+
+// Toggle Filter Bottom Sheet
+function toggleFilterMenu() {
+  const sheet = document.getElementById('filter-bottom-sheet');
+  const overlay = document.getElementById('filter-menu-overlay');
+  if(sheet.style.bottom === '0px') {
+    sheet.style.bottom = '-100%';
+    overlay.style.opacity = '0';
+    setTimeout(() => overlay.style.display = 'none', 300);
+  } else {
+    overlay.style.display = 'block';
+    setTimeout(() => {
+      overlay.style.opacity = '1';
+      sheet.style.bottom = '0px';
+    }, 10);
+  }
+}
+
+// Toggle FAB Bottom Sheet
+function toggleFabMenu() {
+  document.getElementById('fab-bottom-sheet').classList.toggle('open');
+  document.getElementById('fab-menu-overlay').classList.toggle('open');
+}
+
+// Tab Switching Mechanism
+    function switchTab(tabName) {
+    // 1. Define the DOM update logic
+    const updateDOM = () => {
+      const navBtns = document.querySelectorAll('.nav-btn');
+      navBtns.forEach(btn => btn.classList.remove('active'));
+      
+      const activeBtn = Array.from(navBtns).find(btn => btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(tabName));
+      if (activeBtn) {
+        activeBtn.classList.add('active');
+        const indicator = document.querySelector('.nav-indicator');
+        if (indicator) {
+          indicator.style.width = activeBtn.offsetWidth + 'px';
+          indicator.style.transform = `translateX(${activeBtn.offsetLeft}px)`;
+        }
+      }
+      
+      const tabPanes = document.querySelectorAll('.tab-pane');
+      tabPanes.forEach(pane => pane.classList.remove('active'));
+      
+      const targetPane = document.getElementById(`tab-${tabName}`);
+      if (targetPane) targetPane.classList.add('active');
+    };
+
+    // 2. Check for native View Transitions support (Phase 2 Upgrade)
+    if (!document.startViewTransition) {
+      // Fallback for older browsers
+      updateDOM();
+      return;
+    }
+    
+    // 3. Execute with native cross-fade animation
+    document.startViewTransition(() => {
+      updateDOM();
+    });
+  }
+
+// Live calculation of daily revenue as user inputs numbers
+function calculateLiveTotal() {
+  let total = 0;
+  document.querySelectorAll('.dynamic-stream-input').forEach(input => {
+    total += parseFlexibleNumber(input.value) || 0;
+  });
+  
+  const cashIn = parseFlexibleNumber(document.getElementById('cash-in').value) || 0;
+  const cashOut = parseFlexibleNumber(document.getElementById('cash-out').value) || 0;
+  
+  const netCash = cashIn - cashOut;
+  total += netCash;
+  
+  document.getElementById('live-total').innerText = formatCurrency(total);
+}
+
+// Helper to parse numbers robustly (handles both 2,345.67 and 2.345,67)
+function parseFlexibleNumber(val) {
+  if (typeof val === 'number') return val;
+  if (!val) return 0;
+  let str = val.toString().trim();
+  const commas = (str.match(/,/g) || []).length;
+  const periods = (str.match(/\./g) || []).length;
+  if (commas > 0 && periods > 0) {
+    const lastComma = str.lastIndexOf(',');
+    const lastDot = str.lastIndexOf('.');
+    if (lastComma > lastDot) {
+      str = str.replace(/\./g, '').replace(',', '.');
+    } else {
+      str = str.replace(/,/g, '');
+    }
+  } else if (commas > 0) {
+    if (commas > 1) {
+      str = str.replace(/,/g, '');
+    } else {
+      const parts = str.split(',');
+      if (parts[1].length === 3) str = str.replace(',', '');
+      else str = str.replace(',', '.');
+    }
+  } else if (periods > 0) {
+    if (periods > 1) {
+      str = str.replace(/\./g, '');
+    } else {
+      const parts = str.split('.');
+      if (parts[1].length === 3) str = str.replace('.', '');
+    }
+  }
+  str = str.replace(/[^\d.-]/g, '');
+  return Number.parseFloat(str) || 0;
+}
+
+// Helper to format currency values
+function formatCurrency(amount) {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(amount);
+}
+
+function populateStoreDropdowns() {
+  const optionsHTML = businesses.map(b => `<option value="${b.name}">${b.name}</option>`).join('');
+  document.getElementById('store-select').innerHTML = optionsHTML;
+  document.getElementById('expense-store').innerHTML = optionsHTML;
+  document.getElementById('dashboard-store-filter').innerHTML = `<option value="All Stores">All Stores</option>` + optionsHTML;
+  document.getElementById('new-member-store').innerHTML = `<option value="All Stores">All Stores</option>` + optionsHTML;
+  
+  let mobileFiltersHTML = `<button class="nav-btn" onclick="document.getElementById('dashboard-store-filter').value='All Stores'; fetchDashboardData(); toggleFilterMenu();" style="justify-content:center; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);">All Stores</button>`;
+  mobileFiltersHTML += businesses.map(b => `<button class="nav-btn" onclick="document.getElementById('dashboard-store-filter').value='${b.name}'; fetchDashboardData(); toggleFilterMenu();" style="justify-content:center; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);">${b.name}</button>`).join('');
+  document.getElementById('mobile-store-filters').innerHTML = mobileFiltersHTML;
+  
+  // Render streams for the first store
+  if (businesses.length > 0) renderDynamicStreams(businesses[0].name);
+  
+  populateMasterCategoryDropdown();
+}
+
+function populateMasterCategoryDropdown() {
+  const masterSelect = document.getElementById('expense-master-category');
+  if (!masterSelect) return;
+  
+  const categoriesList = (typeof globalExpenseCategories !== 'undefined' && globalExpenseCategories.length > 0) 
+    ? globalExpenseCategories 
+    : ['Supplies', 'Rent', 'Utilities', 'Salaries', 'Marketing', 'Other'];
+  
+  const itemizedLabel = translations[currentLanguage]['exp_cat_itemized'] || 'Itemized (Multiple Categories)';
+  
+  let optionsHTML = `<option value="Itemized" selected>${itemizedLabel}</option>`;
+  categoriesList.forEach(cat => {
+    const catLabel = getCategoryTranslation(cat, currentLanguage);
+    optionsHTML += `<option value="${cat}">${catLabel}</option>`;
+  });
+  
+  masterSelect.innerHTML = optionsHTML;
+  toggleItemizedMode(); // Ensure UI matches initial state
+}
+
+function toggleItemizedMode() {
+  const masterVal = document.getElementById('expense-master-category').value;
+  const isItemized = (masterVal === 'Itemized');
+  const catSelects = document.querySelectorAll('.exp-line-cat');
+  
+  catSelects.forEach(select => {
+    if (isItemized) {
+      select.style.display = 'inline-block';
+      select.setAttribute('required', 'true');
+    } else {
+      select.style.display = 'none';
+      select.removeAttribute('required');
+      select.value = masterVal;
+    }
+  });
+}
+
+function renderDynamicStreams(storeName) {
+  const biz = businesses.find(b => b.name === storeName);
+  const container = document.getElementById('dynamic-streams-container');
+  if (!biz || !biz.streams) {
+    container.innerHTML = '';
+    return;
+  }
+  
+  const streams = biz.streams.split(',').map(s => s.trim()).filter(s => s);
+  let html = '';
+  
+  streams.forEach((stream, idx) => {
+    const safeId = stream.replace(/[^a-zA-Z0-9]/g, '');
+    html += `
+      <div class="form-group">
+        <label>${stream} - Total Sales (R$)</label>
+        <input type="text" inputmode="decimal" step="0.01" min="0" class="dynamic-stream-input" placeholder="0.00" oninput="calculateLiveTotal()" data-stream-name="${stream}">
+      </div>
+      <div class="form-group">
+        <label>${stream} Receipt Photo</label>
+        <div class="photo-upload-container" id="stream-box-${safeId}">
+          <input type="file" id="stream-file-${safeId}" accept="image/*" capture="environment" onchange="previewDynamicImage(this, '${safeId}')">
+          <div class="upload-placeholder" id="stream-placeholder-${safeId}">
+            <i class="fa-solid fa-camera upload-icon"></i>
+            <div class="upload-text">Tap to Take Photo or Upload</div>
+          </div>
+          <div class="image-preview-wrapper" id="stream-preview-wrapper-${safeId}">
+            <img id="stream-preview-img-${safeId}" class="image-preview" src="#" alt="${stream} receipt preview">
+            <button type="button" class="remove-image-btn" onclick="clearDynamicImage('${safeId}')">Remove Image</button>
+          </div>
+        </div>
+      </div>
+    `;
+    // Register image in our global object
+    uploadedImages[safeId] = null;
+  });
+  
+  container.innerHTML = html;
+  calculateLiveTotal();
+}
+
+function previewDynamicImage(input, safeId) {
+  if (input.files && input.files[0]) {
+    const file = input.files[0];
+    const compText = (currentLanguage === 'pt') ? 'Compactando foto...' : 'Compressing photo...';
+    showLoadingScreen(compText);
+    
+    compressImage(file, function(compressedBase64) {
+      uploadedImages[safeId] = {
+        base64: compressedBase64,
+        mimeType: 'image/jpeg',
+        name: `${safeId}_receipt_${Date.now()}.jpg`
+      };
+      
+      document.getElementById('stream-preview-img-' + safeId).src = compressedBase64;
+      document.getElementById('stream-placeholder-' + safeId).style.display = 'none';
+      document.getElementById('stream-preview-wrapper-' + safeId).style.display = 'flex';
+      document.getElementById('stream-box-' + safeId).classList.add('has-image');
+      hideLoadingScreen();
+    });
+  }
+}
+
+function clearDynamicImage(safeId) {
+  uploadedImages[safeId] = null;
+  document.getElementById('stream-file-' + safeId).value = "";
+  document.getElementById('stream-preview-img-' + safeId).src = "#";
+  document.getElementById('stream-placeholder-' + safeId).style.display = 'flex';
+  document.getElementById('stream-preview-wrapper-' + safeId).style.display = 'none';
+  document.getElementById('stream-box-' + safeId).classList.remove('has-image');
+}
+
+document.getElementById('store-select').addEventListener('change', function(e) {
+  renderDynamicStreams(e.target.value);
+});
+
+// Client-side image upload compression and preview
+function previewImage(input, machineKey) {
+  const file = input.files[0];
+  if (!file) return;
+  
+  const placeholder = document.getElementById(`${machineKey}-placeholder`);
+  const previewWrapper = document.getElementById(`${machineKey}-preview-wrapper`);
+  const imgElement = document.getElementById(`${machineKey}-preview-img`);
+  const uploadBox = document.getElementById(`${machineKey}-upload-box`);
+  
+  const compText = (currentLanguage === 'pt') ? 'Compactando foto do comprovante...' : 'Compressing receipt photo...';
+  showLoadingScreen(compText);
+  
+  compressImage(file, function(compressedBase64) {
+    uploadedImages[machineKey] = {
+      base64: compressedBase64,
+      mimeType: 'image/jpeg',
+      name: `${machineKey}_receipt_${Date.now()}.jpg`
+    };
+    
+    imgElement.src = compressedBase64;
+    placeholder.style.display = 'none';
+    previewWrapper.style.display = 'flex';
+    uploadBox.classList.add('has-image');
+    
+    hideLoadingScreen();
+  });
+}
+
+// Compresses image
+function compressImage(file, callback) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      const MAX_WIDTH = 1000;
+      const MAX_HEIGHT = 1000;
+      let width = img.width;
+      let height = img.height;
+      
+      if (width > height) {
+        if (width > MAX_WIDTH) {
+          height *= MAX_WIDTH / width;
+          width = MAX_WIDTH;
+        }
+      } else {
+        if (height > MAX_HEIGHT) {
+          width *= MAX_HEIGHT / height;
+          height = MAX_HEIGHT;
+        }
+      }
+      
+      canvas.width = width;
+      canvas.height = height;
+      ctx.drawImage(img, 0, 0, width, height);
+      
+      const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+      callback(compressedDataUrl);
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// Clears file input and resets previews
+function clearImage(machineKey) {
+  const fileInput = document.getElementById(`${machineKey}-photo`);
+  const placeholder = document.getElementById(`${machineKey}-placeholder`);
+  const previewWrapper = document.getElementById(`${machineKey}-preview-wrapper`);
+  const uploadBox = document.getElementById(`${machineKey}-upload-box`);
+  
+  fileInput.value = '';
+  uploadedImages[machineKey] = null;
+  
+  placeholder.style.display = 'flex';
+  previewWrapper.style.display = 'none';
+  uploadBox.classList.remove('has-image');
+}
+
+// --- DAILY SALES Z-REPORT AI SCANNING ---
+let currentDailyReceiptBase64 = null;
+
+function handleDailyReceiptSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  
+  document.getElementById('lbl-upload-daily').innerText = file.name;
+  document.getElementById('btn-scan-daily-ai').style.display = 'inline-block';
+  
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    currentDailyReceiptBase64 = evt.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function scanDailyReceiptAI() {
+  if (!currentDailyReceiptBase64) return;
+  showLoadingScreen('Scanning Z-Report with AI...');
+  
+  google.script.run
+    .withSuccessHandler(function(res) {
+      hideLoadingScreen();
+      if (res.success && res.data) {
+        // The AI returns: { card, pix, cash, fee }
+        // We will try to apply these to the dynamic inputs if they match, or sum them.
+        // For a single Z-Report, we might only know "Total Card" and "Total PIX".
+        // Let's find the first Machine 1 Card and Machine 1 PIX inputs.
+        
+        let cardInput = document.querySelector('.dynamic-stream-input[data-stream-name*="Machine 1 Card"]');
+        if (!cardInput) cardInput = document.querySelector('.dynamic-stream-input[data-stream-name*="Card"]');
+        if (cardInput && res.data.card) {
+          cardInput.value = res.data.card;
+        }
+        
+        let pixInput = document.querySelector('.dynamic-stream-input[data-stream-name*="Machine 1 PIX"]');
+        if (!pixInput) pixInput = document.querySelector('.dynamic-stream-input[data-stream-name*="PIX"]');
+        if (pixInput && res.data.pix) {
+          pixInput.value = res.data.pix;
+        }
+        
+        if (res.data.cash) {
+          document.getElementById('cash-in').value = res.data.cash;
+        }
+        if (res.data.fee) {
+          document.getElementById('fees-taxes').value = res.data.fee;
+        }
+        
+        calculateLiveTotal();
+        showToast('Z-Report parsed successfully!');
+      } else {
+        showToast(res.message, true);
+      }
+    })
+    .withFailureHandler(function(err) {
+      hideLoadingScreen();
+      showToast('AI Scan Error: ' + err.message, true);
+    })
+    .analyzeZReportAI(currentDailyReceiptBase64);
+}
+
+// Handle Sales Form Submission
+function handleFormSubmit(e) {
+  e.preventDefault();
+  
+  const submitter = currentUser.name;
+  const store = document.getElementById('store-select').value;
+  const date = document.getElementById('entry-date').value;
+  
+  if (!submitter || !date) {
+    const msg = (currentLanguage === 'pt') ? 'Selecione o responsavel e a data.' : 'Please select a submitter and working date.';
+    showToast(msg, true);
+    return;
+  }
+  
+  const payloadStreams = [];
+  
+  // Capture dynamic streams
+  document.querySelectorAll('.dynamic-stream-input').forEach(input => {
+    const streamName = input.getAttribute('data-stream-name');
+    const safeId = streamName.replace(/[^a-zA-Z0-9]/g, '');
+    const amt = parseFlexibleNumber(input.value) || 0;
+    if (amt > 0 || uploadedImages[safeId]) {
+      payloadStreams.push({
+        name: streamName,
+        amount: amt,
+        photo: uploadedImages[safeId] || null
+      });
+    }
+  });
+  
+  // Capture Cash In/Out and Fees
+  const cin = parseFlexibleNumber(document.getElementById('cash-in').value) || 0;
+  if (cin > 0) payloadStreams.push({ name: 'Cash In', amount: cin, photo: null });
+  const cout = parseFlexibleNumber(document.getElementById('cash-out').value) || 0;
+  if (cout > 0) payloadStreams.push({ name: 'Cash Out', amount: cout, photo: null });
+  const fees = parseFlexibleNumber(document.getElementById('fees-taxes').value) || 0;
+  if (fees > 0) payloadStreams.push({ name: 'Fee', amount: fees, photo: null });
+
+  const notes = document.getElementById('notes').value;
+  
+  if (payloadStreams.length === 0) {
+    const msg = (currentLanguage === 'pt') ? 'Insira os valores de vendas ou dinheiro.' : 'Please input sales totals or cash dealings before submitting.';
+    showToast(msg, true);
+    return;
+  }
+  
+  const loadMsg = (currentLanguage === 'pt') ? 'Salvando fechamento e enviando fotos...' : 'Saving entry and uploading images to Drive...';
+  showLoadingScreen(loadMsg);
+  
+  const payload = {
+    date: date,
+    submitter: submitter,
+    store: store,
+    streams: payloadStreams,
+    notes: notes
+  };
+  
+      google.script.run
+      .withSuccessHandler(function(response) {
+        hideLoadingScreen();
+        if (response.success) {
+          console.log('Data successfully saved! Verify here:', response.sheetUrl);
+        showToast(translations[currentLanguage]['toast_success']);
+        resetSubmitForm();
+        fetchDashboardData();
+        switchTab('dashboard');
+      } else {
+        showToast(response.message, true);
+      }
+    })
+    .withFailureHandler(function(err) {
+      hideLoadingScreen();
+      showToast('Error sending submission: ' + err.message, true);
+    })
+    .saveSubmission(payload);
+}
+
+// Reset daily log form values
+// Reset daily log form values
+function resetSubmitForm() {
+  document.getElementById('finance-form').reset();
+  Object.keys(uploadedImages).forEach(k => { if(uploadedImages[k]) clearDynamicImage(k); });
+  uploadedImages = {};
+  currentDailyReceiptBase64 = null;
+  const lbl = document.getElementById('lbl-upload-daily');
+  if (lbl) lbl.innerText = 'Upload Z-Report';
+  const btn = document.getElementById('btn-scan-daily-ai');
+  if (btn) btn.style.display = 'none';
+  setDefaultDates();
+  calculateLiveTotal();
+}
+
+// --- EXPENSE ITEMIZATION & AI ---
+let currentReceiptBase64 = null;
+
+function renderExpenseLines() {
+  const container = document.getElementById('expense-lines-container');
+  if (container.children.length === 0) {
+    addExpenseLine();
+  }
+  calculateExpenseTotal();
+}
+
+function addExpenseLine(category = '', amount = '', description = '') {
+  const container = document.getElementById('expense-lines-container');
+  const rowId = 'line-' + Date.now() + Math.random().toString(36).substr(2, 5);
+  
+  const div = document.createElement('div');
+  div.id = rowId;
+  div.className = 'expense-line';
+  div.style.marginBottom = '0.5rem';
+  
+  // Use global expense categories if available, else fallback to defaults
+  const categoriesList = (typeof globalExpenseCategories !== 'undefined' && globalExpenseCategories.length > 0) 
+    ? globalExpenseCategories 
+    : ['Supplies', 'Rent', 'Utilities', 'Salaries', 'Marketing', 'Other'];
+  
+  const placeholderText = translations[currentLanguage]['exp_category_placeholder'] || 'Category';
+
+  let catOptions = `<option value="" disabled ${!category ? 'selected' : ''}>${placeholderText}</option>`;
+  categoriesList.forEach(cat => {
+    const isSelected = (category === cat) ? 'selected' : '';
+    const catLabel = getCategoryTranslation(cat, currentLanguage);
+    catOptions += `<option value="${cat}" ${isSelected}>${catLabel}</option>`;
+  });
+  
+  div.innerHTML = `
+    <select class="exp-line-cat" required style="padding:0.5rem; background:var(--input-bg); border:1px solid var(--input-border); color:var(--text-primary); border-radius:4px;">${catOptions}</select>
+    <input type="text" inputmode="decimal" class="exp-line-amt" step="0.01" min="0.01" placeholder="R$ 0.00" value="${amount}" required oninput="calculateExpenseTotal()" style="padding:0.5rem; background:var(--input-bg); border:1px solid var(--input-border); color:var(--text-primary); border-radius:4px;">
+    <input type="text" class="exp-line-desc" placeholder="Description..." value="${description}" required style="padding:0.5rem; background:var(--input-bg); border:1px solid var(--input-border); color:var(--text-primary); border-radius:4px;">
+    <button type="button" onclick="document.getElementById('${rowId}').remove(); calculateExpenseTotal();" style="background:rgba(239,68,68,0.2); border:none; color:#ef4444; border-radius:4px; padding:0 0.75rem; cursor:pointer;"><i class="fa-solid fa-trash"></i></button>
+  `;
+  
+  container.appendChild(div);
+  
+  // Ensure the new line obeys the master category setting
+  toggleItemizedMode();
+}
+
+function calculateExpenseTotal() {
+  const amts = document.querySelectorAll('.exp-line-amt');
+  let tot = 0;
+  amts.forEach(a => {
+    tot += (parseFlexibleNumber(a.value) || 0);
+  });
+  const el = document.getElementById('expense-total-calc');
+  if(el) el.innerText = formatCurrency(tot);
+}
+
+function handleExpenseReceiptSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  
+  document.getElementById('lbl-upload-receipt').innerText = file.name;
+  document.getElementById('btn-scan-ai').style.display = 'inline-block';
+  
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    currentReceiptBase64 = evt.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function scanReceiptAI() {
+  if (!currentReceiptBase64) return;
+  showLoadingScreen('Scanning receipt with AI...');
+  
+  google.script.run
+    .withSuccessHandler(function(res) {
+      hideLoadingScreen();
+      if (res.success && res.items) {
+        document.getElementById('expense-lines-container').innerHTML = '';
+        res.items.forEach(item => {
+          addExpenseLine(item.category, item.amount, item.description);
+        });
+        calculateExpenseTotal();
+        showToast('Receipt parsed successfully!');
+      } else {
+        showToast(res.message, true);
+      }
+    })
+    .withFailureHandler(function(err) {
+      hideLoadingScreen();
+      showToast('AI Scan Error: ' + err.message, true);
+    })
+    .analyzeReceiptAI(currentReceiptBase64);
+}
+
+// Handle Expense Form Submission
+function handleExpenseSubmit(e) {
+  e.preventDefault();
+  
+  const submitter = currentUser.name;
+  const store = document.getElementById('expense-store').value;
+  const date = document.getElementById('expense-date').value;
+  const method = document.getElementById('expense-method').value;
+  const masterCategory = document.getElementById('expense-master-category').value;
+  const isItemized = (masterCategory === 'Itemized');
+  
+  const container = document.getElementById('expense-lines-container');
+  const rows = container.children;
+  const items = [];
+  let totalAmount = 0;
+  
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    let cat = row.querySelector('.exp-line-cat').value;
+    const amt = parseFlexibleNumber(row.querySelector('.exp-line-amt').value) || 0;
+    const desc = row.querySelector('.exp-line-desc').value;
+    
+    if (!isItemized) {
+      cat = masterCategory;
+    }
+    
+    if (!cat || amt <= 0 || !desc) {
+      showToast('Please complete all line items.', true);
+      return;
+    }
+    
+    items.push({ category: cat, amount: amt, description: desc });
+    totalAmount += amt;
+  }
+  
+  if (items.length === 0) {
+    showToast('Please add at least one line item.', true);
+    return;
+  }
+  
+  if (!submitter || !date || !method) {
+    showToast('Please fill out all required expense fields.', true);
+    return;
+  }
+  
+  showLoadingScreen('Logging business expense...');
+  
+  const payload = {
+    date: date,
+    submitter: submitter,
+    store: store,
+    paymentMethod: method,
+    items: items,
+    receiptPhoto: currentReceiptBase64 ? { base64: currentReceiptBase64 } : null
+  };
+  
+  google.script.run
+    .withSuccessHandler(function(response) {
+      hideLoadingScreen();
+      if (response.success) {
+        showToast('Expense recorded successfully!');
+        document.getElementById('expense-form').reset();
+        document.getElementById('expense-lines-container').innerHTML = '';
+        addExpenseLine();
+        calculateExpenseTotal();
+        currentReceiptBase64 = null;
+        document.getElementById('lbl-upload-receipt').innerText = 'Upload Receipt';
+        document.getElementById('btn-scan-ai').style.display = 'none';
+        
+        setDefaultDates();
+        fetchDashboardData();
+        switchTab('dashboard');
+      } else {
+        showToast(response.message, true);
+      }
+    })
+    .withFailureHandler(function(error) {
+      hideLoadingScreen();
+      showToast('Server connection failed: ' + error.message, true);
+    })
+    .saveExpense(payload);
+}
+
+// Global cached copy of server data
+let rawDashboardData = null;
+
+// Fetch Dashboard Data from Server
+function showSkeletons() {
+  document.getElementById('kpi-revenue').classList.add('skeleton');
+  document.getElementById('kpi-expenses').classList.add('skeleton');
+  document.getElementById('kpi-netprofit').classList.add('skeleton');
+  document.getElementById('kpi-cards').classList.add('skeleton');
+}
+
+function removeSkeletons() {
+  document.getElementById('kpi-revenue').classList.remove('skeleton');
+  document.getElementById('kpi-expenses').classList.remove('skeleton');
+  document.getElementById('kpi-netprofit').classList.remove('skeleton');
+  document.getElementById('kpi-cards').classList.remove('skeleton');
+}
+
+function fetchDashboardData() {
+  console.log('Fetching dashboard data...');
+  showSkeletons();
+  google.script.run
+          .withSuccessHandler(function(data) {
+        console.log('fetchDashboardData Response:', data);
+        if (!data) {
+          showToast('Server returned null data. Data formatting error.', true);
+          return;
+        }
+        if (data.success) {
+        console.log('Dashboard Data Loaded:', (data.historySubmissions ? data.historySubmissions.length : 0), 'submissions,', (data.historyExpenses ? data.historyExpenses.length : 0), 'expenses.');
+                  rawDashboardData = data;
+        
+        // Save roster locally for settings panel
+        localTeamRoster = data.teamRoster ? [...data.teamRoster] : [];
+        renderSettingsRoster();
+        
+        renderDashboard();
+      } else {
+                  showToast('Error loading dashboard: ' + data.message, true);
+      }
+    })
+        .withFailureHandler(function(err) {
+      console.error('fetchDashboardData Server Error:', err);
+            showToast('Server connection error: ' + err.message, true);
+    })
+    .getDashboardData(document.getElementById('dashboard-store-filter').value);
+}
+
+// Filter and render dashboard components
+function renderDashboard() {
+  removeSkeletons();
+  if (!rawDashboardData) return;
+  
+  const filterVal = document.getElementById('time-filter').value;
+  let filteredSubmissions = [...rawDashboardData.historySubmissions];
+  let filteredExpenses = [...rawDashboardData.historyExpenses];
+  
+  if (filterVal === '7') {
+    filteredSubmissions = filteredSubmissions.slice(0, 7);
+    filteredExpenses = filteredExpenses.slice(0, 7);
+  } else if (filterVal === '30') {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    filteredSubmissions = filteredSubmissions.filter(item => new Date(item.date) >= thirtyDaysAgo);
+    filteredExpenses = filteredExpenses.filter(item => new Date(item.date) >= thirtyDaysAgo);
+  }
+  
+  // Re-calculate statistics
+  let totalRevenue = 0;
+  let card1Total = 0;
+  let cashNet = 0;
+  let bizProfit = {};
+  
+  businesses.forEach(b => bizProfit[b.name] = 0);
+  
+  filteredSubmissions.forEach(item => {
+    let amt = parseFlexibleNumber(item.amount) || 0;
+    let isCashOut = item.entryType === 'Cash Out';
+    let isCashIn = item.entryType === 'Cash In';
+    let isFee = item.entryType === 'Fee';
+    let tot = (isCashOut || isFee) ? -amt : amt;
+    
+    totalRevenue += tot;
+    
+    if (isCashIn) {
+      cashNet += amt;
+    } else if (isCashOut) {
+      cashNet -= amt;
+    } else if (isFee) {
+      // do nothing to cards or cash for a fee
+    } else {
+      card1Total += amt;
+    }
+    
+    if (bizProfit[item.store] === undefined) bizProfit[item.store] = 0;
+    bizProfit[item.store] += tot;
+  });
+  
+  let totalExpenses = 0;
+  filteredExpenses.forEach(item => {
+    let amt = parseFlexibleNumber(item.amount) || 0;
+    totalExpenses += amt;
+    if (bizProfit[item.store] === undefined) bizProfit[item.store] = 0;
+    bizProfit[item.store] -= amt;
+  });
+  
+  const netProfit = totalRevenue - totalExpenses;
+  
+  // Update KPI Metrics UI
+  document.getElementById('kpi-revenue').innerText = formatCurrency(totalRevenue);
+  document.getElementById('kpi-expenses').innerText = formatCurrency(totalExpenses);
+  document.getElementById('kpi-netprofit').innerText = formatCurrency(netProfit);
+  document.getElementById('kpi-cards').innerText = formatCurrency(card1Total);
+  
+  // Update profit calculator header
+  var calcBasis = document.getElementById('calc-net-profit-basis');
+  if (calcBasis) calcBasis.innerText = formatCurrency(netProfit);
+  
+  // Render Dynamic Partner Shares
+  renderPartnerSharesList(netProfit, bizProfit);
+  
+  renderDashboardChart(filteredSubmissions, filteredExpenses);
+  renderPortfolioChart(filteredSubmissions, filteredExpenses);
+    // Render History Tables (both Submissions and Expenses)
+  renderHistoryTables(rawDashboardData.historySubmissions, rawDashboardData.historyExpenses);
+}
+
+// Render dynamic partner profit shares on dashboard
+function renderPartnerSharesList(netProfit, bizProfit) {
+  const container = document.getElementById('partner-shares-output-container');
+  container.innerHTML = '';
+  
+  const partners = localTeamRoster.filter(m => m.role === 'Partner');
+  
+  if (partners.length === 0) {
+    const msg = translations[currentLanguage]['txt_no_partners'];
+    container.innerHTML = `<div style="color:var(--text-muted); text-align:center; padding:1rem; font-size:0.85rem;"><i class="fa-solid fa-circle-exclamation"></i> ${msg}</div>`;
+    return;
+  }
+  
+  partners.forEach(partner => {
+    let shareAmount = 0;
+    if (partner.equity) {
+      for (let biz in partner.equity) {
+        if (bizProfit && bizProfit[biz]) {
+          shareAmount += (bizProfit[biz] * partner.equity[biz]);
+        }
+      }
+    } else {
+      shareAmount = netProfit * (partner.split || 0);
+    }
+    
+    // Localize partner names in output if needed
+    let name = partner.name;
+    if (currentLanguage === 'en') {
+      name = name.replace('(Sócio)', '(Partner)');
+    } else {
+      name = name.replace('(Partner)', '(Sócio)');
+    }
+    
+    let breakdownArr = [];
+    if (partner.equity) {
+      for (let biz in partner.equity) {
+        let pct = Math.round(partner.equity[biz] * 100);
+        if (pct > 0) breakdownArr.push(`${biz}: ${pct}%`);
+      }
+    }
+    let breakdownText = breakdownArr.length > 0 ? breakdownArr.join(' | ') : `${Math.round((partner.split||0) * 100)}%`;
+    
+    const row = document.createElement('div');
+    row.className = 'calc-row';
+    row.innerHTML = `
+      <span class="calc-partner-name" style="display:flex; flex-direction:column; gap:0.25rem;">
+        <span><i class="fa-solid fa-user-tie" style="color: var(--primary); margin-right: 0.5rem;"></i> ${name}</span>
+        <span style="font-size:0.75rem; color:var(--text-muted); font-weight:normal;">${breakdownText}</span>
+      </span>
+      <span class="calc-partner-share">${formatCurrency(shareAmount)}</span>
+    `;
+    container.appendChild(row);
+  });
+  
+  const labelCombined = (currentLanguage === 'pt') ? 'Total Combinado' : 'Combined Total';
+  const totalRow = document.createElement('div');
+  totalRow.className = 'calc-row';
+  totalRow.style.background = 'rgba(16, 185, 129, 0.05)';
+  totalRow.style.borderColor = 'rgba(16, 185, 129, 0.2)';
+  totalRow.innerHTML = `
+    <span class="calc-partner-name"><i class="fa-solid fa-circle-check" style="color: var(--success); margin-right: 0.5rem;"></i> ${labelCombined}</span>
+    <span class="calc-partner-share" style="color: var(--success); font-size: 1.1rem;">${formatCurrency(netProfit)}</span>
+  `;
+  container.appendChild(totalRow);
+}
+
+// Handles dashboard filter changes
+function filterDashboardData() {
+  renderDashboard();
+}
+
+
+
+// Render the historical database list entries into table rows
+function renderHistoryTables(subsLogs, expLogs) {
+  // 1. Daily Sales Table
+  const tbodySubs = document.getElementById('history-tbody');
+  document.getElementById('history-count').innerText = subsLogs.length;
+  
+  if (subsLogs.length === 0) {
+    const msg = translations[currentLanguage]['txt_no_records'];
+    tbodySubs.innerHTML = `<tr><td colspan="10" style="text-align:center; color:var(--text-muted);">${msg}</td></tr>`;
+  } else {
+    tbodySubs.innerHTML = '';
+    const dupLabel = translations[currentLanguage]['btn_duplicate'] || 'Duplicate';
+    subsLogs.forEach(row => {
+      const tr = document.createElement('tr');
+      // Data attributes for duplicate pre-fill
+      tr.dataset.swipeType = 'sale';
+      tr.dataset.store = row.store || '';
+      tr.dataset.entryType = row.entryType || '';
+      tr.dataset.amount = row.amount || 0;
+      tr.dataset.notes = row.notes || '';
+
+      const safeSubmitter = (row.submitter || '').toString();
+      const isPartner = safeSubmitter.includes('Partner') || safeSubmitter.includes('Sócio');
+      const badgeClass = isPartner ? 'badge-partner' : 'badge-employee';
+      const badgeText = isPartner ? translations[currentLanguage]['txt_partner_badge'] : translations[currentLanguage]['txt_employee_badge'];
+      let cleanSubmitter = safeSubmitter.replace(' (Partner)', '').replace(' (Sócio)', '').replace(' (Employee)', '').replace(' (Funcionário)', '');
+      
+      tr.innerHTML = `
+        <td data-label="Date" style="font-weight: 600;">${row.date}</td>
+        <td data-label="Submitter">${cleanSubmitter} <span class="badge ${badgeClass}">${badgeText}</span></td>
+        <td data-label="Store"><span class="badge" style="background: rgba(255,255,255,0.08);">${row.store}</span></td>
+        <td data-label="Type" style="font-weight: 600; color: var(--accent);">${row.entryType}</td>
+        <td data-label="Amount" style="font-weight: 700; color: ${row.entryType === 'Cash Out' ? 'var(--danger)' : 'var(--text-primary)'};">
+          ${row.entryType === 'Cash Out' ? '-' : ''}${formatCurrency(Math.abs(row.amount||0))}
+        </td>
+        <td data-label="Receipt">${getImageLinkMarkup(row.link)}</td>
+        <td data-label="Notes" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-secondary);" title="${row.notes}">${row.notes || '-'}</td>
+        <td class="td-duplicate-action"><button class="btn-duplicate" onclick="duplicateHistoryEntry(this.closest('tr'))"><i class="fa-solid fa-copy"></i> ${dupLabel}</button></td>
+      `;
+      tbodySubs.appendChild(tr);
+    });
+  }
+  
+  // 2. Expenses Table
+  const tbodyExp = document.getElementById('history-expenses-tbody');
+  document.getElementById('history-expenses-count').innerText = expLogs.length;
+  
+  if (expLogs.length === 0) {
+    const msg = translations[currentLanguage]['txt_no_expenses'];
+    tbodyExp.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">${msg}</td></tr>`;
+  } else {
+    tbodyExp.innerHTML = '';
+    const dupLabelExp = translations[currentLanguage]['btn_duplicate'] || 'Duplicate';
+    expLogs.forEach(row => {
+      const tr = document.createElement('tr');
+      tr.dataset.swipeType = 'expense';
+      tr.dataset.store = row.store || '';
+      tr.dataset.category = row.category || '';
+      tr.dataset.amount = row.amount || 0;
+      tr.dataset.paymentMethod = row.paymentMethod || '';
+      tr.dataset.description = row.description || '';
+
+      const safeCategory = (row.category || '').toString();
+      const catClass = safeCategory.toLowerCase();
+      const catName = getCategoryTranslation(safeCategory, currentLanguage);
+      const safeMethod = (row.paymentMethod || '').toString();
+      const methodLabel = getPaymentMethodTranslation(safeMethod, currentLanguage);
+      
+      tr.innerHTML = `
+        <td data-label="Date" style="font-weight: 600;">${row.date}</td>
+        <td data-label="Paid By">${(row.submitter || '').toString().replace(' (Partner)', '').replace(' (Sócio)', '').replace(' (Employee)', '').replace(' (Funcionário)', '')}</td>
+        <td data-label="Category"><span class="badge badge-category ${catClass}">${catName}</span></td>
+        <td data-label="Amount" style="font-family: var(--font-display); font-weight: 700; color: #fca5a5;">${formatCurrency(row.amount)}</td>
+        <td data-label="Payment Method"><span style="font-size: 0.85rem; color: var(--text-secondary);"><i class="fa-solid fa-credit-card" style="font-size:0.75rem; margin-right:0.35rem;"></i>${methodLabel}</span></td>
+        <td data-label="Description" style="color: var(--text-secondary);">${row.description}</td>
+        <td class="td-duplicate-action"><button class="btn-duplicate" onclick="duplicateHistoryEntry(this.closest('tr'))"><i class="fa-solid fa-copy"></i> ${dupLabelExp}</button></td>
+      `;
+      tbodyExp.appendChild(tr);
+    });
+  }
+}
+
+// Category Translation Helper
+function getCategoryTranslation(category, lang) {
+  if (!category) return '';
+  const cats = category.split(',');
+  const translated = cats.map(c => {
+    c = c.trim();
+    let key = 'cat_' + c.toLowerCase().split(' / ')[0].split(' (')[0].trim().replace(/\s+/g, '_');
+    if (key === 'cat_supplies_/_stock') key = 'cat_supplies';
+    if (key === 'cat_utilities_') key = 'cat_utilities';
+    
+    if (c === 'Supplies') key = 'cat_supplies';
+    if (c === 'Rent') key = 'cat_rent';
+    if (c === 'Utilities') key = 'cat_utilities';
+    if (c === 'Salaries') key = 'cat_salaries';
+    if (c === 'Marketing') key = 'cat_marketing';
+    if (c === 'Other') key = 'cat_other';
+    
+    return (translations[lang] && translations[lang][key]) ? translations[lang][key] : c;
+  });
+  return translated.join(', ');
+}
+
+// Payment method translation helper
+function getPaymentMethodTranslation(method, lang) {
+  let key = '';
+  if (method === 'Bank Transfer') key = 'method_bank';
+  if (method === 'Card') key = 'method_card';
+  if (method === 'Cash Drawer') key = 'method_drawer';
+  
+  return (translations[lang] && translations[lang][key]) ? translations[lang][key] : method;
+}
+
+function getImageLinkMarkup(url) {
+  if (url !== null && url !== undefined) url = url.toString();
+  if (url && url.startsWith('http')) {
+    const text = translations[currentLanguage]['btn_view_receipt'];
+    return `<a href="${url}" target="_blank" class="receipt-btn"><i class="fa-solid fa-image"></i> ${text}</a>`;
+  }
+  const textMissing = translations[currentLanguage]['txt_no_image'];
+  return `<span class="receipt-btn-missing"><i class="fa-solid fa-slash"></i> ${textMissing}</span>`;
+}
+
+// ----------------------------------------------------
+// SETTINGS TAB CODE (TEAM LIST & SPLIT PERCENTAGES)
+// ----------------------------------------------------
+
+// Render Roster list to Settings table
+function renderSettingsRoster() {
+  const tbody = document.getElementById('settings-roster-tbody');
+  tbody.innerHTML = '';
+  
+  if (localTeamRoster.length === 0) {
+    const msg = (currentLanguage === 'pt') ? 'Nenhum membro configurado. Adicione parceiros abaixo.' : 'No team members configured. Add partners below.';
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; color:var(--text-muted); padding: 2rem;">${msg}</td></tr>`;
+    validateSettingsSplits();
+    return;
+  }
+  
+  localTeamRoster.forEach((member, index) => {
+    const tr = document.createElement('tr');
+    const isPartner = member.role === 'Partner';
+    
+    let cleanName = member.name.replace(/ \(Partner\)/, '').replace(/ \(S\u00f3cio\)/, '')
+                               .replace(/ \(Employee\)/, '').replace(/ \(Funcion\u00e1rio\)/, '')
+                               .replace(/ \(Admin\)/, '').replace(/ \(Administrador\)/, '');
+    const optPartnerText = translations[currentLanguage]['set_role_partner'].split(' (')[0];
+    const optEmployeeText = translations[currentLanguage]['set_role_employee'].split(' (')[0];
+    const optAdminText = (translations[currentLanguage]['set_role_admin'] || 'Admin').split(' (')[0];
+    const btnRemoveText = translations[currentLanguage]['btn_remove'];
+    
+    let equityHTML = '<span style="font-size:0.8rem; color:var(--text-muted);">N/A</span>';
+    if (isPartner) {
+      if (!member.equity) member.equity = {};
+      let visibleBusinesses = businesses;
+      if (member.storeAssignment && member.storeAssignment !== 'All Stores') {
+        visibleBusinesses = businesses.filter(b => b.name === member.storeAssignment);
+      }
+      equityHTML = visibleBusinesses.map(b => {
+        const val = Math.round((member.equity[b.name] || 0) * 100);
+        return `
+          <div style="display:flex; align-items:center; gap:0.25rem; margin-bottom:4px; justify-content:space-between; width:100%;">
+            <span style="font-size:0.75rem; color:var(--text-secondary); max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${b.name}">${b.name}</span>
+            <div>
+              <input type="text" inputmode="decimal" min="0" max="100" style="width:50px; padding:0.25rem; background:rgba(0,0,0,0.2); border:1px solid #555; color:#fff; border-radius:3px; text-align:center;" value="${val}" oninput="updateRosterEquity(${index}, '${b.name}', this.value)">
+              <span style="font-size:0.75rem; color:var(--text-secondary);">%</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    tr.innerHTML = `
+      <td style="min-width: 140px;">
+        <input type="text" value="${cleanName}" onchange="updateRosterField(${index}, 'name', this.value)" style="width:100%; background:var(--input-bg); border:1px solid var(--input-border); color:var(--text-primary); border-radius:4px; font-weight:600; padding: 0.25rem;">
+      </td>
+      <td style="min-width: 140px;">
+        <select onchange="updateRosterField(${index}, 'storeAssignment', this.value)" style="background:transparent; border:none; color:var(--text-secondary); font-size:0.85rem; padding: 0.25rem; width:100%;">
+          <option value="All Stores" ${(!member.storeAssignment || member.storeAssignment === 'All Stores') ? 'selected' : ''}>${(currentLanguage === 'pt') ? translations[currentLanguage]['opt_all_stores'] : 'All Stores'}</option>
+          ${businesses.map(b => `<option value="${b.name}" ${member.storeAssignment === b.name ? 'selected' : ''}>${b.name}</option>`).join('')}
+        </select>
+      </td>
+      <td style="min-width: 120px;">
+        <select onchange="updateRosterRole(${index}, this.value)" style="background:transparent; border:none; color:var(--text-secondary); font-size:0.85rem; padding: 0.25rem; width:100%;">
+          <option value="Partner" ${member.role === 'Partner' ? 'selected' : ''}>${optPartnerText}</option>
+          <option value="Employee" ${member.role === 'Employee' ? 'selected' : ''}>${optEmployeeText}</option>
+          <option value="Admin" ${(member.role || '').toString().trim().toLowerCase() === 'admin' || (member.role || '').toString().trim().toLowerCase() === 'administrador' ? 'selected' : ''}>${optAdminText}</option>
+        </select>
+      </td>
+      <td style="min-width: 220px;">
+        ${equityHTML}
+      </td>
+      <td style="min-width: 100px;">
+        ${!isPartner ? `<input type="text" inputmode="decimal" step="0.01" value="${member.salary || 0}" onchange="updateRosterField(${index}, 'salary', this.value)" style="width:100%; background:rgba(0,0,0,0.2); border:1px solid #555; color:#fff; text-align:center; border-radius:4px; padding: 0.25rem;" placeholder="0.00">` : `<span style="font-size:0.8rem; color:var(--text-muted);">N/A</span>`}
+      </td>
+      <td style="min-width: 100px;">
+        ${!isPartner ? `
+        <select onchange="updateRosterField(${index}, 'payFrequency', this.value); updateRosterPayDayVisibility(${index}, this.value);" style="width:100%; background:rgba(0,0,0,0.2); border:1px solid #555; color:#fff; padding: 0.25rem; border-radius:4px;">
+          <option value="None" ${member.payFrequency === 'None' || !member.payFrequency ? 'selected' : ''}>${translations[currentLanguage]['opt_freq_none'] || 'Manual'}</option>
+          <option value="Daily" ${member.payFrequency === 'Daily' ? 'selected' : ''}>${translations[currentLanguage]['opt_freq_daily'] || 'Daily'}</option>
+          <option value="Weekly" ${member.payFrequency === 'Weekly' ? 'selected' : ''}>${translations[currentLanguage]['opt_freq_weekly'] || 'Weekly'}</option>
+          <option value="Monthly" ${member.payFrequency === 'Monthly' ? 'selected' : ''}>${translations[currentLanguage]['opt_freq_monthly'] || 'Monthly'}</option>
+        </select>
+        ` : `<span style="font-size:0.8rem; color:var(--text-muted);">N/A</span>`}
+      </td>
+      <td style="min-width: 100px;" id="roster-payday-cell-${index}">
+        ${!isPartner && (member.payFrequency === 'Weekly' || member.payFrequency === 'Monthly') ? buildPayDaySelect(index, member.payFrequency, member.payDay) : `<span style="font-size:0.8rem; color:var(--text-muted);">—</span>`}
+      </td>
+      <td style="min-width: 90px;">
+        <input type="text" value="${member.pin || ''}" onchange="updateRosterField(${index}, 'pin', this.value)" style="width:100%; background:rgba(0,0,0,0.2); border:1px solid #555; color:#fff; text-align:center; border-radius:4px; padding: 0.25rem;" placeholder="PIN">
+      </td>
+      <td style="text-align: center; min-width: 100px;">
+        <button onclick="deleteRosterMember(${index})" style="background:transparent; border:1px solid var(--danger); color:var(--danger); padding:0.35rem 0.75rem; border-radius:15px; cursor:pointer; font-size:0.75rem;"><i class="fa-solid fa-trash"></i> ${btnRemoveText}</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+  
+  validateSettingsSplits();
+}
+
+// Input update handlers
+function updateRosterField(index, key, val) {
+  if (localTeamRoster[index]) {
+    if (key === 'salary') val = parseFlexibleNumber(val) || 0;
+    
+    if (key === 'name') {
+      const role = localTeamRoster[index].role;
+      const suffix = (role === 'Partner') ? ' (Partner)' : ((role === 'Admin') ? ' (Admin)' : ' (Employee)');
+      val = val.replace(/ \(Partner\)/, '').replace(/ \(S\u00f3cio\)/, '')
+               .replace(/ \(Employee\)/, '').replace(/ \(Funcion\u00e1rio\)/, '')
+               .replace(/ \(Admin\)/, '').replace(/ \(Administrador\)/, '').trim();
+      localTeamRoster[index][key] = val + suffix;
+    } else {
+      localTeamRoster[index][key] = val;
+    }
+    
+    if (key === 'storeAssignment') {
+      if (val !== 'All Stores' && localTeamRoster[index].equity) {
+        for (let b in localTeamRoster[index].equity) {
+          if (b !== val) {
+            localTeamRoster[index].equity[b] = 0;
+          }
+        }
+      }
+      renderSettingsRoster();
+    }
+  }
+}
+
+function updateRosterRole(index, val) {
+  if (localTeamRoster[index]) {
+    localTeamRoster[index].role = val;
+    if (val === 'Employee') {
+      localTeamRoster[index].equity = {}; // clear equity for employees
+    }
+    
+    const currentCleanName = localTeamRoster[index].name.replace(/ \(Partner\)/, '').replace(/ \(S\u00f3cio\)/, '')
+               .replace(/ \(Employee\)/, '').replace(/ \(Funcion\u00e1rio\)/, '')
+               .replace(/ \(Admin\)/, '').replace(/ \(Administrador\)/, '').trim();
+    const suffix = (val === 'Partner') ? ' (Partner)' : ((val === 'Admin') ? ' (Admin)' : ' (Employee)');
+    localTeamRoster[index].name = currentCleanName + suffix;
+    
+    renderSettingsRoster();
+  }
+}
+
+function updateRosterEquity(index, bizName, val) {
+  if (localTeamRoster[index] && localTeamRoster[index].role === 'Partner') {
+    if (!localTeamRoster[index].equity) localTeamRoster[index].equity = {};
+    const pct = parseInt(val) || 0;
+    localTeamRoster[index].equity[bizName] = pct / 100;
+    validateSettingsSplits();
+  }
+}
+
+// Validates splits total
+function validateSettingsSplits() {
+  const statusBadge = document.getElementById('split-validation-status');
+  const partners = localTeamRoster.filter(m => m.role === 'Partner');
+  
+  if (partners.length === 0) {
+    statusBadge.innerText = translations[currentLanguage]['txt_no_partners_warning'];
+    statusBadge.className = 'badge invalid';
+    statusBadge.style.background = 'rgba(245, 158, 11, 0.15)';
+    statusBadge.style.color = '#fde68a';
+    statusBadge.style.borderColor = 'rgba(245, 158, 11, 0.3)';
+    return true;
+  }
+  
+  let allValid = true;
+  let invalidBizName = '';
+  let invalidBizTotal = 0;
+  
+  for (let b of businesses) {
+    let bizTotal = 0;
+    partners.forEach(m => {
+      if (m.equity && m.equity[b.name]) {
+        bizTotal += parseFlexibleNumber(m.equity[b.name]);
+      }
+    });
+    
+    let totalPercent = Math.round(bizTotal * 100);
+    if (totalPercent !== 100) {
+      allValid = false;
+      invalidBizName = b.name;
+      invalidBizTotal = totalPercent;
+      break; // stop on first invalid
+    }
+  }
+  
+  if (allValid) {
+    statusBadge.innerText = translations[currentLanguage]['txt_valid_splits'];
+    statusBadge.className = 'badge';
+    statusBadge.style.background = 'rgba(16, 185, 129, 0.15)';
+    statusBadge.style.color = '#a7f3d0';
+    statusBadge.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+    return true;
+  } else {
+    if (currentLanguage === 'pt') {
+      statusBadge.innerText = `Erro: ${invalidBizName} tem ${invalidBizTotal}% distribuÃ­do (Deve ser 100%)`;
+    } else {
+      statusBadge.innerText = `Error: ${invalidBizName} equity is ${invalidBizTotal}% (Must be 100%)`;
+    }
+    statusBadge.className = 'badge invalid';
+    statusBadge.style.background = 'rgba(239, 68, 68, 0.15)';
+    statusBadge.style.color = '#fca5a5';
+    statusBadge.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+    return false;
+  }
+}
+
+// Add member to settings local copy
+function addMemberToRosterList() {
+  const nameInput = document.getElementById('new-member-name');
+  const roleInput = document.getElementById('new-member-role');
+  
+  let name = nameInput.value.trim();
+  const role = roleInput.value;
+  const storeAsg = document.getElementById('new-member-store').value;
+  const pinCode = document.getElementById('new-member-pin').value;
+  
+  if (!name) {
+    const msg = (currentLanguage === 'pt') ? 'Digite um nome vÃ¡lido.' : 'Please input a valid member name.';
+    showToast(msg, true);
+    return;
+  }
+  
+  // Appends backend role tags
+  const backendRoleSuffix = (role === 'Partner') ? ' (Partner)' : ' (Employee)';
+  const backendName = name + backendRoleSuffix;
+  
+  if (localTeamRoster.some(m => m.name.split(' (')[0].toLowerCase() === name.toLowerCase())) {
+    const msg = (currentLanguage === 'pt') ? 'Um membro com este nome jÃ¡ existe.' : 'A team member with this name already exists.';
+    showToast(msg, true);
+    return;
+  }
+  
+  let equity = {};
+  let salary = 0;
+  let payFreq = 'None';
+  if (role === 'Partner') {
+    document.querySelectorAll('.new-member-equity-input').forEach(input => {
+      const bizName = input.getAttribute('data-biz');
+      const val = parseInt(input.value) || 0;
+      equity[bizName] = val / 100;
+    });
+  } else {
+    salary = parseFlexibleNumber(document.getElementById('new-member-salary').value) || 0;
+    payFreq = document.getElementById('new-member-frequency').value || 'None';
+  }
+  
+  const payDayEl = document.getElementById('new-member-payday');
+  const payDayVal = payDayEl && payDayEl.closest('#new-member-payday-container').style.display !== 'none'
+    ? parseInt(payDayEl.value, 10) : null;
+  
+  localTeamRoster.push({
+    name: backendName,
+    role: role,
+    equity: equity,
+    storeAssignment: storeAsg,
+    pin: pinCode,
+    salary: salary,
+    payFrequency: payFreq,
+    payDay: payDayVal
+  });
+  
+  nameInput.value = '';
+  document.getElementById('new-member-salary').value = '';
+  document.getElementById('new-member-frequency').value = 'None';
+  // Reset payday picker
+  togglePayDayPicker('new-member-payday-container', 'None');
+  if (role === 'Partner') {
+    document.querySelectorAll('.new-member-equity-input').forEach(input => input.value = '');
+  }
+  
+  renderSettingsRoster();
+  const addedMsg = (currentLanguage === 'pt') ? `Adicionado ${name} Ã  lista local. Lembre-se de salvar!` : `Added ${name} to local list. Remember to Save!`;
+  showToast(addedMsg);
+}
+
+// Delete member from settings local copy
+function deleteRosterMember(index) {
+  let deletedName = localTeamRoster[index].name.split(' (')[0];
+  localTeamRoster.splice(index, 1);
+  renderSettingsRoster();
+  const delMsg = (currentLanguage === 'pt') ? `Removido ${deletedName} da lista local. Lembre-se de salvar!` : `Removed ${deletedName} from local list. Remember to Save!`;
+  showToast(delMsg);
+}
+
+// Saves settings roster array to backend
+function saveTeamRoster() {
+  if (!validateSettingsSplits()) {
+    const msg = translations[currentLanguage]['txt_invalid_splits'];
+    showToast(msg, true);
+    return;
+  }
+  
+  const loadMsg = (currentLanguage === 'pt') ? 'Salvando sócios e divisões na planilha...' : 'Saving team roster & splits to spreadsheet...';
+  showLoadingScreen(loadMsg);
+  
+      google.script.run
+      .withSuccessHandler(function(response) {
+        hideLoadingScreen();
+        if (response.success) {
+          console.log('Data successfully saved! Verify here:', response.sheetUrl);
+        showToast(translations[currentLanguage]['toast_roster_saved']);
+        // Submitters are handled by session
+        fetchDashboardData(); // Reload details
+      } else {
+        showToast(response.message, true);
+      }
+    })
+    .withFailureHandler(function(err) {
+      hideLoadingScreen();
+      showToast('Error saving settings roster: ' + err.message, true);
+    })
+    .saveTeamMembers(localTeamRoster);
+}
+
+// Toggle split percentage input field display based on selected role
+function toggleNewSplitInput(role) {
+  const container = document.getElementById('new-member-split-container');
+  const salaryContainer = document.getElementById('new-member-salary-container');
+  const grid = document.getElementById('new-member-equity-grid');
+  if (role === 'Partner') {
+    container.style.display = 'flex';
+    salaryContainer.style.display = 'none';
+    const storeAsg = document.getElementById('new-member-store').value;
+    let visibleBusinesses = businesses;
+    if (storeAsg && storeAsg !== 'All Stores') {
+      visibleBusinesses = businesses.filter(b => b.name === storeAsg);
+    }
+    grid.innerHTML = visibleBusinesses.map(b => `
+      <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:4px; min-width:180px; flex:1;">
+        <span style="font-size:0.75rem; color:var(--text-secondary); max-width:120px; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${b.name}">${b.name}</span>
+        <input type="text" inputmode="decimal" min="0" max="100" class="new-member-equity-input" data-biz="${b.name}" style="padding:0.25rem; font-size:0.8rem; width:60px; text-align:center;" placeholder="0">
+        <span style="font-size:0.8rem; color:var(--text-secondary);">%</span>
+      </div>
+    `).join('');
+  } else {
+    container.style.display = 'none';
+    salaryContainer.style.display = 'flex';
+    grid.innerHTML = '';
+  }
+}
+
+// Build the weekly/monthly pay day <select> HTML string (used in roster table cell)
+function buildPayDaySelect(index, freq, currentVal) {
+  const inputStyle = 'width:100%; background:rgba(0,0,0,0.2); border:1px solid #555; color:#fff; padding:0.25rem; border-radius:4px;';
+  const curVal = (currentVal !== null && currentVal !== undefined && currentVal !== '') ? parseInt(currentVal, 10) : null;
+  if (freq === 'Weekly') {
+    const days = [[0,'Sunday'],[1,'Monday'],[2,'Tuesday'],[3,'Wednesday'],[4,'Thursday'],[5,'Friday'],[6,'Saturday']];
+    const opts = days.map(([v,label]) => `<option value="${v}" ${curVal === v || (curVal === null && v === 5) ? 'selected' : ''}>${label}</option>`).join('');
+    return `<select onchange="updateRosterField(${index},'payDay',parseInt(this.value,10))" style="${inputStyle}">${opts}</select>`;
+  }
+  if (freq === 'Monthly') {
+    let opts = '';
+    for (let d = 1; d <= 28; d++) {
+      const sfx = d===1?'st':d===2?'nd':d===3?'rd':'th';
+      opts += `<option value="${d}" ${curVal === d || (curVal === null && d === 1) ? 'selected' : ''}>${d}${sfx}</option>`;
+    }
+    return `<select onchange="updateRosterField(${index},'payDay',parseInt(this.value,10))" style="${inputStyle}">${opts}</select>`;
+  }
+  return `<span style="font-size:0.8rem; color:var(--text-muted);">—</span>`;
+}
+
+// Called when frequency dropdown changes inline in the roster table row
+function updateRosterPayDayVisibility(index, freq) {
+  const cell = document.getElementById(`roster-payday-cell-${index}`);
+  if (!cell) return;
+  const member = localTeamRoster[index];
+  if (freq === 'Weekly' || freq === 'Monthly') {
+    cell.innerHTML = buildPayDaySelect(index, freq, member ? member.payDay : null);
+  } else {
+    cell.innerHTML = `<span style="font-size:0.8rem; color:var(--text-muted);">—</span>`;
+    if (member) member.payDay = null;
+  }
+}
+
+// Show/hide the Pay Day picker in the Add Member form based on frequency selection
+function togglePayDayPicker(containerId, freq) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const select = container.querySelector('select');
+  if (freq === 'Weekly') {
+    const days = [[0,'Sunday'],[1,'Monday'],[2,'Tuesday'],[3,'Wednesday'],[4,'Thursday'],[5,'Friday'],[6,'Saturday']];
+    select.innerHTML = days.map(([v,label]) => `<option value="${v}" ${v===5?'selected':''}>${label}</option>`).join('');
+    container.style.display = 'flex';
+  } else if (freq === 'Monthly') {
+    let html = '';
+    for (let d = 1; d <= 28; d++) {
+      const sfx = d===1?'st':d===2?'nd':d===3?'rd':'th';
+      html += `<option value="${d}" ${d===1?'selected':''}>${d}${sfx}</option>`;
+    }
+    select.innerHTML = html;
+    container.style.display = 'flex';
+  } else {
+    container.style.display = 'none';
+  }
+}
+
+// ----------------------------------------------------
+// USER PREFERENCES & ACCESSIBILITY SECTION (LOCALIZATION HANDLERS)
+// ----------------------------------------------------
+
+// Load preferences from localStorage and apply them
+function loadPreferences() {
+  try {
+    const prefsStr = localStorage.getItem('loja_finance_prefs');
+    let prefs = { theme: 'dark', palette: 'indigo', fontSize: '100', lang: 'pt' }; // Default to pt (Portuguese)
+    
+    if (prefsStr) {
+      prefs = JSON.parse(prefsStr);
+    }
+    
+    // Set selects values
+    document.getElementById('pref-theme').value = prefs.theme || 'dark';
+    document.getElementById('pref-palette').value = prefs.palette || 'indigo';
+    document.getElementById('pref-fontsize').value = prefs.fontSize || '100';
+    document.getElementById('pref-lang').value = prefs.lang || 'pt';
+    
+    applyPreferences(prefs.theme, prefs.palette, prefs.fontSize, prefs.lang || 'pt');
+  } catch (e) {
+    console.error('Error loading preferences: ' + e.message);
+  }
+}
+
+// Applies preferences instantly to root class and styles
+function applyPreferences(theme, palette, fontSize, lang) {
+  // Update global language
+  currentLanguage = lang;
+  
+  // Set theme & palette classes
+  document.documentElement.className = `theme-${theme} palette-${palette}`;
+  
+  // Set root font size scale
+  document.documentElement.style.fontSize = `${fontSize}%`;
+  
+  // Run localization replacement
+  translatePageLayout(lang);
+  
+  // Update date badge formatted subtitle
+  updateDateBadgeSubtitle();
+  
+  // Submitters are handled by session
+    
+    if (typeof rawDashboardData !== 'undefined' && rawDashboardData) {
+      renderDashboard();
+    }
+  }
+
+// Translates static UI headings, labels, select items, and dynamic table headers
+function translatePageLayout(lang) {
+  // Translate standard data-i18n items
+  const elements = document.querySelectorAll('[data-i18n]');
+  elements.forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (translations[lang] && translations[lang][key]) {
+      el.innerText = translations[lang][key];
+    }
+  });
+  
+  // Translate placeholders
+  document.getElementById('notes').placeholder = translations[lang]['daily_notes_placeholder'];
+  document.getElementById('expense-description').placeholder = translations[lang]['exp_desc_placeholder'];
+  document.getElementById('new-member-name').placeholder = (lang === 'pt') ? 'Ex: Alice Silva' : 'e.g. Alice Silva';
+  
+  // Translate dynamic headers for tables
+  const isPt = (lang === 'pt');
+  
+  // 1. Daily submissions headers
+          document.getElementById('hist-daily-th').innerHTML = isPt ? `<th>Data</th><th>Lançado Por</th><th>Loja</th><th>Tipo de Receita</th><th>Valor</th><th>Comprovante</th><th>Notas</th>` :
+    `<th>Date</th><th>Submitter</th><th>Store</th><th>Entry Type</th><th>Amount</th><th>Receipt</th><th>Notes</th>`;
+     
+  // 2. Expense history headers
+  document.getElementById('hist-exp-th').innerHTML = isPt ?
+    `<th>Data</th><th>Pago Por</th><th>Categoria</th><th>Valor</th><th>Forma de Pagamento</th><th>Descrição</th>` :
+    `<th>Date</th><th>Paid By</th><th>Category</th><th>Amount</th><th>Payment Method</th><th>Description</th>`;
+     
+}
+
+// Reads selector values and previews changes instantly
+function applyPreferencesFromForm() {
+  const theme = document.getElementById('pref-theme').value;
+  const palette = document.getElementById('pref-palette').value;
+  const fontSize = document.getElementById('pref-fontsize').value;
+  const lang = document.getElementById('pref-lang').value;
+  
+  applyPreferences(theme, palette, fontSize, lang);
+}
+
+// Saves preferences permanently in browser storage
+function savePreferences() {
+  const theme = document.getElementById('pref-theme').value;
+  const palette = document.getElementById('pref-palette').value;
+  const fontSize = document.getElementById('pref-fontsize').value;
+  const lang = document.getElementById('pref-lang').value;
+  
+  const prefs = { theme: theme, palette: palette, fontSize: fontSize, lang: lang };
+  localStorage.setItem('loja_finance_prefs', JSON.stringify(prefs));
+  
+  showToast(translations[lang]['toast_saved']);
+}
+
+// Toast alerts helper
+function showToast(message, isError = false, isInfo = false) {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+
+  const toast = document.createElement('div');
+  toast.className = `toast ${isError ? 'error' : (isInfo ? 'info' : 'success')}`;
+  
+  const iconClass = isError ? 'fa-triangle-exclamation' : (isInfo ? 'fa-circle-info' : 'fa-circle-check');
+  
+  toast.innerHTML = `
+    <i class="fa-solid ${iconClass} toast-icon"></i>
+    <span>${message}</span>
+    <div class="toast-progress" style="animation-duration: 4s;"></div>
+  `;
+  
+  container.appendChild(toast);
+  
+  // Trigger reflow to start animation
+  void toast.offsetWidth;
+  toast.classList.add('show');
+  
+  setTimeout(() => {
+    toast.classList.remove('show');
+    toast.classList.add('hiding');
+    setTimeout(() => {
+      if (toast.parentNode === container) {
+        container.removeChild(toast);
+      }
+    }, 400); // Wait for transition
+  }, 4000);
+}
+
+// Overlay Loading Spinner toggles
+function showLoadingScreen(text) {
+  document.getElementById('loading-text').innerText = text || (currentLanguage === 'pt' ? 'Processando...' : 'Processing...');
+  document.getElementById('loading-overlay').style.display = 'flex';
+}
+
+function hideLoadingScreen() {
+  document.getElementById('loading-overlay').style.display = 'none';
+}
+
+  let dashboardChartInstance = null;
+
+  function renderDashboardChart(submissions, expenses) {
+    const ctx = document.getElementById('finance-chart');
+    if (!ctx) return;
+    
+    if (dashboardChartInstance) {
+      dashboardChartInstance.destroy();
+    }
+
+    // Aggregate by Date
+    const dateMap = {};
+
+    submissions.forEach(sub => {
+      if(!dateMap[sub.date]) dateMap[sub.date] = { rev: 0, exp: 0 };
+      let amt = parseFlexibleNumber(sub.amount) || 0;
+      let tot = (sub.entryType === 'Cash Out') ? -amt : amt;
+      dateMap[sub.date].rev += tot;
+    });
+    
+    expenses.forEach(exp => {
+      if(!dateMap[exp.date]) dateMap[exp.date] = { rev: 0, exp: 0 };
+      dateMap[exp.date].exp += (parseFlexibleNumber(exp.amount) || 0);
+    });
+
+    // Sort dates
+    const sortedDates = Object.keys(dateMap).sort();
+    const revData = [];
+    const expData = [];
+    const profitData = [];
+
+    sortedDates.forEach(d => {
+      const r = dateMap[d].rev;
+      const e = dateMap[d].exp;
+      revData.push(r);
+      expData.push(e);
+      profitData.push(r - e);
+    });
+
+    dashboardChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: sortedDates,
+        datasets: [
+          {
+            label: (currentLanguage === 'pt') ? 'Receita Total' : 'Total Revenue',
+            data: revData,
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            borderWidth: 2,
+            tension: 0.3,
+            fill: true
+          },
+          {
+            label: (currentLanguage === 'pt') ? 'Despesas' : 'Expenses',
+            data: expData,
+            borderColor: '#ef4444',
+            borderWidth: 2,
+            tension: 0.3
+          },
+          {
+            label: (currentLanguage === 'pt') ? 'Lucro Líquido' : 'Net Profit',
+            data: profitData,
+            borderColor: '#06b6d4',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            tension: 0.3
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: '#94a3b8' } }
+        },
+        scales: {
+          x: { ticks: { color: '#64748b' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+          y: { ticks: { color: '#64748b' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+        }
+      }
+    });
+  }
+
+  let portfolioChartInstance = null;
+  function renderPortfolioChart(submissions, expenses) {
+    const ctx = document.getElementById('portfolio-chart');
+    if (!ctx) return;
+    
+    if (portfolioChartInstance) {
+      portfolioChartInstance.destroy();
+    }
+    
+    const bizMap = {};
+    businesses.forEach(b => bizMap[b.name] = { rev: 0, exp: 0 });
+    
+    submissions.forEach(sub => {
+      let storeName = sub.store || 'Store 1';
+      if(!bizMap[storeName]) bizMap[storeName] = { rev: 0, exp: 0 };
+      let amt = parseFlexibleNumber(sub.amount) || 0;
+      let tot = (sub.entryType === 'Cash Out') ? -amt : amt;
+      bizMap[storeName].rev += tot;
+    });
+    
+    expenses.forEach(exp => {
+      let storeName = exp.store || 'Store 1';
+      if(!bizMap[storeName]) bizMap[storeName] = { rev: 0, exp: 0 };
+      bizMap[storeName].exp += (parseFlexibleNumber(exp.amount) || 0);
+    });
+    
+    const labels = Object.keys(bizMap);
+    const revData = labels.map(l => bizMap[l].rev);
+    const expData = labels.map(l => bizMap[l].exp);
+    const profitData = labels.map(l => bizMap[l].rev - bizMap[l].exp);
+    
+    portfolioChartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: (currentLanguage === 'pt') ? 'Receita Total' : 'Total Revenue',
+            data: revData,
+            backgroundColor: '#10b981'
+          },
+          {
+            label: (currentLanguage === 'pt') ? 'Despesas' : 'Expenses',
+            data: expData,
+            backgroundColor: '#ef4444'
+          },
+          {
+            label: (currentLanguage === 'pt') ? 'Lucro L\u00edquido' : 'Net Profit',
+            data: profitData,
+            backgroundColor: '#06b6d4'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: '#94a3b8' } }
+        },
+        scales: {
+          x: { ticks: { color: '#64748b' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+          y: { ticks: { color: '#64748b' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+        }
+      }
+    });
+  }
+
+
+  function exportHistoryCSV() {
+    if (!rawDashboardData) return;
+    
+    const pt = (currentLanguage === 'pt');
+    let csv = pt ? "Tipo,Data,Usuario,Loja,Cartao1,Dinheiro,Total,Notas/Descricao\n" : "Type,Date,Submitter,Store,Card1,Cash,Total,Description/Notes\n";
+    
+    rawDashboardData.historySubmissions.forEach(r => {
+      csv += `Sales,${r.date},"${(r.submitter || '').toString().split(' (')[0]}","${r.store || ''}","${r.card1 || 0}","${r.cashNet || 0}","${r.total || 0}","${r.notes || ''}"\n`;
+    });
+    
+    rawDashboardData.historyExpenses.forEach(e => {
+      csv += `Expense,${e.date},"${(e.submitter || '').toString().split(' (')[0]}","${e.store || ''}","","","${e.amount || 0}","${e.description || ''}"\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `loja_finance_export_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  // Inject into renderDashboard
+  // Option B: Pull-to-Refresh
+  let ptrStartY = 0;
+  let ptrCurrentY = 0;
+  let isPulling = false;
+  const ptrThreshold = 80;
+  const dashboardTab = document.getElementById('tab-dashboard');
+  const ptrIndicator = document.getElementById('ptr-indicator');
+  const ptrIcon = document.getElementById('ptr-icon');
+  const ptrText = document.getElementById('ptr-text');
+
+  dashboardTab.addEventListener('touchstart', e => {
+    if (window.scrollY === 0 || dashboardTab.scrollTop === 0) {
+      ptrStartY = e.touches[0].clientY;
+      isPulling = true;
+    }
+  }, { passive: true });
+
+  dashboardTab.addEventListener('touchmove', e => {
+    if (!isPulling) return;
+    ptrCurrentY = e.touches[0].clientY;
+    const diff = ptrCurrentY - ptrStartY;
+    
+    if (diff > 0) {
+      ptrIndicator.style.height = Math.min(diff, ptrThreshold) + 'px';
+      ptrIndicator.style.opacity = Math.min(diff / ptrThreshold, 1);
+      
+      if (diff > ptrThreshold) {
+        ptrIcon.style.transform = 'rotate(180deg)';
+        ptrText.innerText = (currentLanguage === 'pt') ? 'Solte para atualizar' : 'Release to refresh';
+      } else {
+        ptrIcon.style.transform = 'rotate(0deg)';
+        ptrText.innerText = (currentLanguage === 'pt') ? 'Puxe para atualizar' : 'Pull to refresh';
+      }
+    }
+  }, { passive: true });
+
+  dashboardTab.addEventListener('touchend', () => {
+    if (!isPulling) return;
+    isPulling = false;
+    const diff = ptrCurrentY - ptrStartY;
+    
+    if (diff > ptrThreshold) {
+      ptrIcon.className = 'fa-solid fa-spinner fa-spin';
+      ptrText.innerText = (currentLanguage === 'pt') ? 'Atualizando...' : 'Refreshing...';
+      ptrIndicator.style.height = '40px';
+      
+      // Perform refresh
+      fetchDashboardData();
+      
+      // Reset after a delay simulating network
+      setTimeout(() => {
+        resetPTR();
+      }, 1000);
+    } else {
+      resetPTR();
+    }
+  });
+  
+  function resetPTR() {
+    ptrIndicator.style.height = '0px';
+    ptrIndicator.style.opacity = '0';
+    setTimeout(() => {
+      ptrIcon.className = 'fa-solid fa-arrow-down';
+      ptrIcon.style.transform = 'rotate(0deg)';
+    }, 300);
+  }
+
+  // Option D: Collapsible Header on Scroll
+  let lastScrollY = window.scrollY;
+  const header = document.querySelector('header');
+  const scrollThreshold = 10;
+  
+  window.addEventListener('scroll', () => {
+    if (window.innerWidth > 768) return; // Only on mobile
+    
+    const currentScrollY = window.scrollY;
+    
+    // Don't do anything if near the top
+    if (currentScrollY < 50) {
+      header.classList.remove('header--collapsed');
+      lastScrollY = currentScrollY;
+      return;
+    }
+    
+    // Scrolling down -> hide header
+    if (currentScrollY > lastScrollY + scrollThreshold) {
+      header.classList.add('header--collapsed');
+      lastScrollY = currentScrollY;
+    } 
+    // Scrolling up -> show header
+    else if (currentScrollY < lastScrollY - scrollThreshold) {
+      header.classList.remove('header--collapsed');
+      lastScrollY = currentScrollY;
+    }
+  }, { passive: true });
+
+// ─────────────────────────────────────────────────────────────────
+// DUPLICATE HISTORY ENTRY: reads data-* attrs from the <tr>
+// ─────────────────────────────────────────────────────────────────
+function duplicateHistoryEntry(tr) {
+  if (!tr || !tr.dataset) return;
+  const type = tr.dataset.swipeType;
+
+  if (type === 'sale') {
+    switchTab('submit');
+    const storeEl = document.getElementById('store-select');
+    if (storeEl && tr.dataset.store) storeEl.value = tr.dataset.store;
+
+    const entryType = tr.dataset.entryType;
+    const entryBtns = document.querySelectorAll('.entry-type-btn');
+    entryBtns.forEach(btn => {
+      if (btn.dataset.type === entryType) btn.click();
+    });
+
+    // Pre-fill the first visible amount input
+    setTimeout(() => {
+      const amtInputs = document.querySelectorAll('.stream-amount-input, #cash-in, #cash-out');
+      if (amtInputs.length > 0) amtInputs[0].value = tr.dataset.amount;
+      const notesEl = document.getElementById('notes');
+      if (notesEl) notesEl.value = tr.dataset.notes || '';
+    }, 100); // Small delay so entry-type btn click can render inputs first
+
+    showToast((currentLanguage === 'pt') ? 'Entrada duplicada! Revise e envie.' : 'Entry duplicated! Review & submit.');
+
+  } else if (type === 'expense') {
+    switchTab('expense');
+
+    const storeEl = document.getElementById('expense-store');
+    if (storeEl && tr.dataset.store) storeEl.value = tr.dataset.store;
+
+    const catEl = document.getElementById('expense-category-select') || document.querySelector('[id^="expense-cat"]');
+    if (catEl && tr.dataset.category) catEl.value = tr.dataset.category;
+
+    // Pre-fill the first expense line item
+    const firstAmt = document.querySelector('.exp-line-amt');
+    if (firstAmt && tr.dataset.amount) firstAmt.value = tr.dataset.amount;
+
+    const firstDesc = document.querySelector('.exp-line-desc');
+    if (firstDesc && tr.dataset.description) firstDesc.value = tr.dataset.description;
+
+    const methodEl = document.getElementById('payment-method');
+    if (methodEl && tr.dataset.paymentMethod) methodEl.value = tr.dataset.paymentMethod;
+
+    showToast((currentLanguage === 'pt') ? 'Despesa duplicada! Revise e envie.' : 'Expense duplicated! Review & submit.');
+  }
+}
+
+</script>
+  </body>
+</html>

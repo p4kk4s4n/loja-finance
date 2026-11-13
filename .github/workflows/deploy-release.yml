@@ -1,0 +1,71 @@
+name: Deploy Loja Finance to GitHub Pages
+
+on:
+  release:
+    types: [published]
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  test-and-stage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Run Unit Tests
+        run: node --test tests/*.test.mjs
+
+      - name: Stamp version.json and sw.js
+        run: |
+          node -e '
+            const fs = require("fs");
+            const tag = (process.env.GITHUB_REF_TYPE === "tag" ? process.env.GITHUB_REF_NAME : "").replace(/^v\.?/i, "");
+            const current = JSON.parse(fs.readFileSync("version.json", "utf8"));
+            const version = tag || current.version || "2.0.0";
+            const out = {
+              version,
+              releasedAt: new Date().toISOString(),
+              commit: (process.env.GITHUB_SHA || "").slice(0, 7),
+              githubRepo: process.env.GITHUB_REPOSITORY || current.githubRepo || "",
+              notes: "Published via GitHub Actions"
+            };
+            fs.writeFileSync("version.json", JSON.stringify(out, null, 2) + "\n");
+            let sw = fs.readFileSync("sw.js", "utf8");
+            sw = sw.replace(/const APP_VERSION = \x27[^\x27]*\x27;/, `const APP_VERSION = \x27${version}-${out.commit}\x27;`);
+            fs.writeFileSync("sw.js", sw);
+          '
+
+      - name: Prepare Pages Artifact
+        run: |
+          mkdir -p _site
+          cp index.html manifest.json version.json sw.js .nojekyll _site/
+          cp -r css js icons _site/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: test-and-stage
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
