@@ -14,6 +14,7 @@ export const translations = {
     daily_store: 'Loja',
     daily_date: 'Data do Caixa',
     daily_submitter: 'Lançado Por',
+    daily_stream_sales: 'Vendas Totais (R$)',
     daily_cash_in: 'Dinheiro Recebido (R$)',
     daily_cash_out: 'Dinheiro Retirado / Pequenas Despesas (R$)',
     daily_fees: 'Taxas & Tarifas de Cartão (R$)',
@@ -84,7 +85,7 @@ export const translations = {
     set_tbl_store: 'Loja',
     set_tbl_role: 'Cargo',
     set_tbl_split: 'Participação %',
-    set_tbl_salary: 'Salário / Fixo',
+    set_tbl_salary: 'Salário / Fixo (R$)',
     set_tbl_freq: 'Pagamento',
     set_tbl_payday: 'Dia de Pagamento',
     set_tbl_pin: 'PIN',
@@ -176,6 +177,7 @@ export const translations = {
     daily_store: 'Store Location',
     daily_date: 'Working Date',
     daily_submitter: 'Submitted By',
+    daily_stream_sales: 'Total Sales (R$)',
     daily_cash_in: 'Cash Received (R$)',
     daily_cash_out: 'Cash Paid Out / Small Expenses (R$)',
     daily_fees: 'Taxes & Card Processing Fees (R$)',
@@ -246,7 +248,7 @@ export const translations = {
     set_tbl_store: 'Store',
     set_tbl_role: 'Role',
     set_tbl_split: 'Split %',
-    set_tbl_salary: 'Salary / Wage',
+    set_tbl_salary: 'Salary / Wage (R$)',
     set_tbl_freq: 'Pay Freq',
     set_tbl_payday: 'Pay Day',
     set_tbl_pin: 'PIN',
@@ -378,14 +380,14 @@ export function translatePageLayout(lang = state.currentLanguage) {
   const dailyTh = document.getElementById('hist-daily-th');
   if (dailyTh) {
     dailyTh.innerHTML = isPt
-      ? '<th>Data</th><th>Lançado Por</th><th>Loja</th><th>Tipo de Receita</th><th>Valor</th><th>Comprovante</th><th>Notas</th><th></th>'
-      : '<th>Date</th><th>Submitter</th><th>Store</th><th>Entry Type</th><th>Amount</th><th>Receipt</th><th>Notes</th><th></th>';
+      ? '<th>Data</th><th>Lançado Por</th><th>Loja</th><th>Tipo de Receita</th><th>Valor (R$)</th><th>Comprovante</th><th>Notas</th><th></th>'
+      : '<th>Date</th><th>Submitter</th><th>Store</th><th>Entry Type</th><th>Amount (R$)</th><th>Receipt</th><th>Notes</th><th></th>';
   }
 
   const expTh = document.getElementById('hist-exp-th');
   if (expTh) {
     expTh.innerHTML = isPt
-      ? '<th>Data</th><th>Pago Por</th><th>Categoria</th><th>Valor</th><th>Forma de Pagamento</th><th>Descrição</th><th></th>'
-      : '<th>Date</th><th>Paid By</th><th>Category</th><th>Amount</th><th>Payment Method</th><th>Description</th><th></th>';
+      ? '<th>Data</th><th>Pago Por</th><th>Categoria</th><th>Valor (R$)</th><th>Forma de Pagamento</th><th>Descrição</th><th></th>'
+      : '<th>Date</th><th>Paid By</th><th>Category</th><th>Amount (R$)</th><th>Payment Method</th><th>Description</th><th></th>';
   }
 }

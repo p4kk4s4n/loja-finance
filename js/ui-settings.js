@@ -370,10 +370,10 @@ export function renderSettingsRoster() {
             </select>
           </td>
           <td style="min-width:210px;">${equityHTML}</td>
-          <td style="min-width:100px;">
+          <td style="min-width:125px;">
             ${
               !isPartner
-                ? `<input type="text" inputmode="decimal" class="roster-cell-input" style="text-align:center;" data-idx="${index}" data-field="salary" value="${escapeHtml(member.salary || 0)}" placeholder="0.00">`
+                ? `<div class="currency-field currency-field--compact"><span class="currency-prefix">R$</span><input type="text" inputmode="decimal" class="roster-cell-input" style="text-align:right;" data-idx="${index}" data-field="salary" value="${escapeHtml(member.salary || 0)}" placeholder="0,00"></div>`
                 : '<span style="font-size:0.8rem; color:var(--text-muted);">N/A</span>'
             }
           </td>

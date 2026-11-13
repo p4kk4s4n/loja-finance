@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  formatCurrency,
   parseFlexibleNumber,
   getSignedSubmissionAmount,
   stripRoleSuffix,
@@ -164,4 +165,11 @@ test('getScopedLedgerData locks Funcionário to self and single-store Sócio to 
   assert.equal(allStoresPartner.scopedSubmissions.length, 3);
   assert.equal(allStoresPartner.visibleBusinesses.length, 2);
   assert.equal(allStoresPartner.visiblePartners.length, 3);
+});
+
+test('formatCurrency formats Brazilian Real (R$) consistently', () => {
+  const pos = formatCurrency(1234.5).replace(/\u00a0/g, ' ');
+  const neg = formatCurrency(-50).replace(/\u00a0/g, ' ');
+  assert.equal(pos, 'R$ 1.234,50');
+  assert.equal(neg, '-R$ 50,00');
 });

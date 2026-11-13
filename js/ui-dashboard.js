@@ -215,10 +215,23 @@ function getChartThemeOptions() {
   return {
     responsive: true,
     maintainAspectRatio: false,
-    plugins: { legend: { labels: { color: textColor } } },
+    plugins: {
+      legend: { labels: { color: textColor } },
+      tooltip: {
+        callbacks: {
+          label: (ctx) => `${ctx.dataset.label}: ${formatCurrency(ctx.parsed?.y ?? 0)}`
+        }
+      }
+    },
     scales: {
       x: { ticks: { color: textColor }, grid: { color: gridColor } },
-      y: { ticks: { color: textColor }, grid: { color: gridColor } }
+      y: {
+        ticks: {
+          color: textColor,
+          callback: (value) => formatCurrency(value)
+        },
+        grid: { color: gridColor }
+      }
     }
   };
 }

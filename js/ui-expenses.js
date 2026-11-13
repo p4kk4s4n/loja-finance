@@ -111,7 +111,10 @@ export function addExpenseLine(category = '', amount = '', description = '') {
 
   div.innerHTML = `
     <select class="exp-line-cat" required>${catOptions}</select>
-    <input type="text" inputmode="decimal" class="exp-line-amt" placeholder="R$ 0.00" value="${escapeHtml(amount)}" required>
+    <div class="currency-field exp-line-amt-wrap">
+      <span class="currency-prefix">R$</span>
+      <input type="text" inputmode="decimal" class="exp-line-amt" placeholder="0,00" value="${escapeHtml(amount)}" required>
+    </div>
     <input type="text" class="exp-line-desc" placeholder="Description..." value="${escapeHtml(description)}" required>
     <button type="button" class="exp-line-del" title="Remove row"><i class="fa-solid fa-trash"></i></button>
   `;

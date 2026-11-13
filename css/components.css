@@ -145,8 +145,40 @@ form:has(input:invalid, select:invalid, textarea:invalid) button[type="submit"] 
   margin-bottom: 0.5rem;
 }
 .expense-line .exp-line-cat { flex: 1.5; min-width: 0; }
-.expense-line .exp-line-amt { flex: 1; min-width: 0; }
+.expense-line .exp-line-amt-wrap { flex: 1; min-width: 0; }
 .expense-line .exp-line-desc { flex: 2.5; min-width: 0; }
+
+/* Currency Prefix Input Wrapper (R$) */
+.currency-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+.currency-prefix {
+  position: absolute;
+  left: 0.9rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  pointer-events: none;
+  user-select: none;
+  transition: color var(--transition-fast);
+}
+.currency-field > input {
+  padding-left: 2.65rem;
+}
+.currency-field:focus-within .currency-prefix {
+  color: var(--primary);
+}
+.currency-field--compact > .currency-prefix {
+  left: 0.5rem;
+  font-size: 0.78rem;
+}
+.currency-field--compact > input {
+  padding-left: 1.95rem !important;
+}
 .expense-line .exp-line-del {
   flex: 0 0 44px; width: 44px; height: 42px;
   background: rgba(239, 68, 68, 0.18); border: none; color: var(--danger);
@@ -371,7 +403,7 @@ dialog#receipt-modal { max-width: 720px; }
   background: linear-gradient(135deg, var(--primary-glow), rgba(16, 185, 129, 0.14));
   border: 1px solid var(--primary);
 }
-.update-banner.visible { display: flex; }
+#tab-settings.active .update-banner.visible { display: flex; }
 
 .toggle-switch {
   display: inline-flex; align-items: center; gap: 0.65rem; cursor: pointer;

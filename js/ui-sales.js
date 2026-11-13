@@ -93,6 +93,7 @@ export function renderDynamicStreams(storeName) {
     .map((s) => s.trim())
     .filter(Boolean);
 
+  const salesSuffix = t('daily_stream_sales', state.currentLanguage === 'pt' ? 'Vendas Totais (R$)' : 'Total Sales (R$)');
   state.uploadedImages = {};
   container.innerHTML = streams
     .map((stream) => {
@@ -100,8 +101,11 @@ export function renderDynamicStreams(storeName) {
       state.uploadedImages[safeId] = null;
       return `
         <div class="form-group">
-          <label>${escapeHtml(stream)} - Total Sales (R$)</label>
-          <input type="text" inputmode="decimal" class="dynamic-stream-input" placeholder="0.00" data-stream-name="${escapeHtml(stream)}">
+          <label>${escapeHtml(stream)} — <span data-i18n="daily_stream_sales">${escapeHtml(salesSuffix)}</span></label>
+          <div class="currency-field">
+            <span class="currency-prefix">R$</span>
+            <input type="text" inputmode="decimal" class="dynamic-stream-input" placeholder="0,00" data-stream-name="${escapeHtml(stream)}">
+          </div>
         </div>
         <div class="form-group">
           <label>${escapeHtml(stream)} Receipt Photo</label>

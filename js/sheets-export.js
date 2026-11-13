@@ -24,8 +24,8 @@ export function exportHistoryCSV() {
 
   const rows = [
     pt
-      ? 'Tipo,Data,Usuario,Loja,CategoriaOuFluxo,FormaPagamento,ValorAssinado,NotasOuDescricao'
-      : 'Type,Date,Submitter,Store,CategoryOrStream,PaymentMethod,SignedAmount,NotesOrDescription'
+      ? 'Tipo,Data,Usuario,Loja,CategoriaOuFluxo,FormaPagamento,ValorAssinado (R$),NotasOuDescricao'
+      : 'Type,Date,Submitter,Store,CategoryOrStream,PaymentMethod,SignedAmount (R$),NotesOrDescription'
   ];
 
   const q = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;

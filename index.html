@@ -29,7 +29,7 @@
       <div class="brand">
         <div class="brand-icon"><i class="fa-solid fa-chart-line"></i></div>
         <div class="brand-name">Loja Finance</div>
-        <span id="header-version-pill" class="version-pill">v2.0.2</span>
+        <span id="header-version-pill" class="version-pill">v2.0.3</span>
       </div>
 
       <div class="user-info">
@@ -63,16 +63,6 @@
     </nav>
 
     <main>
-      <div id="update-banner" class="update-banner">
-        <div style="display:flex; align-items:center; gap:0.75rem;">
-          <i class="fa-solid fa-cloud-arrow-down" style="color:var(--primary); font-size:1.2rem;"></i>
-          <span id="update-banner-text" style="font-weight:600;">Update available</span>
-        </div>
-        <button id="btn-banner-update" type="button" class="btn-submit" style="padding:0.45rem 1rem; font-size:0.85rem;">
-          <i class="fa-solid fa-rotate"></i> <span data-i18n="upd_install_btn">Update Now</span>
-        </button>
-      </div>
-
       <!-- SUBMIT DAILY SALES TAB -->
       <div id="tab-submit" class="tab-pane active">
         <div class="glass-card">
@@ -118,15 +108,24 @@
 
               <div class="form-group">
                 <label for="cash-in" data-i18n="daily_cash_in">Cash Received (R$)</label>
-                <input type="text" inputmode="decimal" id="cash-in" placeholder="0.00">
+                <div class="currency-field">
+                  <span class="currency-prefix">R$</span>
+                  <input type="text" inputmode="decimal" id="cash-in" placeholder="0,00">
+                </div>
               </div>
               <div class="form-group">
                 <label for="cash-out" data-i18n="daily_cash_out">Cash Paid Out / Small Expenses (R$)</label>
-                <input type="text" inputmode="decimal" id="cash-out" placeholder="0.00">
+                <div class="currency-field">
+                  <span class="currency-prefix">R$</span>
+                  <input type="text" inputmode="decimal" id="cash-out" placeholder="0,00">
+                </div>
               </div>
               <div class="form-group">
                 <label for="fees-taxes" data-i18n="daily_fees">Taxes &amp; Card Processing Fees (R$)</label>
-                <input type="text" inputmode="decimal" id="fees-taxes" placeholder="0.00">
+                <div class="currency-field">
+                  <span class="currency-prefix">R$</span>
+                  <input type="text" inputmode="decimal" id="fees-taxes" placeholder="0,00">
+                </div>
               </div>
               <div class="form-group form-grid-full">
                 <label for="notes" data-i18n="daily_notes">Notes / Operating Expenses Detail</label>
@@ -212,7 +211,7 @@
             </div>
 
             <div style="margin-top:1.25rem; text-align:right;">
-              <h3 style="font-family:var(--font-display);">Total: <span id="expense-total-calc" style="color:var(--primary);">R$ 0,00</span></h3>
+              <h3 style="font-family:var(--font-display);">Total (R$): <span id="expense-total-calc" style="color:var(--primary);">R$ 0,00</span></h3>
             </div>
 
             <button type="submit" class="btn-submit" id="expense-submit-btn" style="width:100%; margin-top:1.25rem; background:linear-gradient(135deg,var(--secondary),var(--primary));">
@@ -254,28 +253,28 @@
             <div class="metric-icon-box rev"><i class="fa-solid fa-wallet"></i></div>
             <div class="metric-info">
               <span class="metric-label" data-i18n="dash_kpi_rev">Total Revenue</span>
-              <span class="metric-value" id="kpi-revenue">0</span>
+              <span class="metric-value" id="kpi-revenue">R$ 0,00</span>
             </div>
           </div>
           <div class="metric-card">
             <div class="metric-icon-box exp"><i class="fa-solid fa-file-invoice-dollar"></i></div>
             <div class="metric-info">
               <span class="metric-label" data-i18n="dash_kpi_exp">Operating Expenses</span>
-              <span class="metric-value" id="kpi-expenses" style="color:var(--danger);">0</span>
+              <span class="metric-value" id="kpi-expenses" style="color:var(--danger);">R$ 0,00</span>
             </div>
           </div>
           <div class="metric-card">
             <div class="metric-icon-box net"><i class="fa-solid fa-hand-holding-dollar"></i></div>
             <div class="metric-info">
               <span class="metric-label" data-i18n="dash_kpi_profit">Net Profit</span>
-              <span class="metric-value" id="kpi-netprofit" style="color:var(--success);">0</span>
+              <span class="metric-value" id="kpi-netprofit" style="color:var(--success);">R$ 0,00</span>
             </div>
           </div>
           <div class="metric-card">
             <div class="metric-icon-box card"><i class="fa-solid fa-credit-card"></i></div>
             <div class="metric-info">
               <span class="metric-label" data-i18n="dash_kpi_cards">Total Card &amp; PIX</span>
-              <span class="metric-value" id="kpi-cards">0</span>
+              <span class="metric-value" id="kpi-cards">R$ 0,00</span>
             </div>
           </div>
         </div>
@@ -405,14 +404,23 @@
             <span id="update-status-text" class="badge">Checking...</span>
           </div>
           <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1.25rem;" data-i18n="upd_desc"></p>
+          <div id="update-banner" class="update-banner">
+            <div style="display:flex; align-items:center; gap:0.75rem;">
+              <i class="fa-solid fa-cloud-arrow-down" style="color:var(--primary); font-size:1.2rem;"></i>
+              <span id="update-banner-text" style="font-weight:600;">Update available</span>
+            </div>
+            <button id="btn-banner-update" type="button" class="btn-submit" style="padding:0.45rem 1rem; font-size:0.85rem;">
+              <i class="fa-solid fa-rotate"></i> <span data-i18n="upd_install_btn">Update Now</span>
+            </button>
+          </div>
           <div class="calc-container" style="margin-bottom:1.25rem;">
             <div class="calc-row">
               <span data-i18n="upd_current">Installed Version:</span>
-              <strong id="upd-current-ver">v2.0.2</strong>
+              <strong id="upd-current-ver">v2.0.3</strong>
             </div>
             <div class="calc-row">
               <span data-i18n="upd_latest">Latest on GitHub:</span>
-              <strong id="upd-latest-ver">v2.0.2</strong>
+              <strong id="upd-latest-ver">v2.0.3</strong>
             </div>
             <div class="calc-row">
               <label class="toggle-switch" for="pref-auto-update">
@@ -494,7 +502,7 @@
                     <th data-i18n="set_tbl_store">Store</th>
                     <th data-i18n="set_tbl_role">Role</th>
                     <th data-i18n="set_tbl_split">Split %</th>
-                    <th data-i18n="set_tbl_salary">Salary / Wage</th>
+                    <th data-i18n="set_tbl_salary">Salary / Wage (R$)</th>
                     <th data-i18n="set_tbl_freq">Pay Freq</th>
                     <th data-i18n="set_tbl_payday">Pay Day</th>
                     <th data-i18n="set_tbl_pin">PIN</th>
@@ -535,8 +543,11 @@
               </div>
               <div class="form-grid-full" id="new-member-salary-container" style="display:flex; gap:1rem; flex-wrap:wrap;">
                 <div class="form-group" style="flex:1; min-width:120px;">
-                  <label data-i18n="set_tbl_salary">Fixed Salary / Wage</label>
-                  <input type="text" inputmode="decimal" id="new-member-salary" placeholder="0.00">
+                  <label data-i18n="set_tbl_salary">Fixed Salary / Wage (R$)</label>
+                  <div class="currency-field">
+                    <span class="currency-prefix">R$</span>
+                    <input type="text" inputmode="decimal" id="new-member-salary" placeholder="0,00">
+                  </div>
                 </div>
                 <div class="form-group" style="flex:1; min-width:120px;">
                   <label data-i18n="set_tbl_freq">Pay Frequency</label>
