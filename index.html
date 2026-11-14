@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="theme-light palette-workspace">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -8,7 +8,7 @@
   <link rel="icon" type="image/svg+xml" href="./icons/icon.svg">
   <link rel="apple-touch-icon" href="./icons/icon-192.png">
   <link rel="manifest" href="./manifest.json">
-  <meta name="theme-color" content="#6366f1">
+  <meta name="theme-color" content="#1a73e8">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -29,7 +29,7 @@
       <div class="brand">
         <div class="brand-icon"><i class="fa-solid fa-chart-line"></i></div>
         <div class="brand-name">Loja Finance</div>
-        <span id="header-version-pill" class="version-pill">v2.0.3</span>
+        <span id="header-version-pill" class="version-pill">v2.0.4</span>
       </div>
 
       <div class="user-info">
@@ -358,14 +358,15 @@
             <div class="form-group">
               <label for="pref-theme" data-i18n="pref_theme">Theme Mode</label>
               <select id="pref-theme">
-                <option value="dark" selected data-i18n="pref_theme_dark">Dark Mode (Glow)</option>
-                <option value="light" data-i18n="pref_theme_light">Light Mode (Classic Slate)</option>
+                <option value="light" selected data-i18n="pref_theme_light">Light Mode (Google Workspace)</option>
+                <option value="dark" data-i18n="pref_theme_dark">Dark Mode (Glow)</option>
               </select>
             </div>
             <div class="form-group">
               <label for="pref-palette" data-i18n="pref_palette">Color Accent Palette</label>
               <select id="pref-palette">
-                <option value="indigo" selected data-i18n="pref_palette_indigo">Classic Indigo &amp; Violet</option>
+                <option value="workspace" selected data-i18n="pref_palette_workspace">Google Workspace Blue</option>
+                <option value="indigo" data-i18n="pref_palette_indigo">Classic Indigo &amp; Violet</option>
                 <option value="emerald" data-i18n="pref_palette_emerald">Neon Emerald &amp; Mint</option>
                 <option value="sunset" data-i18n="pref_palette_sunset">Sunset Coral &amp; Rose</option>
                 <option value="cyberpunk" data-i18n="pref_palette_cyberpunk">Cyberpunk Neon Cyan &amp; Pink</option>
@@ -416,11 +417,11 @@
           <div class="calc-container" style="margin-bottom:1.25rem;">
             <div class="calc-row">
               <span data-i18n="upd_current">Installed Version:</span>
-              <strong id="upd-current-ver">v2.0.3</strong>
+              <strong id="upd-current-ver">v2.0.4</strong>
             </div>
             <div class="calc-row">
               <span data-i18n="upd_latest">Latest on GitHub:</span>
-              <strong id="upd-latest-ver">v2.0.3</strong>
+              <strong id="upd-latest-ver">v2.0.4</strong>
             </div>
             <div class="calc-row">
               <label class="toggle-switch" for="pref-auto-update">

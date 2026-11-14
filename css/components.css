@@ -216,7 +216,7 @@ form:has(input:invalid, select:invalid, textarea:invalid) button[type="submit"] 
   width: 48px; height: 48px; border-radius: var(--radius-md);
   display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0;
 }
-.metric-icon-box.rev { background: rgba(99, 102, 241, 0.15); color: var(--primary); }
+.metric-icon-box.rev { background: var(--primary-glow); color: var(--primary); }
 .metric-icon-box.exp { background: rgba(244, 63, 94, 0.15); color: var(--danger); }
 .metric-icon-box.net { background: rgba(16, 185, 129, 0.15); color: var(--success); }
 .metric-icon-box.card { background: rgba(217, 70, 239, 0.15); color: var(--secondary); }
@@ -267,7 +267,7 @@ tr:hover td { background: var(--input-bg); }
   display: inline-block; padding: 0.22rem 0.55rem; border-radius: 6px;
   font-size: 0.75rem; font-weight: 600; background: var(--input-bg);
 }
-.badge-partner { background: rgba(99, 102, 241, 0.18); color: var(--primary); }
+.badge-partner { background: var(--primary-glow); color: var(--primary); }
 .badge-employee { background: rgba(245, 158, 11, 0.18); color: var(--warning); }
 .badge-category.supplies { background: rgba(139, 92, 246, 0.18); color: #a78bfa; }
 .badge-category.rent { background: rgba(99, 102, 241, 0.18); color: #818cf8; }
@@ -275,6 +275,14 @@ tr:hover td { background: var(--input-bg); }
 .badge-category.salaries { background: rgba(16, 185, 129, 0.18); color: #34d399; }
 .badge-category.marketing { background: rgba(245, 158, 11, 0.18); color: #fbbf24; }
 .badge-category.other { background: rgba(100, 116, 139, 0.2); color: var(--text-secondary); }
+
+html.theme-light .badge-employee { background: rgba(249, 171, 0, 0.16); color: #b06000; }
+html.theme-light .badge-category.supplies { background: rgba(109, 40, 217, 0.1); color: #6d28d9; }
+html.theme-light .badge-category.rent { background: rgba(26, 115, 232, 0.1); color: #1a73e8; }
+html.theme-light .badge-category.utilities { background: rgba(14, 116, 144, 0.1); color: #0e7490; }
+html.theme-light .badge-category.salaries { background: rgba(19, 115, 51, 0.1); color: #137333; }
+html.theme-light .badge-category.marketing { background: rgba(176, 96, 0, 0.12); color: #b06000; }
+html.theme-light .remove-image-btn { background: rgba(217, 48, 37, 0.1); color: var(--danger); border-color: rgba(217, 48, 37, 0.28); }
 
 .receipt-btn {
   display: inline-flex; align-items: center; gap: 0.35rem;

@@ -608,7 +608,7 @@ async function saveIntegrations() {
 }
 
 export function loadPreferences(onAfterApply) {
-  let prefs = { theme: 'dark', palette: 'indigo', fontSize: '100', lang: 'pt' };
+  let prefs = { theme: 'light', palette: 'workspace', fontSize: '100', lang: 'pt' };
   try {
     const raw = localStorage.getItem('loja_finance_prefs');
     if (raw) prefs = { ...prefs, ...JSON.parse(raw) };
@@ -638,6 +638,8 @@ function applyPreferences(theme, palette, fontSize, lang, onAfterApply) {
   state.currentLanguage = lang;
   document.documentElement.className = `theme-${theme} palette-${palette}`;
   document.documentElement.style.fontSize = `${fontSize}%`;
+  const themeMeta = document.querySelector('meta[name="theme-color"]');
+  if (themeMeta) themeMeta.setAttribute('content', theme === 'dark' ? '#0b071e' : '#1a73e8');
   translatePageLayout(lang);
   updateDateBadgeSubtitle();
   onAfterApply?.();
