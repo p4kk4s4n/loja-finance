@@ -1,12 +1,28 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <defs>
-    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#6366f1"/>
-      <stop offset="100%" stop-color="#d946ef"/>
-    </linearGradient>
-  </defs>
-  <rect width="512" height="512" rx="112" fill="#0b071e"/>
-  <rect x="40" y="40" width="432" height="432" rx="92" fill="url(#g)" opacity="0.16"/>
-  <path d="M112 336 L208 236 L276 292 L396 164" fill="none" stroke="url(#g)" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M332 164 H396 V228" fill="none" stroke="#06b6d4" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect width="512" height="512" fill="#ffffff"/>
+
+  <!-- Storefront Body (Google Blue) -->
+  <path d="M140 222 H268 V348 Q268 360 256 360 H152 Q140 360 140 348 Z" fill="#1a73e8"/>
+  <!-- Storefront Doorway Cutout -->
+  <path d="M174 274 Q174 264 184 264 H220 Q230 264 230 274 V360 H174 Z" fill="#ffffff"/>
+
+  <!-- Storefront Awning -->
+  <path d="M138 148 Q144 136 158 136 H290 Q304 136 310 148 L322 192 C322 214 294 226 276 212 C262 226 234 226 220 212 C206 226 178 226 164 212 C146 226 118 214 118 192 Z" fill="#1a73e8" stroke="#ffffff" stroke-width="8" stroke-linejoin="round"/>
+  <!-- Awning Stripes -->
+  <path d="M192 142 L176 210 M250 142 L248 210" stroke="#ffffff" stroke-width="10" stroke-linecap="round"/>
+
+  <!-- Financial Card (Soft Workspace Sky Blue) -->
+  <g transform="translate(306 254) rotate(36)">
+    <rect x="-72" y="-102" width="144" height="204" rx="20" fill="#d2e3fc" stroke="#ffffff" stroke-width="10"/>
+    <!-- EMV Chip -->
+    <rect x="-46" y="-58" width="32" height="24" rx="5" fill="#8ab4f8"/>
+    <!-- Card Detail Lines -->
+    <rect x="-46" y="-12" width="88" height="10" rx="5" fill="#8ab4f8"/>
+    <rect x="-46" y="14" width="64" height="10" rx="5" fill="#8ab4f8"/>
+  </g>
+
+  <!-- R$ Badge (Google Green) -->
+  <circle cx="344" cy="322" r="72" fill="#ffffff"/>
+  <circle cx="344" cy="322" r="62" fill="#1e8e3e"/>
+  <text x="344" y="324" fill="#ffffff" font-family="Inter, Segoe UI, Arial, sans-serif" font-weight="800" font-size="56" text-anchor="middle" dominant-baseline="central" letter-spacing="-1">R$</text>
 </svg>
