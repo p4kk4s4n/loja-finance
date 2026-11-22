@@ -7,14 +7,27 @@ import {
   getDocs,
   setDoc,
   addDoc,
+  updateDoc,
   writeBatch,
+  runTransaction,
+  increment,
   onSnapshot,
   query,
+  where,
   orderBy,
   serverTimestamp
 } from './firebase-config.js';
 import { state } from './state.js';
-import { formatMemberNameWithRole, parseFlexibleNumber, sha256Hex, toIsoTimestamp, groupExpenseDocs } from './utils.js';
+import {
+  formatMemberNameWithRole,
+  parseFlexibleNumber,
+  sha256Hex,
+  toIsoTimestamp,
+  groupExpenseDocs,
+  makeTallyDayId,
+  normalizeBarcode,
+  round2
+} from './utils.js';
 
 const DEFAULT_STORES = [
   { name: 'Store 1', streams: 'Stone, Rede' },
@@ -96,6 +109,12 @@ export function stopRealtimeListeners() {
     try { unsub(); } catch (_) {}
   }
   state.unsubscribes = [];
+  if (typeof state.tallyDayUnsub === 'function') {
+    try { state.tallyDayUnsub(); } catch (_) {}
+  }
+  state.tallyDayUnsub = null;
+  state.activeTallyDayId = '';
+  state.activeTallyLines = [];
   state.listenersReady = false;
 }
 
@@ -163,7 +182,32 @@ export async function subscribeRealtimeData(callbacks = {}) {
     callbacks.onLedgerUpdated?.();
   });
 
-  state.unsubscribes.push(uStores, uCats, uAi, uTeam, uSubs, uExp);
+  const uMenu = onSnapshot(collection(db, 'menuItems'), (snap) => {
+    const items = snap.docs.map((d) => ({
+      id: d.id,
+      ...d.data(),
+      createdAt: toIsoTimestamp(d.data().createdAt),
+      updatedAt: toIsoTimestamp(d.data().updatedAt)
+    }));
+    items.sort((a, b) => {
+      const cCmp = (a.category || '').localeCompare(b.category || '');
+      return cCmp !== 0 ? cCmp : (a.name || '').localeCompare(b.name || '');
+    });
+    state.menuItems = items;
+    callbacks.onMenuItemsUpdated?.(items);
+  });
+
+  const qTallyDays = query(collection(db, 'tallyDays'), orderBy('date', 'desc'));
+  const uTallyDays = onSnapshot(qTallyDays, (snap) => {
+    state.tallyDays = snap.docs.map((d) => ({
+      id: d.id,
+      ...d.data(),
+      updatedAt: toIsoTimestamp(d.data().updatedAt)
+    }));
+    callbacks.onTallyDaysUpdated?.(state.tallyDays);
+  });
+
+  state.unsubscribes.push(uStores, uCats, uAi, uTeam, uSubs, uExp, uMenu, uTallyDays);
   state.listenersReady = true;
 }
 
@@ -304,4 +348,393 @@ export async function saveTeamRosterToDb(roster) {
   }
 
   await batch.commit();
+}
+
+/* ==================== CATALOG & TALLY OPERATIONS ==================== */
+
+export async function saveMenuItemToDb(item) {
+  const { db } = await initFirebase();
+  const nowIso = new Date().toISOString();
+  const isNew = !item.id;
+  const ref = isNew ? doc(collection(db, 'menuItems')) : doc(db, 'menuItems', item.id);
+  const payload = {
+    storeId: (item.storeId || '').toString().trim(),
+    name: (item.name || '').toString().trim(),
+    price: round2(parseFlexibleNumber(item.price) || 0),
+    barcode: normalizeBarcode(item.barcode || ''),
+    category: (item.category || '').toString().trim(),
+    active: item.active !== false,
+    updatedAt: nowIso
+  };
+  if (isNew) {
+    payload.createdAt = nowIso;
+    await setDoc(ref, payload);
+  } else {
+    await setDoc(ref, payload, { merge: true });
+  }
+  return ref.id;
+}
+
+export async function archiveMenuItemInDb(itemId, active = false) {
+  if (!itemId) return;
+  const { db } = await initFirebase();
+  await updateDoc(doc(db, 'menuItems', itemId), {
+    active: Boolean(active),
+    updatedAt: new Date().toISOString()
+  });
+}
+
+export async function copyMenuItemsToStoreInDb(sourceStoreId, targetStoreId, allItems = state.menuItems) {
+  const src = (sourceStoreId || '').trim();
+  const dst = (targetStoreId || '').trim();
+  if (!src || !dst || src === dst) return { copiedCount: 0, skippedCount: 0 };
+
+  const { db } = await initFirebase();
+  const nowIso = new Date().toISOString();
+  const srcItems = (allItems || []).filter((i) => (i.storeId || '').trim() === src && i.active !== false);
+  const dstItems = (allItems || []).filter((i) => (i.storeId || '').trim() === dst && i.active !== false);
+
+  const dstNames = new Set(dstItems.map((i) => (i.name || '').trim().toLowerCase()));
+  const dstBarcodes = new Set(dstItems.map((i) => normalizeBarcode(i.barcode)).filter(Boolean));
+
+  const batch = writeBatch(db);
+  let copiedCount = 0;
+  let skippedCount = 0;
+
+  for (const item of srcItems) {
+    const cleanName = (item.name || '').trim();
+    const cleanCode = normalizeBarcode(item.barcode);
+    if (!cleanName || dstNames.has(cleanName.toLowerCase()) || (cleanCode && dstBarcodes.has(cleanCode))) {
+      skippedCount += 1;
+      continue;
+    }
+    const ref = doc(collection(db, 'menuItems'));
+    batch.set(ref, {
+      storeId: dst,
+      name: cleanName,
+      price: round2(Number(item.price) || 0),
+      barcode: cleanCode,
+      category: (item.category || '').trim(),
+      active: true,
+      createdAt: nowIso,
+      updatedAt: nowIso
+    });
+    dstNames.add(cleanName.toLowerCase());
+    if (cleanCode) dstBarcodes.add(cleanCode);
+    copiedCount += 1;
+  }
+
+  if (copiedCount > 0) {
+    await batch.commit();
+  }
+  return { copiedCount, skippedCount };
+}
+
+export async function subscribeTallyDayLines(storeId, dateIso, onUpdate) {
+  if (typeof state.tallyDayUnsub === 'function') {
+    try { state.tallyDayUnsub(); } catch (_) {}
+    state.tallyDayUnsub = null;
+  }
+  if (!storeId || !dateIso) {
+    state.activeTallyDayId = '';
+    state.activeTallyLines = [];
+    onUpdate?.([], '');
+    return () => {};
+  }
+
+  const { db } = await initFirebase();
+  const dayId = makeTallyDayId(storeId, dateIso);
+  state.activeTallyDayId = dayId;
+  const qLines = query(collection(db, 'tallyDays', dayId, 'lines'), orderBy('createdAt', 'desc'));
+  const unsub = onSnapshot(qLines, (snap) => {
+    const lines = snap.docs.map((d) => ({
+      id: d.id,
+      ...d.data(),
+      createdAt: toIsoTimestamp(d.data().createdAt),
+      editedAt: toIsoTimestamp(d.data().editedAt),
+      voidedAt: toIsoTimestamp(d.data().voidedAt)
+    }));
+    state.activeTallyLines = lines;
+    onUpdate?.(lines, dayId);
+  });
+  state.tallyDayUnsub = unsub;
+  return unsub;
+}
+
+export async function addTallyOrderToDb({
+  storeId,
+  date,
+  orderId,
+  payment = '',
+  lines = [],
+  userId = '',
+  userName = '',
+  checkIdempotent = false
+}) {
+  if (!storeId || !date || !Array.isArray(lines) || lines.length === 0) {
+    return { skippedDuplicate: false };
+  }
+  const { db } = await initFirebase();
+  const dayId = makeTallyDayId(storeId, date);
+  const dayRef = doc(db, 'tallyDays', dayId);
+  const nowIso = new Date().toISOString();
+
+  if (checkIdempotent && orderId) {
+    const firstSnap = await getDoc(doc(db, 'tallyDays', dayId, 'lines', `${orderId}_0`));
+    if (firstSnap.exists()) {
+      return { skippedDuplicate: true };
+    }
+  }
+
+  let orderTotal = 0;
+  let orderQty = 0;
+  const batch = writeBatch(db);
+
+  lines.forEach((line, idx) => {
+    const qty = Math.max(1, Math.round(Number(line.qty) || 1));
+    const price = round2(Number(line.price) || 0);
+    orderTotal = round2(orderTotal + price * qty);
+    orderQty += qty;
+
+    const lineId = orderId ? `${orderId}_${idx}` : doc(collection(db, 'tallyDays', dayId, 'lines')).id;
+    const lineRef = doc(db, 'tallyDays', dayId, 'lines', lineId);
+    batch.set(lineRef, {
+      itemId: line.itemId || '',
+      name: line.name || '',
+      barcode: normalizeBarcode(line.barcode || ''),
+      category: line.category || '',
+      price,
+      qty,
+      orderId: orderId || lineId,
+      payment: payment || '',
+      userId: userId || '',
+      userName: userName || '',
+      createdAt: nowIso,
+      voided: false
+    });
+  });
+
+  const cardPixDelta = payment === 'Card' || payment === 'PIX' ? orderTotal : 0;
+  batch.set(
+    dayRef,
+    {
+      storeId,
+      date,
+      total: increment(orderTotal),
+      itemCount: increment(orderQty),
+      cardPixTotal: increment(cardPixDelta),
+      updatedAt: nowIso
+    },
+    { merge: true }
+  );
+
+  await batch.commit();
+  return { skippedDuplicate: false, orderTotal, orderQty };
+}
+
+export async function addRetroactiveTallyLineToDb({
+  storeId,
+  date,
+  item,
+  qty = 1,
+  payment = '',
+  userId = '',
+  userName = ''
+}) {
+  if (!storeId || !date || !item) return;
+  const { db } = await initFirebase();
+  const dayId = makeTallyDayId(storeId, date);
+  const dayRef = doc(db, 'tallyDays', dayId);
+  const lineRef = doc(collection(db, 'tallyDays', dayId, 'lines'));
+  const editRef = doc(collection(db, 'tallyEdits'));
+  const nowIso = new Date().toISOString();
+
+  const cleanQty = Math.max(1, Math.round(Number(qty) || 1));
+  const price = round2(Number(item.price) || 0);
+  const deltaTotal = round2(price * cleanQty);
+  const cardPixDelta = payment === 'Card' || payment === 'PIX' ? deltaTotal : 0;
+
+  const batch = writeBatch(db);
+  batch.set(lineRef, {
+    itemId: item.id || '',
+    name: item.name || '',
+    barcode: normalizeBarcode(item.barcode || ''),
+    category: item.category || '',
+    price,
+    qty: cleanQty,
+    orderId: `retro_${Date.now()}`,
+    payment: payment || '',
+    userId: userId || '',
+    userName: userName || '',
+    createdAt: nowIso,
+    voided: false,
+    retroactive: true
+  });
+
+  batch.set(
+    dayRef,
+    {
+      storeId,
+      date,
+      total: increment(deltaTotal),
+      itemCount: increment(cleanQty),
+      cardPixTotal: increment(cardPixDelta),
+      updatedAt: nowIso
+    },
+    { merge: true }
+  );
+
+  batch.set(editRef, {
+    dayId,
+    storeId,
+    date,
+    lineId: lineRef.id,
+    itemName: item.name || '',
+    action: 'add_line',
+    before: null,
+    after: { qty: cleanQty, price, payment: payment || '', voided: false },
+    userId: userId || '',
+    userName: userName || '',
+    at: nowIso
+  });
+
+  await batch.commit();
+}
+
+export async function voidTallyLineInDb({ storeId, date, lineId, userId = '', userName = '' }) {
+  if (!storeId || !date || !lineId) return;
+  const { db } = await initFirebase();
+  const dayId = makeTallyDayId(storeId, date);
+  const dayRef = doc(db, 'tallyDays', dayId);
+  const lineRef = doc(db, 'tallyDays', dayId, 'lines', lineId);
+  const editRef = doc(collection(db, 'tallyEdits'));
+  const nowIso = new Date().toISOString();
+
+  await runTransaction(db, async (tx) => {
+    const [lineSnap, daySnap] = await Promise.all([tx.get(lineRef), tx.get(dayRef)]);
+    if (!lineSnap.exists()) return;
+    const lineData = lineSnap.data();
+    if (lineData.voided === true) return;
+
+    const qty = Number(lineData.qty) || 0;
+    const price = Number(lineData.price) || 0;
+    const lineAmount = round2(price * qty);
+    const dayData = daySnap.exists() ? daySnap.data() : { total: 0, itemCount: 0, cardPixTotal: 0 };
+    const isCardPix = lineData.payment === 'Card' || lineData.payment === 'PIX';
+
+    tx.update(lineRef, {
+      voided: true,
+      voidedBy: userName || '',
+      voidedAt: nowIso
+    });
+
+    tx.set(
+      dayRef,
+      {
+        storeId,
+        date,
+        total: Math.max(0, round2((Number(dayData.total) || 0) - lineAmount)),
+        itemCount: Math.max(0, (Number(dayData.itemCount) || 0) - qty),
+        cardPixTotal: Math.max(
+          0,
+          round2((Number(dayData.cardPixTotal) || 0) - (isCardPix ? lineAmount : 0))
+        ),
+        updatedAt: nowIso
+      },
+      { merge: true }
+    );
+
+    tx.set(editRef, {
+      dayId,
+      storeId,
+      date,
+      lineId,
+      itemName: lineData.name || '',
+      action: 'void',
+      before: { qty, price, voided: false },
+      after: { qty, price, voided: true },
+      userId: userId || '',
+      userName: userName || '',
+      at: nowIso
+    });
+  });
+}
+
+export async function editTallyLineInDb({ storeId, date, lineId, newQty, userId = '', userName = '' }) {
+  const cleanQty = Math.max(1, Math.round(Number(newQty) || 0));
+  if (!storeId || !date || !lineId || cleanQty < 1) return;
+
+  const { db } = await initFirebase();
+  const dayId = makeTallyDayId(storeId, date);
+  const dayRef = doc(db, 'tallyDays', dayId);
+  const lineRef = doc(db, 'tallyDays', dayId, 'lines', lineId);
+  const editRef = doc(collection(db, 'tallyEdits'));
+  const nowIso = new Date().toISOString();
+
+  await runTransaction(db, async (tx) => {
+    const [lineSnap, daySnap] = await Promise.all([tx.get(lineRef), tx.get(dayRef)]);
+    if (!lineSnap.exists()) return;
+    const lineData = lineSnap.data();
+    if (lineData.voided === true) return;
+
+    const oldQty = Number(lineData.qty) || 0;
+    if (oldQty === cleanQty) return;
+
+    const price = Number(lineData.price) || 0;
+    const qtyDiff = cleanQty - oldQty;
+    const totalDiff = round2(qtyDiff * price);
+    const dayData = daySnap.exists() ? daySnap.data() : { total: 0, itemCount: 0, cardPixTotal: 0 };
+    const isCardPix = lineData.payment === 'Card' || lineData.payment === 'PIX';
+
+    tx.update(lineRef, {
+      qty: cleanQty,
+      editedBy: userName || '',
+      editedAt: nowIso
+    });
+
+    tx.set(
+      dayRef,
+      {
+        storeId,
+        date,
+        total: Math.max(0, round2((Number(dayData.total) || 0) + totalDiff)),
+        itemCount: Math.max(0, (Number(dayData.itemCount) || 0) + qtyDiff),
+        cardPixTotal: Math.max(
+          0,
+          round2((Number(dayData.cardPixTotal) || 0) + (isCardPix ? totalDiff : 0))
+        ),
+        updatedAt: nowIso
+      },
+      { merge: true }
+    );
+
+    tx.set(editRef, {
+      dayId,
+      storeId,
+      date,
+      lineId,
+      itemName: lineData.name || '',
+      action: 'edit_qty',
+      before: { qty: oldQty, price },
+      after: { qty: cleanQty, price },
+      userId: userId || '',
+      userName: userName || '',
+      at: nowIso
+    });
+  });
+}
+
+export async function fetchTallyEditsFromDb(storeId, dateIso) {
+  if (!storeId || !dateIso) return [];
+  const { db } = await initFirebase();
+  const dayId = makeTallyDayId(storeId, dateIso);
+  const qEdits = query(collection(db, 'tallyEdits'), where('dayId', '==', dayId));
+  const snap = await getDocs(qEdits);
+  const list = snap.docs.map((d) => ({
+    id: d.id,
+    ...d.data(),
+    at: toIsoTimestamp(d.data().at)
+  }));
+  list.sort((a, b) => (b.at || '').localeCompare(a.at || ''));
+  return list;
 }

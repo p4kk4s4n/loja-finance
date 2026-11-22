@@ -13,9 +13,10 @@ import {
 export function exportHistoryCSV() {
   const pt = state.currentLanguage === 'pt';
   const requestedStore = document.getElementById('dashboard-store-filter')?.value || 'All Stores';
-  const { scopedSubmissions, scopedExpenses } = getScopedLedgerData({
+  const { scopedSubmissions, scopedExpenses, scopedTallyDays } = getScopedLedgerData({
     rawSubmissions: state.rawSubmissions,
     groupedExpenses: state.groupedExpenses,
+    tallyDays: state.tallyDays,
     teamRoster: state.teamRoster,
     businesses: state.businesses,
     currentUser: state.currentUser,
@@ -34,6 +35,15 @@ export function exportHistoryCSV() {
     const signed = getSignedSubmissionAmount(r.entryType, r.amount);
     rows.push(
       ['Sales', r.date, stripRoleSuffix(r.submitter), r.store, r.entryType, '', signed, r.notes || '']
+        .map(q)
+        .join(',')
+    );
+  }
+
+  for (const td of scopedTallyDays || []) {
+    if (!td || Number(td.total) <= 0) continue;
+    rows.push(
+      ['Tally', td.date, '', td.storeId || td.store || '', `${td.itemCount || 0} items`, '', Number(td.total) || 0, '']
         .map(q)
         .join(',')
     );

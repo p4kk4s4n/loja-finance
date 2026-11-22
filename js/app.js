@@ -12,7 +12,9 @@ import {
 } from './auth.js';
 import { subscribeRealtimeData } from './db.js';
 import { initUpdater, refreshPwaInstallUI } from './updater.js';
-import { bindSalesEvents } from './ui-sales.js';
+import { closeCameraScanner } from './scanner.js';
+import { bindSalesEvents, updateSalesTallyHint } from './ui-sales.js';
+import { bindTallyEvents, refreshTallyStoreOptions, refreshTallyUI, syncOfflineTallyQueue } from './ui-tally.js';
 import { bindExpenseEvents, renderExpenseLines, populateMasterCategoryDropdown } from './ui-expenses.js';
 import { bindDashboardEvents, renderDashboard, showSkeletons } from './ui-dashboard.js';
 import {
@@ -21,6 +23,7 @@ import {
   populateStoreDropdowns,
   renderIntegrationInputs,
   renderSettingsBusinesses,
+  renderSettingsCatalog,
   renderSettingsCategories,
   renderSettingsRoster,
   syncRosterFromLive,
@@ -46,6 +49,18 @@ export function switchTab(tabName) {
 
   document.querySelectorAll('.tab-pane').forEach((pane) => pane.classList.remove('active'));
   document.getElementById(`tab-${tabName}`)?.classList.add('active');
+
+  if (tabName !== 'tally' && tabName !== 'settings') {
+    closeCameraScanner();
+  }
+  if (tabName === 'tally') {
+    refreshTallyUI();
+  } else if (tabName === 'settings') {
+    const roleKind = normalizeUserRole(state.currentUser?.role);
+    if (roleKind === 'admin' || roleKind === 'partner') renderSettingsCatalog();
+  } else if (tabName === 'submit') {
+    updateSalesTallyHint();
+  }
 
   if (targetBtn && typeof targetBtn.scrollIntoView === 'function') {
     requestAnimationFrame(() => {
@@ -92,6 +107,7 @@ async function applyLoginState() {
 
     const roleKind = normalizeUserRole(user.role);
     const isAdmin = roleKind === 'admin';
+    const canManageCatalog = roleKind === 'admin' || roleKind === 'partner';
     const canViewPortfolio = roleKind !== 'employee';
 
     const settingsNavBtn = document.getElementById('nav-btn-settings');
@@ -102,6 +118,9 @@ async function applyLoginState() {
 
     const partnerPanel = document.getElementById('partner-split-panel');
     if (partnerPanel) partnerPanel.style.display = canViewPortfolio ? 'block' : 'none';
+
+    const catalogSettingsEl = document.getElementById('settings-catalog-section');
+    if (catalogSettingsEl) catalogSettingsEl.style.display = canManageCatalog ? '' : 'none';
 
     const adminSettingsEl = document.getElementById('settings-admin-section');
     if (adminSettingsEl) adminSettingsEl.style.display = isAdmin ? '' : 'none';
@@ -116,8 +135,14 @@ async function applyLoginState() {
     switchTab('submit');
   }
 
-  const isAdminUser = normalizeUserRole(user.role) === 'admin';
+  const roleKindUser = normalizeUserRole(user.role);
+  const isAdminUser = roleKindUser === 'admin';
+  const canManageCatUser = roleKindUser === 'admin' || roleKindUser === 'partner';
   populateStoreDropdowns();
+  refreshTallyStoreOptions();
+  if (canManageCatUser) {
+    renderSettingsCatalog();
+  }
   if (isAdminUser) {
     renderSettingsBusinesses();
     renderSettingsCategories();
@@ -129,10 +154,17 @@ async function applyLoginState() {
   await subscribeRealtimeData({
     onStoresUpdated: () => {
       populateStoreDropdowns();
-      if (normalizeUserRole(state.currentUser?.role) === 'admin') {
+      refreshTallyStoreOptions();
+      const rk = normalizeUserRole(state.currentUser?.role);
+      if (rk === 'admin' || rk === 'partner') {
+        renderSettingsCatalog();
+      }
+      if (rk === 'admin') {
         renderSettingsBusinesses();
         syncRosterFromLive(false);
       }
+      refreshTallyUI();
+      updateSalesTallyHint();
       renderDashboard();
     },
     onCategoriesUpdated: () => {
@@ -153,9 +185,24 @@ async function applyLoginState() {
       renderDashboard();
     },
     onLedgerUpdated: () => {
+      updateSalesTallyHint();
+      renderDashboard();
+    },
+    onMenuItemsUpdated: () => {
+      refreshTallyUI();
+      const rk = normalizeUserRole(state.currentUser?.role);
+      if (rk === 'admin' || rk === 'partner') {
+        renderSettingsCatalog();
+      }
+    },
+    onTallyDaysUpdated: () => {
+      refreshTallyUI();
+      updateSalesTallyHint();
       renderDashboard();
     }
   });
+
+  syncOfflineTallyQueue(true);
 }
 
 function bindGlobalGesturesAndNav() {
@@ -292,7 +339,7 @@ function bindSwipeNavigation() {
         tracking = false;
         return;
       }
-      if (e.target.closest('input, select, textarea, canvas, [data-no-swipe]')) {
+      if (e.target.closest('input, select, textarea, canvas, video, [data-no-swipe]')) {
         tracking = false;
         return;
       }
@@ -353,11 +400,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (state.currentUser) {
       populateMasterCategoryDropdown();
       populateStoreDropdowns();
-      if (normalizeUserRole(state.currentUser.role) === 'admin') {
+      refreshTallyStoreOptions();
+      const rk = normalizeUserRole(state.currentUser.role);
+      if (rk === 'admin' || rk === 'partner') {
+        renderSettingsCatalog();
+      }
+      if (rk === 'admin') {
         syncRosterFromLive(false);
         renderSettingsBusinesses();
         renderSettingsCategories();
       }
+      refreshTallyUI();
+      updateSalesTallyHint();
       renderDashboard();
     }
   });
@@ -368,8 +422,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   bindGlobalGesturesAndNav();
   bindSalesEvents(() => switchTab('dashboard'));
+  bindTallyEvents(switchTab);
   bindExpenseEvents(() => switchTab('dashboard'));
   bindDashboardEvents(switchTab);
+  window.addEventListener('online', () => syncOfflineTallyQueue(true));
   bindSettingsEvents(() => {
     refreshPwaInstallUI();
     if (state.currentUser) {

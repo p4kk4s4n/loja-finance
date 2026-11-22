@@ -29,7 +29,7 @@
       <div class="brand">
         <div class="brand-icon"><i class="fa-solid fa-chart-line"></i></div>
         <div class="brand-name">Loja Finance</div>
-        <span id="header-version-pill" class="version-pill">v2.0.5</span>
+        <span id="header-version-pill" class="version-pill">v2.1.0</span>
       </div>
 
       <div class="user-info">
@@ -44,6 +44,9 @@
     <nav>
       <button type="button" class="nav-btn active" data-tab="submit">
         <i class="fa-solid fa-pen-to-square"></i> <span data-i18n="nav_log_daily">Log Daily</span>
+      </button>
+      <button id="nav-btn-tally" type="button" class="nav-btn" data-tab="tally">
+        <i class="fa-solid fa-barcode"></i> <span data-i18n="nav_tally">Orders</span>
       </button>
       <button type="button" class="nav-btn" data-tab="expense">
         <i class="fa-solid fa-receipt"></i> <span data-i18n="nav_log_expense">Log Expense</span>
@@ -132,6 +135,8 @@
                 <textarea id="notes" rows="2" required></textarea>
               </div>
 
+              <div id="sales-tally-hint" class="sales-tally-hint form-grid-full" style="display:none;"></div>
+
               <div class="form-grid-full calc-row">
                 <div>
                   <h4 data-i18n="daily_summary_title" style="font-family:var(--font-display); margin-bottom:0.2rem;">Live Sales Summary</h4>
@@ -145,6 +150,171 @@
               </button>
             </div>
           </form>
+        </div>
+      </div>
+
+      <!-- COMANDA / ORDER TALLY TAB -->
+      <div id="tab-tally" class="tab-pane">
+        <div class="glass-card">
+          <div class="glass-card-header">
+            <h2 class="glass-card-title">
+              <i class="fa-solid fa-barcode" style="color:var(--primary);"></i>
+              <span data-i18n="tally_title">Comanda &amp; Leitor</span>
+            </h2>
+            <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+              <select id="tally-store-select" style="width:auto; min-width:140px; padding:0.45rem 0.85rem; font-size:0.85rem;"></select>
+              <div class="tally-view-switch" data-no-swipe="true">
+                <button id="btn-tally-view-order" type="button" class="tally-switch-btn active" data-i18n="tally_view_order">Novo Pedido</button>
+                <button id="btn-tally-view-history" type="button" class="tally-switch-btn" data-i18n="tally_view_history">Histórico / Editar</button>
+              </div>
+              <button id="tally-offline-badge" type="button" class="badge tally-offline-badge" style="display:none; cursor:pointer;"></button>
+              <button id="btn-tally-go-settings" type="button" style="display:none;" aria-hidden="true"></button>
+            </div>
+          </div>
+
+          <div class="tally-summary-bar">
+            <div style="display:flex; align-items:center; gap:0.65rem; flex-wrap:wrap;">
+              <span data-i18n="tally_today_label" style="font-weight:600; color:var(--text-secondary);">Comanda de Hoje:</span>
+              <span id="tally-today-count" class="badge">0 item(ns)</span>
+            </div>
+            <strong id="tally-today-total" style="font-family:var(--font-display); font-size:1.45rem; color:var(--accent);">R$ 0,00</strong>
+          </div>
+
+          <!-- ORDER ENTRY VIEW -->
+          <div id="tally-view-order">
+            <div class="tally-scan-bar">
+              <div style="flex:1; min-width:190px; position:relative;">
+                <input type="text" id="tally-scan-input" inputmode="search" autocomplete="off" placeholder="Bipe o código de barras ou busque item...">
+              </div>
+              <button id="btn-tally-bt-mode" type="button" class="btn-secondary" title="Bluetooth Scanner Mode">
+                <i class="fa-brands fa-bluetooth-b"></i> <span data-i18n="tally_bt_btn">Leitor BT</span>
+              </button>
+              <button id="btn-tally-camera" type="button" class="btn-submit" style="padding:0.55rem 1rem; font-size:0.88rem;">
+                <i class="fa-solid fa-camera"></i> <span data-i18n="tally_cam_btn">Câmera</span>
+              </button>
+            </div>
+
+            <div class="tally-layout">
+              <div style="min-width:0;">
+                <div id="tally-category-chips" class="tally-chips" data-no-swipe="true"></div>
+                <div id="tally-tiles-grid" class="tally-tiles-grid"></div>
+              </div>
+
+              <div id="tally-cart-card" class="tally-cart">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.85rem;">
+                  <h3 style="font-family:var(--font-display); font-size:1.05rem; margin:0;">
+                    <i class="fa-solid fa-cart-shopping" style="color:var(--primary);"></i>
+                    <span data-i18n="tally_cart_title">Pedido Atual</span>
+                  </h3>
+                  <button id="btn-tally-clear-cart" type="button" class="btn-danger-outline" disabled>
+                    <i class="fa-solid fa-trash"></i> <span data-i18n="tally_clear_btn">Limpar</span>
+                  </button>
+                </div>
+
+                <div id="tally-cart-items" class="tally-cart-items"></div>
+
+                <div style="margin-top:0.85rem;">
+                  <label style="font-size:0.78rem; display:block; margin-bottom:0.35rem;" data-i18n="tally_payment_label">Pagamento (opcional)</label>
+                  <div id="tally-payment-pills" class="tally-payment-pills" data-no-swipe="true">
+                    <button type="button" class="tally-chip active" data-tally-pay="" data-i18n="tally_pay_none">—</button>
+                    <button type="button" class="tally-chip" data-tally-pay="Cash" data-i18n="tally_pay_cash">Dinheiro</button>
+                    <button type="button" class="tally-chip" data-tally-pay="Card" data-i18n="tally_pay_card">Cartão</button>
+                    <button type="button" class="tally-chip" data-tally-pay="PIX">PIX</button>
+                  </div>
+                </div>
+
+                <div class="calc-row" style="margin-top:0.9rem; margin-bottom:0.9rem;">
+                  <span data-i18n="tally_order_total" style="font-weight:600;">Total do Pedido</span>
+                  <strong id="tally-cart-total" style="font-family:var(--font-display); font-size:1.3rem; color:var(--primary);">R$ 0,00</strong>
+                </div>
+
+                <button id="btn-tally-confirm" type="button" class="btn-submit" style="width:100%;" disabled>
+                  <i class="fa-solid fa-check"></i> <span data-i18n="tally_confirm_btn">Confirmar Venda</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- HISTORY & RETROACTIVE EDITS VIEW -->
+          <div id="tally-view-history" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; margin-bottom:1.1rem;">
+              <div style="display:flex; align-items:center; gap:0.45rem; flex-wrap:wrap;">
+                <button id="btn-tally-prev-day" type="button" class="btn-secondary" style="padding:0.45rem 0.7rem;" aria-label="Previous Day">
+                  <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <input type="date" id="tally-history-date" style="width:auto; padding:0.45rem 0.75rem; font-size:0.88rem;">
+                <button id="btn-tally-next-day" type="button" class="btn-secondary" style="padding:0.45rem 0.7rem;" aria-label="Next Day">
+                  <i class="fa-solid fa-chevron-right"></i>
+                </button>
+                <button id="btn-tally-today" type="button" class="btn-secondary" style="padding:0.45rem 0.75rem; font-size:0.82rem;" data-i18n="tally_today_btn">Hoje</button>
+              </div>
+              <button id="btn-tally-edit-log" type="button" class="btn-secondary" style="display:none;">
+                <i class="fa-solid fa-clock-rotate-left"></i> <span data-i18n="tally_audit_btn">Log de Edições</span>
+              </button>
+            </div>
+
+            <div class="metrics-grid" style="margin-bottom:1.25rem;">
+              <div class="metric-card">
+                <div class="metric-info">
+                  <span class="metric-label" data-i18n="tally_hist_tally">Comanda</span>
+                  <span class="metric-value" id="tally-hist-summary-tally" style="font-size:1.2rem; color:var(--primary);">R$ 0,00</span>
+                </div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-info">
+                  <span class="metric-label" data-i18n="tally_hist_manual">Caixa Manual</span>
+                  <span class="metric-value" id="tally-hist-summary-manual" style="font-size:1.2rem;">R$ 0,00</span>
+                </div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-info">
+                  <span class="metric-label" data-i18n="tally_hist_unitemized">Não Itemizado</span>
+                  <span class="metric-value" id="tally-hist-summary-unitemized" style="font-size:1.2rem; color:var(--warning);">R$ 0,00</span>
+                </div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-info">
+                  <span class="metric-label" data-i18n="tally_hist_reported">Receita Final</span>
+                  <span class="metric-value" id="tally-hist-summary-reported" style="font-size:1.2rem; color:var(--success);">R$ 0,00</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Socio/Admin Retroactive Add Item -->
+            <div id="tally-retro-add-box" class="calc-row" style="display:none; flex-direction:column; align-items:stretch; gap:0.65rem; margin-bottom:1.25rem;">
+              <strong style="font-size:0.88rem;" data-i18n="tally_retro_title">Adicionar lançamento retroativo (Sócio/Admin)</strong>
+              <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+                <select id="tally-retro-item" style="flex:2; min-width:170px;"></select>
+                <input type="number" id="tally-retro-qty" min="1" value="1" style="width:82px; text-align:center;">
+                <select id="tally-retro-payment" style="flex:1; min-width:120px;">
+                  <option value="" data-i18n="tally_pay_none">—</option>
+                  <option value="Cash" data-i18n="tally_pay_cash">Dinheiro</option>
+                  <option value="Card" data-i18n="tally_pay_card">Cartão</option>
+                  <option value="PIX">PIX</option>
+                </select>
+                <button id="btn-tally-retro-add" type="button" class="btn-submit" style="padding:0.55rem 1rem; font-size:0.85rem;">
+                  <i class="fa-solid fa-plus"></i> <span data-i18n="tally_retro_btn">Adicionar</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="table-container" style="margin-bottom:1.25rem;">
+              <table>
+                <thead>
+                  <tr>
+                    <th data-i18n="tally_tbl_item">Item</th>
+                    <th data-i18n="tally_tbl_qty">Qtd</th>
+                    <th data-i18n="tally_tbl_unit">Unitário (R$)</th>
+                    <th data-i18n="tally_tbl_subtotal">Subtotal (R$)</th>
+                  </tr>
+                </thead>
+                <tbody id="tally-hist-items-tbody"></tbody>
+              </table>
+            </div>
+
+            <h4 style="font-family:var(--font-display); margin-bottom:0.65rem;" data-i18n="tally_events_title">Lançamentos do Dia</h4>
+            <div id="tally-hist-lines-list" class="calc-container"></div>
+          </div>
         </div>
       </div>
 
@@ -297,6 +467,31 @@
             <div id="partner-shares-output-container" class="calc-container"></div>
           </div>
         </div>
+
+        <div class="glass-card" id="dashboard-reconciliation-card" style="display:none; margin-top:1.5rem;">
+          <div class="glass-card-header">
+            <h3 class="glass-card-title">
+              <i class="fa-solid fa-scale-balanced" style="color:var(--primary);"></i>
+              <span data-i18n="dash_recon_title">Reconciliação Comanda vs. Caixa Diário</span>
+            </h3>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th data-i18n="recon_col_date">Data</th>
+                  <th data-i18n="recon_col_store">Loja</th>
+                  <th data-i18n="recon_col_tally">Comanda (R$)</th>
+                  <th data-i18n="recon_col_manual">Manual (R$)</th>
+                  <th data-i18n="recon_col_unitemized">Não Itemizado (R$)</th>
+                  <th data-i18n="recon_col_reported">Considerado (R$)</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="dashboard-reconciliation-tbody"></tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
       <!-- PORTFOLIO TAB -->
@@ -417,11 +612,11 @@
           <div class="calc-container" style="margin-bottom:1.25rem;">
             <div class="calc-row">
               <span data-i18n="upd_current">Installed Version:</span>
-              <strong id="upd-current-ver">v2.0.5</strong>
+              <strong id="upd-current-ver">v2.1.0</strong>
             </div>
             <div class="calc-row">
               <span data-i18n="upd_latest">Latest on GitHub:</span>
-              <strong id="upd-latest-ver">v2.0.5</strong>
+              <strong id="upd-latest-ver">v2.1.0</strong>
             </div>
             <div class="calc-row">
               <label class="toggle-switch" for="pref-auto-update">
@@ -471,7 +666,80 @@
           </div>
         </div>
 
-        <!-- 4. Admin-Only Management Sections -->
+        <!-- 4. Item Catalog per Store (Socio & Admin) -->
+        <div id="settings-catalog-section" style="display:none;">
+          <div class="glass-card">
+            <div class="glass-card-header">
+              <h2 class="glass-card-title">
+                <i class="fa-solid fa-barcode" style="color:var(--primary);"></i>
+                <span data-i18n="set_cat_items_title">Catálogo de Produtos &amp; Códigos</span>
+              </h2>
+              <label class="toggle-switch" for="catalog-show-archived" style="font-size:0.82rem;">
+                <input type="checkbox" id="catalog-show-archived">
+                <span data-i18n="set_cat_show_archived">Mostrar arquivados</span>
+              </label>
+            </div>
+            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1.1rem;" data-i18n="set_cat_items_desc"></p>
+
+            <div class="form-grid" style="margin-bottom:1.1rem; align-items:end;">
+              <div class="form-group">
+                <label for="catalog-store-select" data-i18n="set_cat_store_label">Loja do Catálogo</label>
+                <select id="catalog-store-select"></select>
+              </div>
+              <div class="form-group" id="catalog-copy-row" style="display:flex; flex-direction:row; align-items:flex-end; gap:0.5rem; flex-wrap:wrap;">
+                <div style="flex:1; min-width:140px;">
+                  <label for="catalog-copy-target" data-i18n="set_cat_copy_label">Copiar itens para:</label>
+                  <select id="catalog-copy-target"></select>
+                </div>
+                <button id="btn-catalog-copy" type="button" class="btn-secondary">
+                  <i class="fa-solid fa-copy"></i> <span data-i18n="set_cat_copy_btn">Copiar</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="calc-row" style="flex-direction:column; align-items:stretch; gap:0.85rem; margin-bottom:1.25rem;">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="catalog-item-name" data-i18n="set_cat_item_name">Nome do Produto / Prato</label>
+                  <input type="text" id="catalog-item-name" placeholder="Ex: Heineken 600ml">
+                </div>
+                <div class="form-group">
+                  <label for="catalog-item-price" data-i18n="set_cat_item_price">Preço (R$)</label>
+                  <div class="currency-field">
+                    <span class="currency-prefix">R$</span>
+                    <input type="text" inputmode="decimal" id="catalog-item-price" placeholder="0,00">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="catalog-item-category" data-i18n="set_cat_item_cat">Categoria (opcional)</label>
+                  <input type="text" id="catalog-item-category" list="catalog-category-suggestions" placeholder="Ex: Cervejas, Pratos">
+                  <datalist id="catalog-category-suggestions"></datalist>
+                </div>
+                <div class="form-group">
+                  <label for="catalog-item-barcode" data-i18n="set_cat_item_barcode">Código de Barras (opcional)</label>
+                  <div style="display:flex; gap:0.45rem;">
+                    <input type="text" id="catalog-item-barcode" placeholder="789..." style="flex:1;">
+                    <button id="btn-catalog-scan-barcode" type="button" class="btn-secondary" style="white-space:nowrap;">
+                      <i class="fa-solid fa-camera"></i> <span data-i18n="tally_cam_btn">Câmera</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex; justify-content:flex-end; gap:0.65rem; flex-wrap:wrap;">
+                <button id="btn-catalog-cancel" type="button" class="btn-secondary" style="display:none;">
+                  <span data-i18n="btn_cancel">Cancelar</span>
+                </button>
+                <button id="btn-catalog-save" type="button" class="btn-submit">
+                  <i class="fa-solid fa-plus"></i> <span id="lbl-catalog-save" data-i18n="cat_item_add_btn">Salvar Item</span>
+                </button>
+              </div>
+            </div>
+
+            <div id="catalog-items-list" class="calc-container"></div>
+          </div>
+        </div>
+
+        <!-- 5. Admin-Only Management Sections -->
         <div id="settings-admin-section" style="display:none;">
           <!-- Businesses -->
           <div class="glass-card">
@@ -700,6 +968,69 @@
         </button>
       </div>
       <img id="receipt-modal-img" src="" alt="Receipt" style="max-width:100%; max-height:75vh; border-radius:12px; object-fit:contain;">
+    </div>
+  </dialog>
+
+  <!-- Camera Barcode Scanner Modal -->
+  <dialog id="camera-scanner-modal" class="app-dialog" style="max-width:560px;">
+    <div class="glass-card" style="padding:1.25rem;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem; margin-bottom:0.75rem;">
+        <h3 class="glass-card-title" style="font-size:1rem;">
+          <i class="fa-solid fa-barcode" style="color:var(--primary);"></i>
+          <span id="camera-scanner-title">Camera Barcode Scanner</span>
+        </h3>
+        <div style="display:flex; align-items:center; gap:0.45rem;">
+          <span id="camera-scanner-engine" class="badge">...</span>
+          <button id="btn-camera-torch" type="button" class="btn-secondary" style="display:none; padding:0.35rem 0.65rem;" title="Flashlight">
+            <i class="fa-solid fa-bolt"></i>
+          </button>
+          <button id="btn-close-camera-scanner" type="button" class="btn-secondary" style="padding:0.35rem 0.75rem;">
+            <i class="fa-solid fa-xmark"></i> <span data-i18n="btn_close">Fechar</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="camera-viewfinder">
+        <video id="camera-scanner-video" autoplay muted playsinline></video>
+        <div class="camera-reticle"></div>
+        <div id="camera-scanner-banner" class="camera-banner" style="display:none;"></div>
+      </div>
+      <p id="camera-scanner-status" style="font-size:0.84rem; color:var(--text-secondary); margin-top:0.75rem; text-align:center;"></p>
+    </div>
+  </dialog>
+
+  <!-- Retroactive Tally Line Quantity Editor Modal -->
+  <dialog id="tally-edit-line-modal" class="app-dialog">
+    <div class="glass-card" style="padding:1.4rem;">
+      <h3 class="glass-card-title" style="margin-bottom:0.75rem;">
+        <i class="fa-solid fa-pen" style="color:var(--primary);"></i>
+        <span data-i18n="tally_edit_modal_title">Editar Quantidade</span>
+      </h3>
+      <p id="tally-edit-item-label" style="font-size:0.9rem; font-weight:600; margin-bottom:0.85rem;"></p>
+      <div class="form-group" style="margin-bottom:1rem;">
+        <label for="tally-edit-qty-input" data-i18n="tally_tbl_qty">Qtd</label>
+        <input type="number" id="tally-edit-qty-input" min="1" value="1">
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:0.65rem;">
+        <button id="btn-close-tally-edit" type="button" class="btn-secondary" data-i18n="btn_cancel">Cancelar</button>
+        <button id="btn-tally-edit-save" type="button" class="btn-submit" data-i18n="btn_save">Salvar</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Tally Audit Log Modal -->
+  <dialog id="tally-edit-log-modal" class="app-dialog" style="max-width:560px;">
+    <div class="glass-card" style="padding:1.4rem;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.85rem;">
+        <h3 class="glass-card-title">
+          <i class="fa-solid fa-clock-rotate-left" style="color:var(--primary);"></i>
+          <span data-i18n="tally_audit_btn">Log de Edições</span>
+        </h3>
+        <button id="btn-close-tally-log" type="button" class="btn-secondary" style="padding:0.35rem 0.75rem;">
+          <i class="fa-solid fa-xmark"></i> <span data-i18n="btn_close">Fechar</span>
+        </button>
+      </div>
+      <div id="tally-edit-log-list" class="calc-container" style="max-height:60vh; overflow-y:auto;"></div>
     </div>
   </dialog>
 

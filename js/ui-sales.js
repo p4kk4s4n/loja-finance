@@ -4,8 +4,10 @@ import {
   compressImage,
   escapeHtml,
   formatCurrency,
+  getEffectiveDaySales,
   getTodayISO,
   hideLoadingScreen,
+  makeTallyDayId,
   parseFlexibleNumber,
   showLoadingScreen,
   showToast
@@ -21,10 +23,14 @@ export function bindSalesEvents(onSavedSwitchToDashboard) {
   const dailyFile = document.getElementById('daily-receipt-upload');
   const scanBtn = document.getElementById('btn-scan-daily-ai');
 
-  storeSelect?.addEventListener('change', (e) => renderDynamicStreams(e.target.value));
+  storeSelect?.addEventListener('change', (e) => {
+    renderDynamicStreams(e.target.value);
+    updateSalesTallyHint();
+  });
+  document.getElementById('entry-date')?.addEventListener('change', updateSalesTallyHint);
 
   ['cash-in', 'cash-out', 'fees-taxes'].forEach((id) => {
-    document.getElementById(id)?.addEventListener('input', calculateLiveTotal);
+    document.getElementById(id)?.addEventListener('input', () => calculateLiveTotal());
   });
 
   streamsContainer?.addEventListener('input', (e) => {
@@ -153,6 +159,73 @@ export function calculateLiveTotal() {
 
   const liveEl = document.getElementById('live-total');
   if (liveEl) liveEl.innerText = formatCurrency(total);
+  updateSalesTallyHint(total);
+}
+
+export function updateSalesTallyHint(precomputedManual = null) {
+  const box = document.getElementById('sales-tally-hint');
+  if (!box) return;
+
+  const store = document.getElementById('store-select')?.value || '';
+  const date = document.getElementById('entry-date')?.value || '';
+  if (!store || !date) {
+    box.style.display = 'none';
+    return;
+  }
+
+  const dayId = makeTallyDayId(store, date);
+  const tallyDoc = (state.tallyDays || []).find(
+    (d) => d.id === dayId || ((d.storeId || '').trim() === store && d.date === date)
+  );
+  const tallyTotal = Number(tallyDoc?.total) || 0;
+
+  if (tallyTotal <= 0) {
+    box.style.display = 'none';
+    return;
+  }
+
+  let formManual = precomputedManual;
+  if (formManual === null || typeof formManual !== 'number') {
+    formManual = 0;
+    document.querySelectorAll('.dynamic-stream-input').forEach((input) => {
+      formManual += parseFlexibleNumber(input.value) || 0;
+    });
+    formManual += (parseFlexibleNumber(document.getElementById('cash-in')?.value) || 0) -
+      (parseFlexibleNumber(document.getElementById('cash-out')?.value) || 0);
+  }
+  const fees = parseFlexibleNumber(document.getElementById('fees-taxes')?.value) || 0;
+  const netManualForm = formManual - fees;
+
+  const pt = state.currentLanguage === 'pt';
+  const eff = getEffectiveDaySales(netManualForm, tallyTotal);
+
+  let detailText = '';
+  if (eff.unitemized > 0) {
+    detailText = pt
+      ? `Diferença (+${formatCurrency(eff.unitemized)}) será registrada como "Não itemizado" → Total: ${formatCurrency(eff.reported)}`
+      : `Difference (+${formatCurrency(eff.unitemized)}) will record as "Unitemized" → Total: ${formatCurrency(eff.reported)}`;
+  } else if (netManualForm > 0) {
+    detailText = pt
+      ? `A comanda registrada (${formatCurrency(eff.tally)}) já cobre ou supera este valor.`
+      : `The recorded tally (${formatCurrency(eff.tally)}) covers or exceeds this entry.`;
+  } else {
+    detailText = pt
+      ? 'Se preencher um valor maior aqui, apenas a diferença entrará como "Não itemizado".'
+      : 'If you enter a higher manual settlement here, only the difference counts as "Unitemized".';
+  }
+
+  box.innerHTML = `
+    <i class="fa-solid fa-barcode" style="color:var(--primary); font-size:1.1rem;"></i>
+    <div style="display:flex; flex-direction:column; gap:0.15rem;">
+      <strong>${escapeHtml(
+        pt
+          ? `Comanda de ${store} (${date}): ${formatCurrency(tallyTotal)}`
+          : `Recorded Tally for ${store} (${date}): ${formatCurrency(tallyTotal)}`
+      )}</strong>
+      <span style="font-size:0.8rem; color:var(--text-secondary);">${escapeHtml(detailText)}</span>
+    </div>
+  `;
+  box.style.display = 'flex';
 }
 
 async function scanDailyReceiptAI() {

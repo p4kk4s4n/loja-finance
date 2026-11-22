@@ -4,6 +4,7 @@ import { state } from './state.js';
 export const translations = {
   pt: {
     nav_log_daily: 'Registrar Vendas',
+    nav_tally: 'Comanda',
     nav_log_expense: 'Lançar Despesa',
     nav_dashboard: 'Painel de Lucros',
     nav_portfolio: 'Portfólio',
@@ -164,10 +165,61 @@ export const translations = {
     login_btn: 'Entrar',
     login_authenticating: 'Autenticando...',
     login_err_empty: 'Por favor, insira seu PIN.',
-    login_err_invalid: 'PIN Inválido.'
+    login_err_invalid: 'PIN Inválido.',
+
+    tally_title: 'Comanda & Leitor',
+    tally_view_order: 'Novo Pedido',
+    tally_view_history: 'Histórico / Editar',
+    tally_today_label: 'Comanda de Hoje:',
+    tally_bt_btn: 'Leitor BT',
+    tally_cam_btn: 'Câmera',
+    tally_cart_title: 'Pedido Atual',
+    tally_clear_btn: 'Limpar',
+    tally_payment_label: 'Pagamento (opcional)',
+    tally_pay_none: '—',
+    tally_pay_cash: 'Dinheiro',
+    tally_pay_card: 'Cartão',
+    tally_order_total: 'Total do Pedido',
+    tally_confirm_btn: 'Confirmar Venda',
+    tally_today_btn: 'Hoje',
+    tally_audit_btn: 'Log de Edições',
+    tally_hist_tally: 'Comanda',
+    tally_hist_manual: 'Caixa Manual',
+    tally_hist_unitemized: 'Não Itemizado',
+    tally_hist_reported: 'Receita Final',
+    tally_retro_title: 'Adicionar lançamento retroativo (Sócio/Admin)',
+    tally_retro_btn: 'Adicionar',
+    tally_tbl_item: 'Item',
+    tally_tbl_qty: 'Qtd',
+    tally_tbl_unit: 'Unitário (R$)',
+    tally_tbl_subtotal: 'Subtotal (R$)',
+    tally_events_title: 'Lançamentos do Dia',
+    tally_edit_modal_title: 'Editar Quantidade',
+    dash_recon_title: 'Reconciliação Comanda vs. Caixa Diário',
+    recon_col_date: 'Data',
+    recon_col_store: 'Loja',
+    recon_col_tally: 'Comanda (R$)',
+    recon_col_manual: 'Manual (R$)',
+    recon_col_unitemized: 'Não Itemizado (R$)',
+    recon_col_reported: 'Considerado (R$)',
+    set_cat_items_title: 'Catálogo de Produtos & Códigos',
+    set_cat_show_archived: 'Mostrar arquivados',
+    set_cat_items_desc: 'Cadastre produtos, pratos, bebidas, preços em R$ e códigos de barras por loja. Sócios e Administradores gerenciam suas lojas.',
+    set_cat_store_label: 'Loja do Catálogo',
+    set_cat_copy_label: 'Copiar itens para:',
+    set_cat_copy_btn: 'Copiar',
+    set_cat_item_name: 'Nome do Produto / Prato',
+    set_cat_item_price: 'Preço (R$)',
+    set_cat_item_cat: 'Categoria (opcional)',
+    set_cat_item_barcode: 'Código de Barras (opcional)',
+    cat_item_add_btn: 'Salvar Item',
+    btn_close: 'Fechar',
+    btn_cancel: 'Cancelar',
+    btn_save: 'Salvar'
   },
   en: {
     nav_log_daily: 'Log Daily',
+    nav_tally: 'Orders',
     nav_log_expense: 'Log Expense',
     nav_dashboard: 'Dashboard',
     nav_portfolio: 'Portfolio',
@@ -328,7 +380,57 @@ export const translations = {
     login_btn: 'Login',
     login_authenticating: 'Authenticating...',
     login_err_empty: 'Please enter your PIN.',
-    login_err_invalid: 'Invalid PIN.'
+    login_err_invalid: 'Invalid PIN.',
+
+    tally_title: 'Order Tally & Scanner',
+    tally_view_order: 'New Order',
+    tally_view_history: 'History / Edit',
+    tally_today_label: "Today's Tally:",
+    tally_bt_btn: 'BT Scanner',
+    tally_cam_btn: 'Camera',
+    tally_cart_title: 'Current Order',
+    tally_clear_btn: 'Clear',
+    tally_payment_label: 'Payment (optional)',
+    tally_pay_none: '—',
+    tally_pay_cash: 'Cash',
+    tally_pay_card: 'Card',
+    tally_order_total: 'Order Total',
+    tally_confirm_btn: 'Confirm Sale',
+    tally_today_btn: 'Today',
+    tally_audit_btn: 'Edit Log',
+    tally_hist_tally: 'Tally',
+    tally_hist_manual: 'Manual Close',
+    tally_hist_unitemized: 'Unitemized',
+    tally_hist_reported: 'Reported Sales',
+    tally_retro_title: 'Add retroactive line (Partner/Admin)',
+    tally_retro_btn: 'Add',
+    tally_tbl_item: 'Item',
+    tally_tbl_qty: 'Qty',
+    tally_tbl_unit: 'Unit Price (R$)',
+    tally_tbl_subtotal: 'Subtotal (R$)',
+    tally_events_title: 'Day Event Lines',
+    tally_edit_modal_title: 'Edit Quantity',
+    dash_recon_title: 'Tally vs. Daily Close Reconciliation',
+    recon_col_date: 'Date',
+    recon_col_store: 'Store',
+    recon_col_tally: 'Tally (R$)',
+    recon_col_manual: 'Manual (R$)',
+    recon_col_unitemized: 'Unitemized (R$)',
+    recon_col_reported: 'Reported (R$)',
+    set_cat_items_title: 'Store Product Catalog & Barcodes',
+    set_cat_show_archived: 'Show archived',
+    set_cat_items_desc: 'Add dishes, drinks, goods, R$ prices, and optional barcodes per store. Partners and Admins manage their assigned stores.',
+    set_cat_store_label: 'Catalog Store',
+    set_cat_copy_label: 'Copy items to:',
+    set_cat_copy_btn: 'Copy',
+    set_cat_item_name: 'Item / Dish Name',
+    set_cat_item_price: 'Price (R$)',
+    set_cat_item_cat: 'Category (optional)',
+    set_cat_item_barcode: 'Barcode (optional)',
+    cat_item_add_btn: 'Save Item',
+    btn_close: 'Close',
+    btn_cancel: 'Cancel',
+    btn_save: 'Save'
   }
 };
 
@@ -360,7 +462,8 @@ export function getCategoryTranslation(category, lang = state.currentLanguage) {
 export function getPaymentMethodTranslation(method, lang = state.currentLanguage) {
   const map = {
     'Bank Transfer': 'method_bank',
-    Card: 'method_card',
+    Card: 'tally_pay_card',
+    Cash: 'tally_pay_cash',
     'Cash Drawer': 'method_drawer'
   };
   const key = map[method];
@@ -377,6 +480,11 @@ export function translatePageLayout(lang = state.currentLanguage) {
   if (notes) notes.placeholder = t('daily_notes_placeholder');
   const newName = document.getElementById('new-member-name');
   if (newName) newName.placeholder = lang === 'pt' ? 'Ex: Alice Silva' : 'e.g. Alice Silva';
+  const tallyScan = document.getElementById('tally-scan-input');
+  if (tallyScan) {
+    tallyScan.placeholder =
+      lang === 'pt' ? 'Bipe o código de barras ou busque item...' : 'Scan barcode or search item...';
+  }
 
   const isPt = lang === 'pt';
   const dailyTh = document.getElementById('hist-daily-th');

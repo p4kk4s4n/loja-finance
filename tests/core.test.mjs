@@ -11,7 +11,11 @@ import {
   groupExpenseDocs,
   normalizeUserRole,
   getEffectiveStoreFilter,
-  getScopedLedgerData
+  getScopedLedgerData,
+  resolveScanCode,
+  getEffectiveDaySales,
+  computeTallyLinesSummary,
+  reconcileLedgerRevenue
 } from '../js/utils.js';
 import { isNewerVersion, detectGithubRepoFromUrl } from '../js/updater.js';
 
@@ -172,4 +176,85 @@ test('formatCurrency formats Brazilian Real (R$) consistently', () => {
   const neg = formatCurrency(-50).replace(/\u00a0/g, ' ');
   assert.equal(pos, 'R$ 1.234,50');
   assert.equal(neg, '-R$ 50,00');
+});
+
+test('getEffectiveDaySales reconciles tally and manual totals using max and unitemized diff', () => {
+  const manualHigher = getEffectiveDaySales(1000, 800);
+  assert.equal(manualHigher.reported, 1000);
+  assert.equal(manualHigher.unitemized, 200);
+  assert.equal(manualHigher.source, 'mixed');
+
+  const tallyHigher = getEffectiveDaySales(650, 800);
+  assert.equal(tallyHigher.reported, 800);
+  assert.equal(tallyHigher.unitemized, 0);
+  assert.equal(tallyHigher.source, 'tally');
+
+  const onlyManual = getEffectiveDaySales(420, 0);
+  assert.equal(onlyManual.reported, 420);
+  assert.equal(onlyManual.unitemized, 0);
+  assert.equal(onlyManual.source, 'manual');
+
+  const onlyTally = getEffectiveDaySales(0, 310);
+  assert.equal(onlyTally.reported, 310);
+  assert.equal(onlyTally.unitemized, 0);
+  assert.equal(onlyTally.source, 'tally');
+});
+
+test('resolveScanCode matches store catalog, strips control chars, ignores archived, handles UPC/EAN zero', () => {
+  const items = [
+    { id: '1', storeId: 'Porteira Velho', name: 'Heineken 600ml', barcode: '7891234567890', active: true },
+    { id: '2', storeId: 'Porteira Velho', name: 'Old Beer', barcode: '111222333444', active: false },
+    { id: '3', storeId: 'Sua Loja', name: 'Coca-Cola', barcode: '0123456789012', active: true }
+  ];
+  assert.equal(resolveScanCode(' 7891234567890\r\n', items, 'Porteira Velho')?.id, '1');
+  assert.equal(resolveScanCode('7891234567890', items, 'Sua Loja'), null);
+  assert.equal(resolveScanCode('111222333444', items, 'Porteira Velho'), null);
+  assert.equal(resolveScanCode('123456789012', items, 'Sua Loja')?.id, '3');
+});
+
+test('computeTallyLinesSummary aggregates active lines and excludes voided lines', () => {
+  const res = computeTallyLinesSummary([
+    { itemId: 'a', name: 'Heineken', price: 15, qty: 2, payment: 'Card', voided: false },
+    { itemId: 'a', name: 'Heineken', price: 15, qty: 1, payment: 'PIX', voided: false },
+    { itemId: 'b', name: 'Prato Feito', price: 32, qty: 1, payment: 'Cash', voided: false },
+    { itemId: 'c', name: 'Soda', price: 8, qty: 3, payment: 'PIX', voided: true }
+  ]);
+  assert.equal(res.total, 77);
+  assert.equal(res.itemCount, 4);
+  assert.equal(res.cardPixTotal, 45);
+  assert.equal(res.byItem.length, 2);
+  assert.equal(res.byItem[0].qty, 3);
+});
+
+test('reconcileLedgerRevenue and getScopedLedgerData enforce store/role scoping across tallies', () => {
+  const subs = [
+    { store: 'Porteira Velho', date: '2026-11-20', entryType: 'Stone', amount: 600 },
+    { store: 'Porteira Velho', date: '2026-11-20', entryType: 'Cash In', amount: 400 }
+  ];
+  const tallies = [
+    { storeId: 'Porteira Velho', date: '2026-11-20', total: 800, cardPixTotal: 500 },
+    { storeId: 'Sua Loja', date: '2026-11-20', total: 350, cardPixTotal: 200 }
+  ];
+  const rec = reconcileLedgerRevenue(subs, tallies);
+  assert.equal(rec.totalRevenue, 1350);
+  assert.equal(rec.dailyBreakdown.length, 2);
+  assert.equal(rec.dailyBreakdown[0].unitemized, 200);
+
+  const emp = getScopedLedgerData({
+    rawSubmissions: [],
+    groupedExpenses: [],
+    tallyDays: tallies,
+    currentUser: { name: 'Ana', role: 'Employee', storeAssignment: 'Porteira Velho' }
+  });
+  assert.equal(emp.scopedTallyDays.length, 0);
+
+  const socio = getScopedLedgerData({
+    rawSubmissions: [],
+    groupedExpenses: [],
+    tallyDays: tallies,
+    currentUser: { name: 'Leo', role: 'Sócio', storeAssignment: 'Porteira Velho' },
+    selectedStore: 'Sua Loja'
+  });
+  assert.equal(socio.scopedTallyDays.length, 1);
+  assert.equal(socio.scopedTallyDays[0].storeId, 'Porteira Velho');
 });

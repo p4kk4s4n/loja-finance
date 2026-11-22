@@ -12,10 +12,14 @@ import {
   getDocs,
   setDoc,
   addDoc,
+  updateDoc,
   deleteDoc,
   writeBatch,
+  runTransaction,
+  increment,
   onSnapshot,
   query,
+  where,
   orderBy,
   serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js';
@@ -112,10 +116,14 @@ export {
   getDocs,
   setDoc,
   addDoc,
+  updateDoc,
   deleteDoc,
   writeBatch,
+  runTransaction,
+  increment,
   onSnapshot,
   query,
+  where,
   orderBy,
   serverTimestamp
 };

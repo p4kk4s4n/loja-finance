@@ -4,10 +4,9 @@ import {
   escapeHtml,
   formatCurrency,
   getScopedLedgerData,
-  getSignedSubmissionAmount,
   hideLoadingScreen,
-  normalizeUserRole,
   parseFlexibleNumber,
+  reconcileLedgerRevenue,
   showLoadingScreen,
   showToast,
   stripRoleSuffix
@@ -17,6 +16,7 @@ import { getReceiptDataUrl } from './db.js';
 import { renderDynamicStreams, calculateLiveTotal } from './ui-sales.js';
 import { addExpenseLine, calculateExpenseTotal, toggleItemizedMode } from './ui-expenses.js';
 import { exportHistoryCSV } from './sheets-export.js';
+import { openTallyHistoryForDate } from './ui-tally.js';
 
 let dashboardChartInstance = null;
 let portfolioChartInstance = null;
@@ -41,6 +41,12 @@ export function bindDashboardEvents(switchTab) {
 
   document.getElementById('history-tbody')?.addEventListener('click', handleHistoryClick);
   document.getElementById('history-expenses-tbody')?.addEventListener('click', handleHistoryClick);
+  document.getElementById('dashboard-reconciliation-tbody')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-open-tally-date]');
+    if (btn) {
+      openTallyHistoryForDate(btn.dataset.openTallyStore, btn.dataset.openTallyDate);
+    }
+  });
 
   const modal = document.getElementById('receipt-modal');
   document.getElementById('btn-close-receipt-modal')?.addEventListener('click', () => modal?.close());
@@ -69,6 +75,7 @@ export function renderDashboard() {
   const scoped = getScopedLedgerData({
     rawSubmissions: state.rawSubmissions,
     groupedExpenses: state.groupedExpenses,
+    tallyDays: state.tallyDays,
     teamRoster: state.teamRoster,
     businesses: state.businesses,
     currentUser: state.currentUser,
@@ -96,37 +103,37 @@ export function renderDashboard() {
 
   let filteredSubmissions = [...storeSubmissions];
   let filteredExpenses = [...storeExpenses];
+  let filteredTallyDays = [...(scoped.scopedTallyDays || [])];
 
   if (timeFilter === '7') {
+    const topDates = new Set(
+      [...storeSubmissions.map((s) => s.date), ...filteredTallyDays.map((td) => td.date)]
+        .filter(Boolean)
+        .sort((a, b) => b.localeCompare(a))
+        .slice(0, 7)
+    );
     filteredSubmissions = filteredSubmissions.slice(0, 7);
-    filteredExpenses = filteredExpenses.slice(0, 7);
+    filteredTallyDays = filteredTallyDays.filter((td) => topDates.has(td.date));
   } else if (timeFilter === '30') {
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - 30);
     filteredSubmissions = filteredSubmissions.filter((item) => new Date(item.date) >= cutoff);
     filteredExpenses = filteredExpenses.filter((item) => new Date(item.date) >= cutoff);
+    filteredTallyDays = filteredTallyDays.filter((td) => new Date(td.date) >= cutoff);
   }
 
-  let totalRevenue = 0;
-  let card1Total = 0;
+  const rev = reconcileLedgerRevenue(filteredSubmissions, filteredTallyDays);
+  const totalRevenue = rev.totalRevenue;
+  const card1Total = rev.cardTotal;
+
   const bizProfit = {};
   scoped.visibleBusinesses.forEach((b) => {
     bizProfit[b.name] = 0;
   });
-
-  filteredSubmissions.forEach((item) => {
-    const amt = parseFlexibleNumber(item.amount) || 0;
-    const tot = getSignedSubmissionAmount(item.entryType, amt);
-    totalRevenue += tot;
-
-    if (!['Cash In', 'Cash Out', 'Fee'].includes(item.entryType)) {
-      card1Total += amt;
-    }
-
-    const st = item.store || 'Store 1';
+  for (const [st, val] of Object.entries(rev.bizRevenue)) {
     if (bizProfit[st] === undefined) bizProfit[st] = 0;
-    bizProfit[st] += tot;
-  });
+    bizProfit[st] += val;
+  }
 
   let totalExpenses = 0;
   filteredExpenses.forEach((item) => {
@@ -145,8 +152,9 @@ export function renderDashboard() {
   document.getElementById('kpi-cards').innerText = formatCurrency(card1Total);
 
   renderPartnerSharesList(netProfit, bizProfit, scoped.visiblePartners);
-  renderDashboardChart(filteredSubmissions, filteredExpenses);
-  renderPortfolioChart(filteredSubmissions, filteredExpenses, scoped.visibleBusinesses);
+  renderDashboardChart(rev.dateRevenue, filteredExpenses);
+  renderPortfolioChart(rev.bizRevenue, filteredExpenses, scoped.visibleBusinesses);
+  renderReconciliationTable(rev.dailyBreakdown);
   renderHistoryTables(storeSubmissions, storeExpenses);
 }
 
@@ -236,16 +244,15 @@ function getChartThemeOptions() {
   };
 }
 
-function renderDashboardChart(submissions, expenses) {
+function renderDashboardChart(dateRevenue, expenses) {
   const ctx = document.getElementById('finance-chart');
   if (!ctx || typeof Chart === 'undefined') return;
   if (dashboardChartInstance) dashboardChartInstance.destroy();
 
   const dateMap = {};
-  submissions.forEach((sub) => {
-    if (!dateMap[sub.date]) dateMap[sub.date] = { rev: 0, exp: 0 };
-    dateMap[sub.date].rev += getSignedSubmissionAmount(sub.entryType, sub.amount);
-  });
+  for (const [dt, rev] of Object.entries(dateRevenue || {})) {
+    dateMap[dt] = { rev: Number(rev) || 0, exp: 0 };
+  }
   expenses.forEach((exp) => {
     if (!dateMap[exp.date]) dateMap[exp.date] = { rev: 0, exp: 0 };
     dateMap[exp.date].exp += parseFlexibleNumber(exp.amount) || 0;
@@ -291,7 +298,7 @@ function renderDashboardChart(submissions, expenses) {
   });
 }
 
-function renderPortfolioChart(submissions, expenses, visibleBusinesses = state.businesses) {
+function renderPortfolioChart(bizRevenue, expenses, visibleBusinesses = state.businesses) {
   const ctx = document.getElementById('portfolio-chart');
   if (!ctx || typeof Chart === 'undefined') return;
   if (portfolioChartInstance) portfolioChartInstance.destroy();
@@ -302,11 +309,10 @@ function renderPortfolioChart(submissions, expenses, visibleBusinesses = state.b
     bizMap[b.name] = { rev: 0, exp: 0 };
   });
 
-  submissions.forEach((sub) => {
-    const storeName = sub.store || 'Store 1';
+  for (const [storeName, revVal] of Object.entries(bizRevenue || {})) {
     if (!bizMap[storeName]) bizMap[storeName] = { rev: 0, exp: 0 };
-    bizMap[storeName].rev += getSignedSubmissionAmount(sub.entryType, sub.amount);
-  });
+    bizMap[storeName].rev += Number(revVal) || 0;
+  }
 
   expenses.forEach((exp) => {
     const storeName = exp.store || 'Store 1';
@@ -371,6 +377,41 @@ async function openReceiptModal(receiptId) {
   } finally {
     hideLoadingScreen();
   }
+}
+
+function renderReconciliationTable(dailyBreakdown = []) {
+  const card = document.getElementById('dashboard-reconciliation-card');
+  const tbody = document.getElementById('dashboard-reconciliation-tbody');
+  if (!card || !tbody) return;
+
+  const tallyRows = (dailyBreakdown || []).filter((r) => r.tally > 0);
+  if (tallyRows.length === 0) {
+    card.style.display = 'none';
+    tbody.innerHTML = '';
+    return;
+  }
+
+  card.style.display = 'block';
+  const pt = state.currentLanguage === 'pt';
+  tbody.innerHTML = tallyRows
+    .map(
+      (r) => `
+      <tr>
+        <td style="font-weight:600;">${escapeHtml(r.date)}</td>
+        <td><span class="badge">${escapeHtml(r.store)}</span></td>
+        <td style="color:var(--primary); font-weight:600;">${formatCurrency(r.tally)}</td>
+        <td>${formatCurrency(r.manual)}</td>
+        <td style="color:${r.unitemized > 0 ? 'var(--warning)' : 'var(--text-muted)'}; font-weight:${r.unitemized > 0 ? '700' : '400'};">${formatCurrency(r.unitemized)}</td>
+        <td style="font-weight:700; color:var(--success);">${formatCurrency(r.reported)}</td>
+        <td style="text-align:right;">
+          <button type="button" class="btn-secondary" style="padding:0.25rem 0.65rem; font-size:0.75rem;" data-open-tally-store="${escapeHtml(r.store)}" data-open-tally-date="${escapeHtml(r.date)}">
+            <i class="fa-solid fa-eye"></i> ${escapeHtml(pt ? 'Revisar' : 'Review')}
+          </button>
+        </td>
+      </tr>
+    `
+    )
+    .join('');
 }
 
 export function renderHistoryTables(subsLogs, expLogs) {

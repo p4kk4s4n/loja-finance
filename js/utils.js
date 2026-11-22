@@ -257,6 +257,7 @@ export function getEffectiveStoreFilter(currentUser, requestedStore = 'All Store
 export function getScopedLedgerData({
   rawSubmissions = [],
   groupedExpenses = [],
+  tallyDays = [],
   teamRoster = [],
   businesses = [],
   currentUser = null,
@@ -278,6 +279,13 @@ export function getScopedLedgerData({
 
   const scopedSubmissions = rawSubmissions.filter(matchesScope);
   const scopedExpenses = groupedExpenses.filter(matchesScope);
+  const scopedTallyDays =
+    roleKind === 'employee'
+      ? []
+      : (tallyDays || []).filter((td) => {
+          const tdStore = (td.storeId || td.store || '').trim();
+          return effectiveStore === 'All Stores' || tdStore === effectiveStore;
+        });
 
   const visibleBusinesses =
     roleKind === 'employee'
@@ -313,7 +321,196 @@ export function getScopedLedgerData({
     effectiveStore,
     scopedSubmissions,
     scopedExpenses,
+    scopedTallyDays,
     visibleBusinesses,
     visiblePartners
+  };
+}
+
+export function round2(val) {
+  return Math.round((Number(val) || 0) * 100) / 100;
+}
+
+export function makeTallyDayId(storeName, dateIso) {
+  const safeStore = encodeURIComponent((storeName || 'Store 1').toString().trim());
+  const safeDate = (dateIso || '').toString().trim();
+  return `${safeStore}__${safeDate}`;
+}
+
+export function normalizeBarcode(raw) {
+  return (raw ?? '')
+    .toString()
+    .replace(/[\x00-\x1F\x7F]/g, '')
+    .trim();
+}
+
+export function resolveScanCode(rawCode, menuItems = [], storeId = '') {
+  const code = normalizeBarcode(rawCode);
+  if (!code) return null;
+
+  const targetStore = (storeId || '').toString().trim();
+  const candidates = (menuItems || []).filter((item) => {
+    if (!item || item.active === false) return false;
+    if (targetStore && (item.storeId || '').toString().trim() !== targetStore) return false;
+    return Boolean(normalizeBarcode(item.barcode));
+  });
+
+  const exact = candidates.find((item) => normalizeBarcode(item.barcode) === code);
+  if (exact) return exact;
+
+  // Handle UPC-A (12 digits) <-> EAN-13 (leading '0' + 12 digits) scanner variance
+  if (/^\d+$/.test(code)) {
+    const altCodes = new Set();
+    if (code.length === 12) altCodes.add('0' + code);
+    if (code.length === 13 && code.startsWith('0')) altCodes.add(code.slice(1));
+    if (altCodes.size > 0) {
+      const paddedMatch = candidates.find((item) => altCodes.has(normalizeBarcode(item.barcode)));
+      if (paddedMatch) return paddedMatch;
+    }
+  }
+
+  return null;
+}
+
+export function getEffectiveDaySales(manualTotal, tallyTotal) {
+  const manual = round2(Number(manualTotal) || 0);
+  const tally = round2(Math.max(0, Number(tallyTotal) || 0));
+
+  if (tally <= 0) {
+    return {
+      reported: manual,
+      tally: 0,
+      manual,
+      unitemized: 0,
+      source: 'manual'
+    };
+  }
+
+  const reported = round2(Math.max(manual, tally));
+  const unitemized = round2(Math.max(0, manual - tally));
+  const source = manual <= 0 ? 'tally' : manual > tally ? 'mixed' : 'tally';
+  return {
+    reported,
+    tally,
+    manual,
+    unitemized,
+    source
+  };
+}
+
+export function computeTallyLinesSummary(lines = []) {
+  let total = 0;
+  let itemCount = 0;
+  let cardPixTotal = 0;
+  const byItemMap = new Map();
+
+  for (const line of lines || []) {
+    if (!line || line.voided === true) continue;
+    const price = Number(line.price) || 0;
+    const qty = Number(line.qty) || 0;
+    if (qty <= 0) continue;
+    const subtotal = round2(price * qty);
+    total += subtotal;
+    itemCount += qty;
+
+    if (line.payment === 'Card' || line.payment === 'PIX') {
+      cardPixTotal += subtotal;
+    }
+
+    const key = line.itemId || line.name || 'item';
+    const existing = byItemMap.get(key);
+    if (existing) {
+      existing.qty += qty;
+      existing.subtotal = round2(existing.subtotal + subtotal);
+    } else {
+      byItemMap.set(key, {
+        itemId: line.itemId || '',
+        name: line.name || 'Item',
+        category: line.category || '',
+        price,
+        qty,
+        subtotal
+      });
+    }
+  }
+
+  const byItem = Array.from(byItemMap.values()).sort((a, b) => b.subtotal - a.subtotal);
+  return {
+    total: round2(total),
+    itemCount,
+    cardPixTotal: round2(cardPixTotal),
+    byItem
+  };
+}
+
+export function reconcileLedgerRevenue(submissions = [], tallyDays = []) {
+  const dayBuckets = new Map();
+
+  const getBucket = (store, date) => {
+    const st = (store || 'Store 1').toString().trim();
+    const dt = (date || '').toString().trim();
+    const key = `${st}||${dt}`;
+    let b = dayBuckets.get(key);
+    if (!b) {
+      b = { store: st, date: dt, manualNet: 0, manualCardPix: 0, tallyTotal: 0, tallyCardPix: 0 };
+      dayBuckets.set(key, b);
+    }
+    return b;
+  };
+
+  for (const sub of submissions || []) {
+    if (!sub || !sub.date) continue;
+    const bucket = getBucket(sub.store, sub.date);
+    const amt = parseFlexibleNumber(sub.amount) || 0;
+    const signed = getSignedSubmissionAmount(sub.entryType, amt);
+    bucket.manualNet += signed;
+    if (!['Cash In', 'Cash Out', 'Fee'].includes(sub.entryType)) {
+      bucket.manualCardPix += amt;
+    }
+  }
+
+  for (const td of tallyDays || []) {
+    if (!td || !td.date) continue;
+    const tTotal = Number(td.total) || 0;
+    if (tTotal <= 0) continue;
+    const bucket = getBucket(td.storeId || td.store, td.date);
+    bucket.tallyTotal += tTotal;
+    bucket.tallyCardPix += Number(td.cardPixTotal) || 0;
+  }
+
+  let totalRevenue = 0;
+  let cardTotal = 0;
+  const bizRevenue = {};
+  const dateRevenue = {};
+  const dailyBreakdown = [];
+
+  for (const b of dayBuckets.values()) {
+    const eff = getEffectiveDaySales(b.manualNet, b.tallyTotal);
+    totalRevenue += eff.reported;
+    cardTotal += eff.tally > 0 ? Math.max(b.manualCardPix, b.tallyCardPix) : b.manualCardPix;
+    bizRevenue[b.store] = round2((bizRevenue[b.store] || 0) + eff.reported);
+    dateRevenue[b.date] = round2((dateRevenue[b.date] || 0) + eff.reported);
+    dailyBreakdown.push({
+      date: b.date,
+      store: b.store,
+      tally: eff.tally,
+      manual: eff.manual,
+      unitemized: eff.unitemized,
+      reported: eff.reported,
+      source: eff.source
+    });
+  }
+
+  dailyBreakdown.sort((a, b) => {
+    const dCmp = (b.date || '').localeCompare(a.date || '');
+    return dCmp !== 0 ? dCmp : (a.store || '').localeCompare(b.store || '');
+  });
+
+  return {
+    totalRevenue: round2(totalRevenue),
+    cardTotal: round2(cardTotal),
+    bizRevenue,
+    dateRevenue,
+    dailyBreakdown
   };
 }

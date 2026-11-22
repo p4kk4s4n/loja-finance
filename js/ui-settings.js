@@ -3,8 +3,10 @@ import { state } from './state.js';
 import {
   computePartnerEquityValidation,
   escapeHtml,
+  formatCurrency,
   formatMemberNameWithRole,
   hideLoadingScreen,
+  normalizeBarcode,
   normalizeUserRole,
   parseFlexibleNumber,
   showLoadingScreen,
@@ -13,17 +15,22 @@ import {
 } from './utils.js';
 import { t, translatePageLayout } from './i18n.js';
 import {
+  archiveMenuItemInDb,
+  copyMenuItemsToStoreInDb,
   saveBusinessesToDb,
   saveCategoriesToDb,
   saveIntegrationConfigToDb,
+  saveMenuItemToDb,
   saveTeamRosterToDb
 } from './db.js';
 import { applyAppUpdate, checkForUpdates } from './updater.js';
 import { syncSnapshotToGoogleSheets } from './sheets-export.js';
+import { openCameraScanner } from './scanner.js';
 import { renderDynamicStreams } from './ui-sales.js';
 import { populateMasterCategoryDropdown } from './ui-expenses.js';
 
 let rosterHasLocalEdits = false;
+let editingCatalogItemId = null;
 
 export function bindSettingsEvents(onPrefsOrDashboardRefresh) {
   // Businesses
@@ -149,6 +156,50 @@ export function bindSettingsEvents(onPrefsOrDashboardRefresh) {
     document.getElementById(id)?.addEventListener('change', () => applyPreferencesFromForm(onPrefsOrDashboardRefresh));
   });
   document.getElementById('btn-save-prefs')?.addEventListener('click', savePreferences);
+
+  // Store Item Catalog (Socio + Admin)
+  document.getElementById('catalog-store-select')?.addEventListener('change', () => {
+    resetCatalogItemForm();
+    renderSettingsCatalog();
+  });
+  document.getElementById('catalog-show-archived')?.addEventListener('change', renderSettingsCatalog);
+  document.getElementById('btn-catalog-scan-barcode')?.addEventListener('click', () => {
+    const barcodeInput = document.getElementById('catalog-item-barcode');
+    openCameraScanner({
+      continuous: false,
+      title: state.currentLanguage === 'pt' ? 'Ler Código do Produto' : 'Scan Product Barcode',
+      onDetected: (code) => {
+        if (barcodeInput) barcodeInput.value = normalizeBarcode(code);
+      }
+    });
+  });
+  document.getElementById('catalog-item-barcode')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      e.target.value = normalizeBarcode(e.target.value);
+      document.getElementById('btn-catalog-save')?.focus();
+    }
+  });
+  document.getElementById('btn-catalog-save')?.addEventListener('click', handleSaveCatalogItem);
+  document.getElementById('btn-catalog-cancel')?.addEventListener('click', resetCatalogItemForm);
+  document.getElementById('btn-catalog-copy')?.addEventListener('click', handleCopyCatalogItems);
+
+  document.getElementById('catalog-items-list')?.addEventListener('click', async (e) => {
+    const editBtn = e.target.closest('[data-edit-item]');
+    if (editBtn) {
+      startEditCatalogItem(editBtn.dataset.editItem);
+      return;
+    }
+    const archBtn = e.target.closest('[data-archive-item]');
+    if (archBtn) {
+      await toggleArchiveCatalogItem(archBtn.dataset.archiveItem, false);
+      return;
+    }
+    const restBtn = e.target.closest('[data-restore-item]');
+    if (restBtn) {
+      await toggleArchiveCatalogItem(restBtn.dataset.restoreItem, true);
+    }
+  });
 }
 
 export function syncRosterFromLive(force = false) {
@@ -203,7 +254,44 @@ export function populateStoreDropdowns() {
   if (storeSelect?.value) renderDynamicStreams(storeSelect.value);
   else if (state.businesses.length > 0) renderDynamicStreams(state.businesses[0].name);
 
+  populateCatalogStoreDropdowns();
   populateMasterCategoryDropdown();
+}
+
+export function populateCatalogStoreDropdowns() {
+  const catStore = document.getElementById('catalog-store-select');
+  const copyTarget = document.getElementById('catalog-copy-target');
+  const copyWrap = document.getElementById('catalog-copy-row');
+  if (!catStore) return;
+
+  const prevCatStore = catStore.value;
+  const optionsHTML = state.businesses
+    .map((b) => `<option value="${escapeHtml(b.name)}">${escapeHtml(b.name)}</option>`)
+    .join('');
+
+  catStore.innerHTML = optionsHTML;
+  if (copyTarget) copyTarget.innerHTML = optionsHTML;
+
+  const lockedStore =
+    state.currentUser?.storeAssignment && state.currentUser.storeAssignment !== 'All Stores'
+      ? state.currentUser.storeAssignment
+      : '';
+
+  if (lockedStore) {
+    catStore.value = lockedStore;
+    catStore.disabled = true;
+    if (copyWrap) copyWrap.style.display = 'none';
+  } else {
+    catStore.disabled = false;
+    if (prevCatStore && state.businesses.some((b) => b.name === prevCatStore)) {
+      catStore.value = prevCatStore;
+    }
+    if (copyTarget) {
+      const altBiz = state.businesses.find((b) => b.name !== catStore.value);
+      if (altBiz) copyTarget.value = altBiz.name;
+    }
+    if (copyWrap) copyWrap.style.display = state.businesses.length >= 2 ? 'flex' : 'none';
+  }
 }
 
 export function renderSettingsBusinesses() {
@@ -666,4 +754,227 @@ function savePreferences() {
   };
   localStorage.setItem('loja_finance_prefs', JSON.stringify(prefs));
   showToast(t('toast_saved'));
+}
+
+/* ==================== STORE ITEM CATALOG MANAGEMENT ==================== */
+
+function resetCatalogItemForm() {
+  editingCatalogItemId = null;
+  const nameEl = document.getElementById('catalog-item-name');
+  const priceEl = document.getElementById('catalog-item-price');
+  const catEl = document.getElementById('catalog-item-category');
+  const barEl = document.getElementById('catalog-item-barcode');
+  const cancelBtn = document.getElementById('btn-catalog-cancel');
+  const saveLabel = document.getElementById('lbl-catalog-save');
+
+  if (nameEl) nameEl.value = '';
+  if (priceEl) priceEl.value = '';
+  if (catEl) catEl.value = '';
+  if (barEl) barEl.value = '';
+  if (cancelBtn) cancelBtn.style.display = 'none';
+  if (saveLabel) saveLabel.textContent = t('cat_item_add_btn', state.currentLanguage === 'pt' ? 'Salvar Item' : 'Save Item');
+}
+
+function startEditCatalogItem(itemId) {
+  const item = (state.menuItems || []).find((m) => m.id === itemId);
+  if (!item) return;
+  editingCatalogItemId = item.id;
+
+  const storeEl = document.getElementById('catalog-store-select');
+  if (storeEl && !storeEl.disabled && item.storeId) storeEl.value = item.storeId;
+
+  const nameEl = document.getElementById('catalog-item-name');
+  const priceEl = document.getElementById('catalog-item-price');
+  const catEl = document.getElementById('catalog-item-category');
+  const barEl = document.getElementById('catalog-item-barcode');
+  const cancelBtn = document.getElementById('btn-catalog-cancel');
+  const saveLabel = document.getElementById('lbl-catalog-save');
+
+  if (nameEl) nameEl.value = item.name || '';
+  if (priceEl) priceEl.value = String(item.price ?? '').replace('.', ',');
+  if (catEl) catEl.value = item.category || '';
+  if (barEl) barEl.value = item.barcode || '';
+  if (cancelBtn) cancelBtn.style.display = 'inline-flex';
+  if (saveLabel) {
+    saveLabel.textContent = state.currentLanguage === 'pt' ? 'Atualizar Item' : 'Update Item';
+  }
+  nameEl?.focus();
+}
+
+export function renderSettingsCatalog() {
+  const listEl = document.getElementById('catalog-items-list');
+  const catDatalist = document.getElementById('catalog-category-suggestions');
+  if (!listEl) return;
+
+  const pt = state.currentLanguage === 'pt';
+  const storeId = document.getElementById('catalog-store-select')?.value || state.businesses?.[0]?.name || '';
+  const showArchived = Boolean(document.getElementById('catalog-show-archived')?.checked);
+
+  // Sync category datalist suggestions for quick entry
+  if (catDatalist) {
+    const cats = Array.from(
+      new Set((state.menuItems || []).filter((i) => i.storeId === storeId && i.category).map((i) => i.category.trim()))
+    ).sort();
+    catDatalist.innerHTML = cats.map((c) => `<option value="${escapeHtml(c)}">`).join('');
+  }
+
+  // Update copy target dropdown exclusion/selection cleanly when unlocked
+  const copyTarget = document.getElementById('catalog-copy-target');
+  if (copyTarget && copyTarget.value === storeId && state.businesses.length >= 2) {
+    const alt = state.businesses.find((b) => b.name !== storeId);
+    if (alt) copyTarget.value = alt.name;
+  }
+
+  const items = (state.menuItems || []).filter((item) => {
+    if ((item.storeId || '').trim() !== storeId) return false;
+    if (!showArchived && item.active === false) return false;
+    return true;
+  });
+
+  if (items.length === 0) {
+    listEl.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:1.1rem; font-size:0.88rem;">${escapeHtml(
+      pt ? 'Nenhum item cadastrado nesta loja.' : 'No items configured for this store yet.'
+    )}</div>`;
+    return;
+  }
+
+  listEl.innerHTML = items
+    .map((item) => {
+      const archived = item.active === false;
+      const catBadge = item.category ? `<span class="badge">${escapeHtml(item.category)}</span>` : '';
+      const barBadge = item.barcode
+        ? `<span class="badge"><i class="fa-solid fa-barcode"></i> ${escapeHtml(item.barcode)}</span>`
+        : `<span style="font-size:0.75rem; color:var(--text-muted);">${escapeHtml(pt ? 'Sem código' : 'No barcode')}</span>`;
+      const archBtn = archived
+        ? `<button type="button" class="btn-secondary" style="padding:0.28rem 0.65rem; font-size:0.75rem;" data-restore-item="${escapeHtml(item.id)}"><i class="fa-solid fa-rotate-left"></i> ${escapeHtml(pt ? 'Restaurar' : 'Restore')}</button>`
+        : `<button type="button" class="btn-danger-outline" data-archive-item="${escapeHtml(item.id)}"><i class="fa-solid fa-box-archive"></i> ${escapeHtml(pt ? 'Arquivar' : 'Archive')}</button>`;
+      return `
+        <div class="catalog-item-row ${archived ? 'archived' : ''}">
+          <div style="display:flex; flex-direction:column; gap:0.25rem; min-width:0;">
+            <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+              <strong>${escapeHtml(item.name)}</strong>
+              ${catBadge}
+              ${archived ? `<span class="badge" style="color:var(--danger);">${escapeHtml(pt ? 'Arquivado' : 'Archived')}</span>` : ''}
+            </div>
+            <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+              <strong style="color:var(--accent); font-family:var(--font-display);">${formatCurrency(item.price)}</strong>
+              ${barBadge}
+            </div>
+          </div>
+          <div style="display:flex; gap:0.45rem; flex-wrap:wrap;">
+            <button type="button" class="btn-secondary" style="padding:0.28rem 0.65rem; font-size:0.75rem;" data-edit-item="${escapeHtml(item.id)}">
+              <i class="fa-solid fa-pen"></i> ${escapeHtml(pt ? 'Editar' : 'Edit')}
+            </button>
+            ${archBtn}
+          </div>
+        </div>
+      `;
+    })
+    .join('');
+}
+
+async function handleSaveCatalogItem() {
+  const roleKind = normalizeUserRole(state.currentUser?.role);
+  if (roleKind !== 'admin' && roleKind !== 'partner') return;
+
+  const pt = state.currentLanguage === 'pt';
+  const storeId = document.getElementById('catalog-store-select')?.value || '';
+  const name = (document.getElementById('catalog-item-name')?.value || '').trim();
+  const price = parseFlexibleNumber(document.getElementById('catalog-item-price')?.value) || 0;
+  const category = (document.getElementById('catalog-item-category')?.value || '').trim();
+  const barcode = normalizeBarcode(document.getElementById('catalog-item-barcode')?.value || '');
+
+  if (!storeId || !name) {
+    showToast(pt ? 'Selecione a loja e informe o nome do item.' : 'Select a store and enter an item name.', true);
+    return;
+  }
+  if (price < 0) {
+    showToast(pt ? 'O preço não pode ser negativo.' : 'Price cannot be negative.', true);
+    return;
+  }
+
+  // Enforce per-store barcode uniqueness among active items
+  if (barcode) {
+    const duplicate = (state.menuItems || []).find(
+      (m) =>
+        m.id !== editingCatalogItemId &&
+        m.active !== false &&
+        (m.storeId || '').trim() === storeId &&
+        normalizeBarcode(m.barcode) === barcode
+    );
+    if (duplicate) {
+      showToast(
+        pt
+          ? `Este código já está vinculado a "${duplicate.name}" nesta loja.`
+          : `Barcode already assigned to "${duplicate.name}" in this store.`,
+        true
+      );
+      return;
+    }
+  }
+
+  showLoadingScreen(pt ? 'Salvando item no catálogo...' : 'Saving catalog item...');
+  try {
+    await saveMenuItemToDb({
+      id: editingCatalogItemId || undefined,
+      storeId,
+      name,
+      price,
+      category,
+      barcode,
+      active: true
+    });
+    const wasEdit = Boolean(editingCatalogItemId);
+    resetCatalogItemForm();
+    showToast(
+      wasEdit ? (pt ? 'Item atualizado!' : 'Item updated!') : pt ? 'Item adicionado ao catálogo!' : 'Item added to catalog!'
+    );
+  } catch (err) {
+    showToast('Error saving catalog item: ' + err.message, true);
+  } finally {
+    hideLoadingScreen();
+  }
+}
+
+async function toggleArchiveCatalogItem(itemId, active) {
+  const roleKind = normalizeUserRole(state.currentUser?.role);
+  if (roleKind !== 'admin' && roleKind !== 'partner') return;
+  const pt = state.currentLanguage === 'pt';
+  showLoadingScreen(pt ? 'Atualizando item...' : 'Updating item...');
+  try {
+    await archiveMenuItemInDb(itemId, active);
+    if (editingCatalogItemId === itemId && !active) resetCatalogItemForm();
+    showToast(active ? (pt ? 'Item restaurado!' : 'Item restored!') : pt ? 'Item arquivado!' : 'Item archived!');
+  } catch (err) {
+    showToast('Error updating item: ' + err.message, true);
+  } finally {
+    hideLoadingScreen();
+  }
+}
+
+async function handleCopyCatalogItems() {
+  const roleKind = normalizeUserRole(state.currentUser?.role);
+  if (roleKind !== 'admin' && roleKind !== 'partner') return;
+
+  const pt = state.currentLanguage === 'pt';
+  const sourceStore = document.getElementById('catalog-store-select')?.value || '';
+  const targetStore = document.getElementById('catalog-copy-target')?.value || '';
+  if (!sourceStore || !targetStore || sourceStore === targetStore) {
+    showToast(pt ? 'Escolha uma loja de destino diferente.' : 'Choose a different target store.', true);
+    return;
+  }
+
+  showLoadingScreen(pt ? 'Copiando catálogo...' : 'Copying catalog...');
+  try {
+    const { copiedCount, skippedCount } = await copyMenuItemsToStoreInDb(sourceStore, targetStore, state.menuItems);
+    showToast(
+      pt
+        ? `${copiedCount} item(ns) copiado(s) para ${targetStore} (${skippedCount} já existente(s)).`
+        : `Copied ${copiedCount} item(s) to ${targetStore} (${skippedCount} skipped as existing).`
+    );
+  } catch (err) {
+    showToast('Error copying items: ' + err.message, true);
+  } finally {
+    hideLoadingScreen();
+  }
 }

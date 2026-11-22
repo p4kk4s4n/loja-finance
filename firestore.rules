@@ -29,5 +29,21 @@ service cloud.firestore {
     match /payrollRuns/{runId} {
       allow read, write: if isSignedIn();
     }
+
+    match /menuItems/{itemId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /tallyDays/{dayId} {
+      allow read, write: if isSignedIn();
+
+      match /lines/{lineId} {
+        allow read, write: if isSignedIn();
+      }
+    }
+
+    match /tallyEdits/{editId} {
+      allow read, write: if isSignedIn();
+    }
   }
 }
