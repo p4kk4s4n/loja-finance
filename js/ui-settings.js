@@ -27,7 +27,7 @@ import {
   saveStoreBrandingToDb,
   saveTeamRosterToDb
 } from './db.js';
-import { generateInStoreEan13 } from './barcode-svg.js';
+import { generateInStoreEan13, renderBarcodeSvg } from './barcode-svg.js';
 import { openMenuPrintModal } from './menu-print.js';
 import { applyAppUpdate, checkForUpdates } from './updater.js';
 import { syncSnapshotToGoogleSheets } from './sheets-export.js';
@@ -859,25 +859,23 @@ export function renderSettingsCatalog() {
     .map((item) => {
       const archived = item.active === false;
       const catBadge = item.category ? `<span class="badge">${escapeHtml(item.category)}</span>` : '';
-      const barBadge = item.barcode
-        ? `<span class="badge"><i class="fa-solid fa-barcode"></i> ${escapeHtml(item.barcode)}</span>`
+      const barVisual = item.barcode
+        ? `<div class="scan-barcode-box scan-barcode-box--catalog">${renderBarcodeSvg(item.barcode, { height: 50, barWidth: 1.8, quietModules: 10, showText: true })}</div>`
         : `<span style="font-size:0.75rem; color:var(--text-muted);">${escapeHtml(pt ? 'Sem código' : 'No barcode')}</span>`;
       const archBtn = archived
         ? `<button type="button" class="btn-secondary" style="padding:0.28rem 0.65rem; font-size:0.75rem;" data-restore-item="${escapeHtml(item.id)}"><i class="fa-solid fa-rotate-left"></i> ${escapeHtml(pt ? 'Restaurar' : 'Restore')}</button>`
         : `<button type="button" class="btn-danger-outline" data-archive-item="${escapeHtml(item.id)}"><i class="fa-solid fa-box-archive"></i> ${escapeHtml(pt ? 'Arquivar' : 'Archive')}</button>`;
       return `
         <div class="catalog-item-row ${archived ? 'archived' : ''}">
-          <div style="display:flex; flex-direction:column; gap:0.25rem; min-width:0;">
+          <div style="display:flex; flex-direction:column; gap:0.25rem; min-width:140px; flex:1;">
             <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
               <strong>${escapeHtml(item.name)}</strong>
               ${catBadge}
               ${archived ? `<span class="badge" style="color:var(--danger);">${escapeHtml(pt ? 'Arquivado' : 'Archived')}</span>` : ''}
             </div>
-            <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
-              <strong style="color:var(--accent); font-family:var(--font-display);">${formatCurrency(item.price)}</strong>
-              ${barBadge}
-            </div>
+            <strong style="color:var(--accent); font-family:var(--font-display); font-size:1.02rem;">${formatCurrency(item.price)}</strong>
           </div>
+          ${barVisual}
           <div style="display:flex; gap:0.45rem; flex-wrap:wrap;">
             <button type="button" class="btn-secondary" style="padding:0.28rem 0.65rem; font-size:0.75rem;" data-edit-item="${escapeHtml(item.id)}">
               <i class="fa-solid fa-pen"></i> ${escapeHtml(pt ? 'Editar' : 'Edit')}

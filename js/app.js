@@ -208,6 +208,9 @@ async function applyLoginState() {
       if (rk === 'admin' || rk === 'partner') {
         refreshCatalogBrandingUI();
       }
+    },
+    onOpenOrdersUpdated: () => {
+      refreshTallyUI();
     }
   });
 

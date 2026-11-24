@@ -29,7 +29,7 @@
       <div class="brand">
         <div class="brand-icon"><i class="fa-solid fa-chart-line"></i></div>
         <div class="brand-name">Loja Finance</div>
-        <span id="header-version-pill" class="version-pill">v2.2.0</span>
+        <span id="header-version-pill" class="version-pill">v2.2.1</span>
       </div>
 
       <div class="user-info">
@@ -102,6 +102,9 @@
               <button id="btn-tally-bt-mode" type="button" class="btn-secondary" title="Bluetooth Scanner Mode">
                 <i class="fa-brands fa-bluetooth-b"></i> <span data-i18n="tally_bt_btn">Leitor BT</span>
               </button>
+              <button id="btn-tally-barcode-size" type="button" class="btn-secondary" title="Toggle Barcode Size">
+                <i class="fa-solid fa-compress"></i> <span data-i18n="tally_compact_btn">Compactar</span>
+              </button>
               <button id="btn-tally-camera" type="button" class="btn-submit" style="padding:0.55rem 1rem; font-size:0.88rem;">
                 <i class="fa-solid fa-camera"></i> <span data-i18n="tally_cam_btn">Câmera</span>
               </button>
@@ -114,36 +117,18 @@
               </div>
 
               <div id="tally-cart-card" class="tally-cart">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.85rem;">
-                  <h3 style="font-family:var(--font-display); font-size:1.05rem; margin:0;">
-                    <i class="fa-solid fa-cart-shopping" style="color:var(--primary);"></i>
-                    <span data-i18n="tally_cart_title">Pedido Atual</span>
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem; margin-bottom:0.85rem; flex-wrap:wrap;">
+                  <h3 style="font-family:var(--font-display); font-size:1.05rem; margin:0; display:flex; align-items:center; gap:0.45rem;">
+                    <i class="fa-solid fa-utensils" style="color:var(--primary);"></i>
+                    <span data-i18n="tally_open_orders_title">Comandas Abertas</span>
+                    <span id="tally-open-count" class="badge">0</span>
                   </h3>
-                  <button id="btn-tally-clear-cart" type="button" class="btn-danger-outline" disabled>
-                    <i class="fa-solid fa-trash"></i> <span data-i18n="tally_clear_btn">Limpar</span>
+                  <button id="btn-tally-new-order" type="button" class="btn-secondary" style="padding:0.4rem 0.75rem; font-size:0.82rem;">
+                    <i class="fa-solid fa-plus"></i> <span data-i18n="tally_new_order_btn">Nova Mesa</span>
                   </button>
                 </div>
 
-                <div id="tally-cart-items" class="tally-cart-items"></div>
-
-                <div style="margin-top:0.85rem;">
-                  <label style="font-size:0.78rem; display:block; margin-bottom:0.35rem;" data-i18n="tally_payment_label">Pagamento (opcional)</label>
-                  <div id="tally-payment-pills" class="tally-payment-pills" data-no-swipe="true">
-                    <button type="button" class="tally-chip active" data-tally-pay="" data-i18n="tally_pay_none">—</button>
-                    <button type="button" class="tally-chip" data-tally-pay="Cash" data-i18n="tally_pay_cash">Dinheiro</button>
-                    <button type="button" class="tally-chip" data-tally-pay="Card" data-i18n="tally_pay_card">Cartão</button>
-                    <button type="button" class="tally-chip" data-tally-pay="PIX">PIX</button>
-                  </div>
-                </div>
-
-                <div class="calc-row" style="margin-top:0.9rem; margin-bottom:0.9rem;">
-                  <span data-i18n="tally_order_total" style="font-weight:600;">Total do Pedido</span>
-                  <strong id="tally-cart-total" style="font-family:var(--font-display); font-size:1.3rem; color:var(--primary);">R$ 0,00</strong>
-                </div>
-
-                <button id="btn-tally-confirm" type="button" class="btn-submit" style="width:100%;" disabled>
-                  <i class="fa-solid fa-check"></i> <span data-i18n="tally_confirm_btn">Confirmar Venda</span>
-                </button>
+                <div id="tally-open-orders-list" class="tally-open-orders-stack"></div>
               </div>
             </div>
           </div>
@@ -612,11 +597,11 @@
           <div class="calc-container" style="margin-bottom:1.25rem;">
             <div class="calc-row">
               <span data-i18n="upd_current">Installed Version:</span>
-              <strong id="upd-current-ver">v2.2.0</strong>
+              <strong id="upd-current-ver">v2.2.1</strong>
             </div>
             <div class="calc-row">
               <span data-i18n="upd_latest">Latest on GitHub:</span>
-              <strong id="upd-latest-ver">v2.2.0</strong>
+              <strong id="upd-latest-ver">v2.2.1</strong>
             </div>
             <div class="calc-row">
               <label class="toggle-switch" for="pref-auto-update">

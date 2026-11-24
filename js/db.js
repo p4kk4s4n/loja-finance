@@ -207,29 +207,43 @@ export async function subscribeRealtimeData(callbacks = {}) {
     callbacks.onTallyDaysUpdated?.(state.tallyDays);
   });
 
-  const uBranding = onSnapshot(collection(db, 'config'), (snap) => {
-    let changed = false;
-    const nextMap = { ...(state.storeBranding || {}) };
+  const uConfig = onSnapshot(collection(db, 'config'), (snap) => {
+    let brandingChanged = false;
+    let openOrdersChanged = false;
+    const nextBranding = { ...(state.storeBranding || {}) };
+    const nextOpenOrders = { ...(state.openOrdersByStore || {}) };
+
     snap.docs.forEach((d) => {
-      if (!d.id.startsWith('logo_')) return;
       const data = d.data();
-      const storeId = (data.storeId || decodeURIComponent(d.id.slice(5))).trim();
-      if (!storeId) return;
-      nextMap[storeId] = {
-        storeId,
-        logoDataUrl: data.logoDataUrl || '',
-        menuSubtitle: data.menuSubtitle || '',
-        updatedAt: toIsoTimestamp(data.updatedAt)
-      };
-      changed = true;
+      if (d.id.startsWith('logo_')) {
+        const storeId = (data.storeId || decodeURIComponent(d.id.slice(5))).trim();
+        if (!storeId) return;
+        nextBranding[storeId] = {
+          storeId,
+          logoDataUrl: data.logoDataUrl || '',
+          menuSubtitle: data.menuSubtitle || '',
+          updatedAt: toIsoTimestamp(data.updatedAt)
+        };
+        brandingChanged = true;
+      } else if (d.id.startsWith('openOrders_')) {
+        const storeId = (data.storeId || decodeURIComponent(d.id.slice('openOrders_'.length))).trim();
+        if (!storeId) return;
+        nextOpenOrders[storeId] = Array.isArray(data.orders) ? data.orders : [];
+        openOrdersChanged = true;
+      }
     });
-    if (changed) {
-      state.storeBranding = nextMap;
+
+    if (brandingChanged) {
+      state.storeBranding = nextBranding;
       callbacks.onStoreBrandingUpdated?.(state.storeBranding);
+    }
+    if (openOrdersChanged) {
+      state.openOrdersByStore = nextOpenOrders;
+      callbacks.onOpenOrdersUpdated?.(state.openOrdersByStore);
     }
   });
 
-  state.unsubscribes.push(uStores, uCats, uAi, uTeam, uSubs, uExp, uMenu, uTallyDays, uBranding);
+  state.unsubscribes.push(uStores, uCats, uAi, uTeam, uSubs, uExp, uMenu, uTallyDays, uConfig);
   state.listenersReady = true;
 }
 
@@ -511,6 +525,23 @@ export async function bulkAssignBarcodesInDb(updates = []) {
   return valid.length;
 }
 
+export function makeOpenOrdersDocId(storeId) {
+  return 'openOrders_' + encodeURIComponent((storeId || 'Store 1').toString().trim());
+}
+
+export async function saveOpenOrdersToDb(storeId, orders = []) {
+  const cleanStore = (storeId || '').toString().trim();
+  if (!cleanStore) return;
+  const cleanOrders = Array.isArray(orders) ? orders : [];
+  state.openOrdersByStore[cleanStore] = cleanOrders;
+  const { db } = await initFirebase();
+  await setDoc(doc(db, 'config', makeOpenOrdersDocId(cleanStore)), {
+    storeId: cleanStore,
+    orders: cleanOrders,
+    updatedAt: new Date().toISOString()
+  });
+}
+
 export async function subscribeTallyDayLines(storeId, dateIso, onUpdate) {
   if (typeof state.tallyDayUnsub === 'function') {
     try { state.tallyDayUnsub(); } catch (_) {}
@@ -546,6 +577,7 @@ export async function addTallyOrderToDb({
   storeId,
   date,
   orderId,
+  tableNumber = '',
   payment = '',
   lines = [],
   userId = '',
@@ -587,6 +619,7 @@ export async function addTallyOrderToDb({
       price,
       qty,
       orderId: orderId || lineId,
+      tableNumber: (tableNumber || '').toString().trim(),
       payment: payment || '',
       userId: userId || '',
       userName: userName || '',

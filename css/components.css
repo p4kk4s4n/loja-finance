@@ -527,8 +527,67 @@ dialog#receipt-modal { max-width: 720px; }
 
 .tally-tiles-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(138px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(225px, 1fr));
   gap: 0.75rem;
+}
+.tally-tiles-grid--compact {
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+}
+.scan-barcode-box {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 6px 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  overflow-x: auto;
+}
+.scan-barcode-box--catalog {
+  width: auto;
+  min-width: 210px;
+  max-width: 260px;
+}
+.scan-barcode-box .barcode-svg {
+  flex-shrink: 0;
+  max-width: none;
+  height: auto;
+  display: block;
+}
+.tally-open-orders-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+.tally-order-card {
+  background: var(--panel-bg);
+  border: 1.5px solid var(--panel-border);
+  border-radius: var(--radius-md);
+  padding: 0.9rem;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+.tally-order-card.active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+.tally-order-card.active .tally-active-pill {
+  background: var(--primary);
+  color: #fff;
+}
+.tally-order-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.65rem;
+  flex-wrap: wrap;
+}
+.tally-table-input {
+  flex: 1;
+  min-width: 110px;
+  padding: 0.42rem 0.7rem !important;
+  font-size: 0.86rem !important;
+  font-weight: 600;
 }
 
 .tally-tile {
@@ -733,6 +792,16 @@ dialog#receipt-modal { max-width: 720px; }
 @media (max-width: 768px) {
   .tally-layout {
     grid-template-columns: 1fr;
+  }
+  .tally-tiles-grid {
+    grid-template-columns: 1fr;
+  }
+  .tally-tiles-grid.tally-tiles-grid--compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .scan-barcode-box--catalog {
+    width: 100%;
+    max-width: none;
   }
   .tally-cart {
     position: static;

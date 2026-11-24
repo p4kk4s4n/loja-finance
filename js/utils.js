@@ -559,3 +559,62 @@ export function reconcileLedgerRevenue(submissions = [], tallyDays = []) {
     dailyBreakdown
   };
 }
+
+export function createOpenOrder({ tableNumber = '', createdBy = '' } = {}) {
+  return {
+    id: `open_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    tableNumber: (tableNumber || '').toString().trim(),
+    payment: '',
+    items: [],
+    createdAt: new Date().toISOString(),
+    createdBy: (createdBy || '').toString().trim()
+  };
+}
+
+export function addItemToOpenOrders(orders = [], activeOrderId = '', item, { tableNumber = '', createdBy = '' } = {}) {
+  const nextOrders = (orders || []).map((o) => ({
+    ...o,
+    items: (o.items || []).map((line) => ({ ...line }))
+  }));
+
+  let target = nextOrders.find((o) => o.id === activeOrderId) || nextOrders[0];
+  if (!target) {
+    target = createOpenOrder({ tableNumber, createdBy });
+    nextOrders.push(target);
+  }
+
+  const existingLine = target.items.find((line) => line.itemId === item.id);
+  if (existingLine) {
+    existingLine.qty = (Number(existingLine.qty) || 0) + 1;
+  } else {
+    target.items.push({
+      itemId: item.id,
+      name: item.name || '',
+      barcode: item.barcode || '',
+      category: item.category || '',
+      price: round2(Number(item.price) || 0),
+      qty: 1
+    });
+  }
+
+  return {
+    orders: nextOrders,
+    activeOrderId: target.id
+  };
+}
+
+export function removeOpenOrderById(orders = [], orderId) {
+  const remaining = (orders || []).filter((o) => o.id !== orderId);
+  return {
+    orders: remaining,
+    nextActiveOrderId: remaining[0]?.id || ''
+  };
+}
+
+export function computeOpenOrderTotal(order) {
+  let total = 0;
+  for (const line of order?.items || []) {
+    total = round2(total + round2((Number(line.price) || 0) * (Number(line.qty) || 0)));
+  }
+  return round2(total);
+}

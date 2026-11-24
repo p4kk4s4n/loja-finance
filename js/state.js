@@ -10,6 +10,7 @@ export const state = {
   groupedExpenses: [],
   menuItems: [],
   storeBranding: {},
+  openOrdersByStore: {},
   tallyDays: [],
   activeTallyDayId: '',
   activeTallyLines: [],

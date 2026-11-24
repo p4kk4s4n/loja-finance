@@ -1,7 +1,10 @@
-// Comanda (Daily Order Tally): Bluetooth/Camera barcode scanning, tap tiles, offline cart, history & retroactive edits
+// Comanda (Daily Order Tally): Bluetooth/Camera barcode scanning, concurrent table orders, scannable tiles, history & retroactive edits
 import { state } from './state.js';
 import {
+  addItemToOpenOrders,
+  computeOpenOrderTotal,
   computeTallyLinesSummary,
+  createOpenOrder,
   escapeHtml,
   formatCurrency,
   getEffectiveDaySales,
@@ -11,6 +14,7 @@ import {
   makeTallyDayId,
   normalizeUserRole,
   parseFlexibleNumber,
+  removeOpenOrderById,
   resolveScanCode,
   round2,
   showLoadingScreen,
@@ -23,19 +27,27 @@ import {
   addTallyOrderToDb,
   editTallyLineInDb,
   fetchTallyEditsFromDb,
+  saveOpenOrdersToDb,
   subscribeTallyDayLines,
   voidTallyLineInDb
 } from './db.js';
 import { createWedgeScanner, openCameraScanner, playScanFeedback } from './scanner.js';
+import { renderBarcodeSvg } from './barcode-svg.js';
 
 const OFFLINE_QUEUE_KEY = 'loja_tally_offline_queue';
+const OPEN_ORDERS_CACHE_KEY = 'loja_open_orders_cache';
+const COMPACT_TILES_KEY = 'loja_tally_compact_tiles';
 
-let cart = [];
+let activeOrderId = '';
 let selectedCategory = 'ALL';
 let searchQuery = '';
-let selectedPayment = '';
 let activeView = 'order'; // 'order' | 'history'
 let btScannerMode = false;
+let compactTiles = false;
+try {
+  compactTiles = localStorage.getItem(COMPACT_TILES_KEY) === '1';
+} catch (_) {}
+let openOrdersSaveTimer = null;
 let subscribedKey = '';
 let wedgeScanner = null;
 let editingLineTarget = null;
@@ -89,12 +101,56 @@ function shiftIsoDate(dateIso, deltaDays) {
   return `${yy}-${mm}-${dd}`;
 }
 
+function getStoreOpenOrders(storeId) {
+  const cleanStore = (storeId || '').toString().trim();
+  if (!cleanStore) return [];
+  const live = state.openOrdersByStore?.[cleanStore];
+  if (Array.isArray(live)) return live;
+  try {
+    const raw = localStorage.getItem(OPEN_ORDERS_CACHE_KEY);
+    const cache = raw ? JSON.parse(raw) : {};
+    return Array.isArray(cache[cleanStore]) ? cache[cleanStore] : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function saveOpenOrdersCache(storeId, orders) {
+  try {
+    const raw = localStorage.getItem(OPEN_ORDERS_CACHE_KEY);
+    const cache = raw ? JSON.parse(raw) : {};
+    cache[storeId] = orders;
+    localStorage.setItem(OPEN_ORDERS_CACHE_KEY, JSON.stringify(cache));
+  } catch (_) {}
+}
+
+function persistOpenOrders(storeId, orders, immediate = true) {
+  const cleanStore = (storeId || '').toString().trim();
+  if (!cleanStore) return;
+  if (!state.openOrdersByStore) state.openOrdersByStore = {};
+  state.openOrdersByStore[cleanStore] = orders;
+  saveOpenOrdersCache(cleanStore, orders);
+
+  if (!state.currentUser || (typeof navigator !== 'undefined' && navigator.onLine === false)) {
+    return;
+  }
+
+  clearTimeout(openOrdersSaveTimer);
+  if (immediate) {
+    saveOpenOrdersToDb(cleanStore, orders).catch(() => {});
+  } else {
+    openOrdersSaveTimer = setTimeout(() => {
+      saveOpenOrdersToDb(cleanStore, state.openOrdersByStore?.[cleanStore] || orders).catch(() => {});
+    }, 350);
+  }
+}
+
 export function bindTallyEvents(switchTab) {
   switchTabCallback = switchTab;
 
   const storeSelect = document.getElementById('tally-store-select');
   storeSelect?.addEventListener('change', () => {
-    cart = [];
+    activeOrderId = '';
     selectedCategory = 'ALL';
     subscribedKey = '';
     refreshTallyUI();
@@ -178,6 +234,15 @@ export function bindTallyEvents(switchTab) {
     });
   });
 
+  document.getElementById('btn-tally-barcode-size')?.addEventListener('click', () => {
+    compactTiles = !compactTiles;
+    try {
+      localStorage.setItem(COMPACT_TILES_KEY, compactTiles ? '1' : '0');
+    } catch (_) {}
+    renderBarcodeSizeToggle();
+    renderMenuTiles();
+  });
+
   document.getElementById('tally-category-chips')?.addEventListener('click', (e) => {
     const chip = e.target.closest('[data-tally-cat]');
     if (!chip) return;
@@ -197,37 +262,104 @@ export function bindTallyEvents(switchTab) {
     } catch (_) {}
   });
 
-  document.getElementById('tally-cart-items')?.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-cart-act]');
-    if (!btn) return;
-    const idx = Number(btn.dataset.cartIdx);
-    if (Number.isNaN(idx) || !cart[idx]) return;
-    const act = btn.dataset.cartAct;
-    if (act === 'inc') cart[idx].qty += 1;
-    else if (act === 'dec') {
-      cart[idx].qty -= 1;
-      if (cart[idx].qty <= 0) cart.splice(idx, 1);
-    } else if (act === 'rem') {
-      cart.splice(idx, 1);
+  document.getElementById('btn-tally-new-order')?.addEventListener('click', () => {
+    const storeId = getSelectedStoreId();
+    if (!storeId) return;
+    const existing = getStoreOpenOrders(storeId).map((o) => ({ ...o, items: [...(o.items || [])] }));
+    const fresh = createOpenOrder({ createdBy: stripRoleSuffix(state.currentUser?.name) });
+    existing.push(fresh);
+    activeOrderId = fresh.id;
+    persistOpenOrders(storeId, existing, true);
+    renderOpenOrders();
+    renderMenuTiles();
+    const newInput = document.querySelector(`[data-order-table="${fresh.id}"]`);
+    newInput?.focus();
+  });
+
+  const ordersContainer = document.getElementById('tally-open-orders-list');
+  ordersContainer?.addEventListener('input', (e) => {
+    const tblInput = e.target.closest('[data-order-table]');
+    if (!tblInput) return;
+    const storeId = getSelectedStoreId();
+    const oid = tblInput.dataset.orderTable;
+    const orders = getStoreOpenOrders(storeId).map((o) =>
+      o.id === oid ? { ...o, tableNumber: tblInput.value } : o
+    );
+    activeOrderId = oid;
+    persistOpenOrders(storeId, orders, false);
+  });
+
+  ordersContainer?.addEventListener('focusin', (e) => {
+    const card = e.target.closest('[data-order-id]');
+    if (!card) return;
+    const oid = card.dataset.orderId;
+    if (oid && oid !== activeOrderId) {
+      activeOrderId = oid;
+      syncActiveOrderHighlightDom();
+      renderMenuTiles();
     }
-    renderCart();
-    renderMenuTiles();
   });
 
-  document.getElementById('tally-payment-pills')?.addEventListener('click', (e) => {
-    const pill = e.target.closest('[data-tally-pay]');
-    if (!pill) return;
-    selectedPayment = pill.dataset.tallyPay || '';
-    renderPaymentPills();
+  ordersContainer?.addEventListener('click', (e) => {
+    const confirmBtn = e.target.closest('[data-order-confirm]');
+    if (confirmBtn) {
+      confirmOpenOrder(confirmBtn.dataset.orderConfirm);
+      return;
+    }
+
+    const discardBtn = e.target.closest('[data-order-discard]');
+    if (discardBtn) {
+      discardOpenOrder(discardBtn.dataset.orderDiscard);
+      return;
+    }
+
+    const payBtn = e.target.closest('[data-order-pay]');
+    if (payBtn) {
+      const oid = payBtn.dataset.orderId;
+      const storeId = getSelectedStoreId();
+      const orders = getStoreOpenOrders(storeId).map((o) =>
+        o.id === oid ? { ...o, payment: payBtn.dataset.orderPay || '' } : o
+      );
+      activeOrderId = oid;
+      persistOpenOrders(storeId, orders, true);
+      renderOpenOrders();
+      return;
+    }
+
+    const stepBtn = e.target.closest('[data-order-item-act]');
+    if (stepBtn) {
+      const oid = stepBtn.dataset.orderId;
+      const idx = Number(stepBtn.dataset.itemIdx);
+      const act = stepBtn.dataset.orderItemAct;
+      const storeId = getSelectedStoreId();
+      const orders = getStoreOpenOrders(storeId).map((o) => {
+        if (o.id !== oid) return o;
+        const items = (o.items || []).map((line) => ({ ...line }));
+        if (Number.isNaN(idx) || !items[idx]) return o;
+        if (act === 'inc') items[idx].qty = (Number(items[idx].qty) || 0) + 1;
+        else if (act === 'dec') {
+          items[idx].qty = (Number(items[idx].qty) || 0) - 1;
+          if (items[idx].qty <= 0) items.splice(idx, 1);
+        } else if (act === 'rem') {
+          items.splice(idx, 1);
+        }
+        return { ...o, items };
+      });
+      activeOrderId = oid;
+      persistOpenOrders(storeId, orders, true);
+      renderOpenOrders();
+      renderMenuTiles();
+      return;
+    }
+
+    const card = e.target.closest('[data-order-id]');
+    if (card && !e.target.closest('input, button')) {
+      activeOrderId = card.dataset.orderId;
+      syncActiveOrderHighlightDom();
+      renderMenuTiles();
+    }
   });
 
-  document.getElementById('btn-tally-clear-cart')?.addEventListener('click', () => {
-    cart = [];
-    renderCart();
-    renderMenuTiles();
-  });
-
-  document.getElementById('btn-tally-confirm')?.addEventListener('click', confirmCartOrder);
   document.getElementById('tally-offline-badge')?.addEventListener('click', () => syncOfflineTallyQueue(false));
   document.getElementById('btn-tally-go-settings')?.addEventListener('click', () => switchTabCallback?.('settings'));
 
@@ -304,15 +436,26 @@ function ensureTallyDaySubscription() {
   }).catch(() => {});
 }
 
+function renderBarcodeSizeToggle() {
+  const btn = document.getElementById('btn-tally-barcode-size');
+  if (!btn) return;
+  btn.classList.toggle('active', compactTiles);
+  const label = compactTiles
+    ? t('tally_large_btn', isPt() ? 'Códigos Grandes' : 'Large Codes')
+    : t('tally_compact_btn', isPt() ? 'Compactar' : 'Compact');
+  const icon = compactTiles ? 'fa-barcode' : 'fa-compress';
+  btn.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${escapeHtml(label)}</span>`;
+}
+
 export function refreshTallyUI() {
   refreshTallyStoreOptions();
   ensureTallyDaySubscription();
+  renderBarcodeSizeToggle();
   renderOfflineBadge();
   renderSummaryBar();
   renderCategoryChips();
   renderMenuTiles();
-  renderCart();
-  renderPaymentPills();
+  renderOpenOrders();
   if (activeView === 'history') renderHistoryView();
 }
 
@@ -350,20 +493,14 @@ function handleBarcodeScan(rawCode) {
 }
 
 function addItemToCart(item) {
-  const idx = cart.findIndex((c) => c.itemId === item.id);
-  if (idx >= 0) {
-    cart[idx].qty += 1;
-  } else {
-    cart.push({
-      itemId: item.id,
-      name: item.name || '',
-      barcode: item.barcode || '',
-      category: item.category || '',
-      price: round2(Number(item.price) || 0),
-      qty: 1
-    });
-  }
-  renderCart();
+  const storeId = getSelectedStoreId();
+  if (!storeId) return;
+  const res = addItemToOpenOrders(getStoreOpenOrders(storeId), activeOrderId, item, {
+    createdBy: stripRoleSuffix(state.currentUser?.name)
+  });
+  activeOrderId = res.activeOrderId;
+  persistOpenOrders(storeId, res.orders, true);
+  renderOpenOrders();
   renderMenuTiles();
 }
 
@@ -444,6 +581,8 @@ function renderMenuTiles() {
   const grid = document.getElementById('tally-tiles-grid');
   if (!grid) return;
 
+  grid.classList.toggle('tally-tiles-grid--compact', compactTiles);
+
   const storeItems = getStoreActiveItems();
   if (storeItems.length === 0) {
     const canManage = ['admin', 'partner'].includes(normalizeUserRole(state.currentUser?.role));
@@ -475,112 +614,212 @@ function renderMenuTiles() {
     return;
   }
 
-  const cartQtyMap = new Map(cart.map((c) => [c.itemId, c.qty]));
+  const storeId = getSelectedStoreId();
+  const orders = getStoreOpenOrders(storeId);
+  const currentOrder = orders.find((o) => o.id === activeOrderId) || orders[0];
+  const cartQtyMap = new Map((currentOrder?.items || []).map((c) => [c.itemId, c.qty]));
+
   grid.innerHTML = filtered
     .map((item) => {
       const inCartQty = cartQtyMap.get(item.id) || 0;
       const badgeHtml = inCartQty > 0 ? `<span class="tally-tile-qty">${inCartQty}</span>` : '';
       const catHtml = item.category ? `<span class="tally-tile-cat">${escapeHtml(item.category)}</span>` : '';
-      const barcodeHtml = item.barcode
-        ? `<span class="tally-tile-code"><i class="fa-solid fa-barcode"></i> ${escapeHtml(item.barcode)}</span>`
-        : '';
+      let barcodeHtml = '';
+      if (item.barcode) {
+        barcodeHtml = compactTiles
+          ? `<span class="tally-tile-code"><i class="fa-solid fa-barcode"></i> ${escapeHtml(item.barcode)}</span>`
+          : `<div class="scan-barcode-box">${renderBarcodeSvg(item.barcode, { height: 48, barWidth: 1.75, quietModules: 10, showText: true })}</div>`;
+      }
       return `
         <button type="button" class="tally-tile ${inCartQty > 0 ? 'in-cart' : ''}" data-menu-item-id="${escapeHtml(item.id)}">
           ${badgeHtml}
-          <span class="tally-tile-name">${escapeHtml(item.name)}</span>
-          <span class="tally-tile-price">${formatCurrency(item.price)}</span>
-          <span class="tally-tile-meta">${catHtml}${barcodeHtml}</span>
+          <div style="width:100%; display:flex; justify-content:space-between; align-items:baseline; gap:0.4rem;">
+            <span class="tally-tile-name">${escapeHtml(item.name)}</span>
+            <span class="tally-tile-price">${formatCurrency(item.price)}</span>
+          </div>
+          ${catHtml ? `<span class="tally-tile-meta">${catHtml}</span>` : ''}
+          ${barcodeHtml}
         </button>
       `;
     })
     .join('');
 }
 
-function renderCart() {
-  const listEl = document.getElementById('tally-cart-items');
-  const totalEl = document.getElementById('tally-cart-total');
-  const confirmBtn = document.getElementById('btn-tally-confirm');
-  const clearBtn = document.getElementById('btn-tally-clear-cart');
+function syncActiveOrderHighlightDom() {
+  const pt = isPt();
+  const activeText = pt ? 'Ativa · Bipe aqui' : 'Active · Scan here';
+  const inactiveText = pt ? 'Toque para selecionar' : 'Tap to select';
+  document.querySelectorAll('#tally-open-orders-list .tally-order-card').forEach((card) => {
+    const isAct = card.dataset.orderId === activeOrderId;
+    card.classList.toggle('active', isAct);
+    const pill = card.querySelector('.tally-active-pill');
+    if (pill) pill.textContent = isAct ? activeText : inactiveText;
+  });
+}
+
+function renderOpenOrders() {
+  const listEl = document.getElementById('tally-open-orders-list');
+  const countBadge = document.getElementById('tally-open-count');
   if (!listEl) return;
 
-  if (cart.length === 0) {
-    listEl.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:1.25rem 0.5rem; font-size:0.88rem;">
-      <i class="fa-solid fa-cart-shopping" style="margin-bottom:0.35rem; font-size:1.2rem; display:block;"></i>
-      ${escapeHtml(isPt() ? 'Escaneie um código ou toque nos itens para montar o pedido.' : 'Scan a barcode or tap items to build an order.')}
+  const storeId = getSelectedStoreId();
+  const orders = getStoreOpenOrders(storeId);
+  if (countBadge) countBadge.textContent = String(orders.length);
+
+  if (orders.length === 0) {
+    activeOrderId = '';
+    listEl.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:1.25rem 0.75rem; font-size:0.88rem; border:1px dashed var(--panel-border); border-radius:var(--radius-sm);">
+      <i class="fa-solid fa-utensils" style="margin-bottom:0.4rem; font-size:1.2rem; display:block;"></i>
+      ${escapeHtml(
+        isPt()
+          ? 'Nenhuma comanda aberta. Escaneie um produto ou clique em "+ Nova Mesa".'
+          : 'No open orders. Scan a product or click "+ New Order".'
+      )}
     </div>`;
-    if (totalEl) totalEl.textContent = formatCurrency(0);
-    if (confirmBtn) confirmBtn.disabled = true;
-    if (clearBtn) clearBtn.disabled = true;
     return;
   }
 
-  let orderTotal = 0;
-  listEl.innerHTML = cart
-    .map((line, idx) => {
-      const sub = round2(line.price * line.qty);
-      orderTotal = round2(orderTotal + sub);
+  if (!orders.some((o) => o.id === activeOrderId)) {
+    activeOrderId = orders[0].id;
+  }
+
+  // Preserve cursor focus if user is actively typing a Table #
+  let focusedTableOrderId = null;
+  let selStart = null;
+  let selEnd = null;
+  if (document.activeElement?.matches?.('.tally-table-input')) {
+    focusedTableOrderId = document.activeElement.dataset.orderTable || null;
+    selStart = document.activeElement.selectionStart;
+    selEnd = document.activeElement.selectionEnd;
+  }
+
+  const pt = isPt();
+  const tablePlaceholder = pt ? 'Mesa # / Cliente (opcional)' : 'Table # / Label (optional)';
+  const confirmLabel = pt ? 'Confirmar Venda' : 'Confirm Sale';
+  const activeText = pt ? 'Ativa · Bipe aqui' : 'Active · Scan here';
+  const inactiveText = pt ? 'Toque para selecionar' : 'Tap to select';
+
+  listEl.innerHTML = orders
+    .map((order) => {
+      const isAct = order.id === activeOrderId;
+      const orderTotal = computeOpenOrderTotal(order);
+      const items = order.items || [];
+      const itemsHtml =
+        items.length === 0
+          ? `<div style="font-size:0.82rem; color:var(--text-muted); padding:0.45rem 0.25rem;">${escapeHtml(
+              pt ? 'Sem itens nesta comanda ainda.' : 'No items in this order yet.'
+            )}</div>`
+          : items
+              .map((line, idx) => {
+                const sub = round2((Number(line.price) || 0) * (Number(line.qty) || 0));
+                return `
+                  <div class="tally-cart-row">
+                    <div class="tally-cart-info">
+                      <div class="tally-cart-name">${escapeHtml(line.name)}</div>
+                      <div class="tally-cart-unit">${formatCurrency(line.price)} × ${line.qty} = <strong>${formatCurrency(sub)}</strong></div>
+                    </div>
+                    <div class="tally-qty-stepper">
+                      <button type="button" data-order-item-act="dec" data-order-id="${escapeHtml(order.id)}" data-item-idx="${idx}" aria-label="Decrease">−</button>
+                      <span>${line.qty}</span>
+                      <button type="button" data-order-item-act="inc" data-order-id="${escapeHtml(order.id)}" data-item-idx="${idx}" aria-label="Increase">+</button>
+                      <button type="button" class="del" data-order-item-act="rem" data-order-id="${escapeHtml(order.id)}" data-item-idx="${idx}" aria-label="Remove"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                  </div>
+                `;
+              })
+              .join('');
+
+      const payVal = order.payment || '';
       return `
-        <div class="tally-cart-row">
-          <div class="tally-cart-info">
-            <div class="tally-cart-name">${escapeHtml(line.name)}</div>
-            <div class="tally-cart-unit">${formatCurrency(line.price)} × ${line.qty} = <strong>${formatCurrency(sub)}</strong></div>
+        <div class="tally-order-card ${isAct ? 'active' : ''}" data-order-id="${escapeHtml(order.id)}">
+          <div class="tally-order-header">
+            <span class="badge tally-active-pill">${escapeHtml(isAct ? activeText : inactiveText)}</span>
+            <input type="text" class="tally-table-input" data-order-table="${escapeHtml(order.id)}" value="${escapeHtml(order.tableNumber || '')}" placeholder="${escapeHtml(tablePlaceholder)}">
+            <button type="button" class="btn-danger-outline" style="padding:0.35rem 0.55rem;" data-order-discard="${escapeHtml(order.id)}" title="${escapeHtml(pt ? 'Remover comanda' : 'Discard order')}">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
           </div>
-          <div class="tally-qty-stepper">
-            <button type="button" data-cart-act="dec" data-cart-idx="${idx}" aria-label="Decrease">−</button>
-            <span>${line.qty}</span>
-            <button type="button" data-cart-act="inc" data-cart-idx="${idx}" aria-label="Increase">+</button>
-            <button type="button" class="del" data-cart-act="rem" data-cart-idx="${idx}" aria-label="Remove"><i class="fa-solid fa-trash"></i></button>
+
+          <div class="tally-cart-items" style="margin-bottom:0.6rem;">${itemsHtml}</div>
+
+          <div class="tally-payment-pills" data-no-swipe="true" style="margin-bottom:0.65rem;">
+            <button type="button" class="tally-chip ${payVal === '' ? 'active' : ''}" data-order-pay="" data-order-id="${escapeHtml(order.id)}">—</button>
+            <button type="button" class="tally-chip ${payVal === 'Cash' ? 'active' : ''}" data-order-pay="Cash" data-order-id="${escapeHtml(order.id)}">${escapeHtml(pt ? 'Dinheiro' : 'Cash')}</button>
+            <button type="button" class="tally-chip ${payVal === 'Card' ? 'active' : ''}" data-order-pay="Card" data-order-id="${escapeHtml(order.id)}">${escapeHtml(pt ? 'Cartão' : 'Card')}</button>
+            <button type="button" class="tally-chip ${payVal === 'PIX' ? 'active' : ''}" data-order-pay="PIX" data-order-id="${escapeHtml(order.id)}">PIX</button>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem; flex-wrap:wrap; border-top:1px solid var(--panel-border); padding-top:0.6rem;">
+            <strong style="font-family:var(--font-display); font-size:1.18rem; color:var(--primary);">${formatCurrency(orderTotal)}</strong>
+            <button type="button" class="btn-submit" style="padding:0.5rem 0.95rem; font-size:0.88rem;" data-order-confirm="${escapeHtml(order.id)}" ${items.length === 0 ? 'disabled' : ''}>
+              <i class="fa-solid fa-check"></i> ${escapeHtml(confirmLabel)}
+            </button>
           </div>
         </div>
       `;
     })
     .join('');
 
-  if (totalEl) totalEl.textContent = formatCurrency(orderTotal);
-  if (confirmBtn) confirmBtn.disabled = false;
-  if (clearBtn) clearBtn.disabled = false;
+  if (focusedTableOrderId) {
+    const restoreEl = listEl.querySelector(`[data-order-table="${focusedTableOrderId}"]`);
+    if (restoreEl) {
+      restoreEl.focus();
+      if (selStart !== null && selEnd !== null && typeof restoreEl.setSelectionRange === 'function') {
+        restoreEl.setSelectionRange(selStart, selEnd);
+      }
+    }
+  }
 }
 
-function renderPaymentPills() {
-  document.querySelectorAll('#tally-payment-pills [data-tally-pay]').forEach((btn) => {
-    btn.classList.toggle('active', (btn.dataset.tallyPay || '') === selectedPayment);
-  });
-}
-
-async function confirmCartOrder() {
-  if (cart.length === 0 || !state.currentUser) return;
+async function confirmOpenOrder(orderId) {
+  if (!state.currentUser) return;
   const storeId = getSelectedStoreId();
   if (!storeId) {
     showToast(isPt() ? 'Selecione uma loja primeiro.' : 'Please select a store first.', true);
     return;
   }
 
+  const orders = getStoreOpenOrders(storeId);
+  const order = orders.find((o) => o.id === orderId);
+  if (!order || !Array.isArray(order.items) || order.items.length === 0) return;
+
+  const liveTableInput = document.querySelector(`[data-order-table="${orderId}"]`);
+  const tableNumber = (liveTableInput ? liveTableInput.value : order.tableNumber || '').trim();
+
   const orderPayload = {
     storeId,
     date: getTodayISO(),
     orderId: `ord_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-    payment: selectedPayment,
-    lines: cart.map((c) => ({ ...c })),
+    tableNumber,
+    payment: order.payment || '',
+    lines: order.items.map((c) => ({ ...c })),
     userId: state.currentUser.id || '',
     userName: state.currentUser.name || ''
   };
 
+  const finishRemoval = () => {
+    const { orders: remaining, nextActiveOrderId } = removeOpenOrderById(getStoreOpenOrders(storeId), orderId);
+    activeOrderId = nextActiveOrderId;
+    persistOpenOrders(storeId, remaining, true);
+    renderOpenOrders();
+    renderMenuTiles();
+  };
+
   if (typeof navigator !== 'undefined' && navigator.onLine === false) {
-    queueOfflineOrder(orderPayload);
+    queueOfflineOrder(orderPayload, finishRemoval);
     return;
   }
 
-  showLoadingScreen(isPt() ? 'Registrando pedido na comanda...' : 'Saving order to daily tally...');
+  showLoadingScreen(isPt() ? 'Confirmando comanda...' : 'Confirming order...');
   try {
     await addTallyOrderToDb(orderPayload);
-    cart = [];
-    renderCart();
-    renderMenuTiles();
-    showToast(isPt() ? 'Pedido confirmado na comanda!' : 'Order added to tally!');
+    finishRemoval();
+    const label = tableNumber ? ` (${isPt() ? 'Mesa' : 'Table'} ${tableNumber})` : '';
+    showToast(isPt() ? `Pedido${label} confirmado!` : `Order${label} confirmed!`);
   } catch (err) {
     const msg = (err?.message || '').toLowerCase();
     if (!navigator.onLine || msg.includes('offline') || msg.includes('network') || msg.includes('unavailable')) {
-      queueOfflineOrder(orderPayload);
+      queueOfflineOrder(orderPayload, finishRemoval);
     } else {
       showToast('Error saving order: ' + err.message, true);
     }
@@ -589,13 +828,21 @@ async function confirmCartOrder() {
   }
 }
 
-function queueOfflineOrder(orderPayload) {
+function discardOpenOrder(orderId) {
+  const storeId = getSelectedStoreId();
+  if (!storeId) return;
+  const { orders: remaining, nextActiveOrderId } = removeOpenOrderById(getStoreOpenOrders(storeId), orderId);
+  activeOrderId = nextActiveOrderId;
+  persistOpenOrders(storeId, remaining, true);
+  renderOpenOrders();
+  renderMenuTiles();
+}
+
+function queueOfflineOrder(orderPayload, onAfterQueue) {
   const queue = getOfflineQueue();
   queue.push({ ...orderPayload, queuedAt: new Date().toISOString() });
   saveOfflineQueue(queue);
-  cart = [];
-  renderCart();
-  renderMenuTiles();
+  onAfterQueue?.();
   renderOfflineBadge();
   renderSummaryBar();
   showToast(
@@ -742,6 +989,11 @@ function renderHistoryView() {
         : '';
       const whoLabel = stripRoleSuffix(line.userName || '');
       const payLabel = line.payment ? getPaymentMethodTranslation(line.payment) : '';
+      const tableBadge = line.tableNumber
+        ? `<span class="badge"><i class="fa-solid fa-chair"></i> ${escapeHtml(
+            (isPt() ? 'Mesa ' : 'Table ') + line.tableNumber
+          )}</span>`
+        : '';
       const isOwner =
         (selfId && line.userId === selfId) ||
         (selfName && stripRoleSuffix(line.userName).toLowerCase() === selfName);
@@ -790,6 +1042,7 @@ function renderHistoryView() {
             <div style="font-size:0.78rem; color:var(--text-secondary); display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.2rem;">
               ${timeLabel ? `<span><i class="fa-regular fa-clock"></i> ${escapeHtml(timeLabel)}</span>` : ''}
               ${whoLabel ? `<span><i class="fa-regular fa-user"></i> ${escapeHtml(whoLabel)}</span>` : ''}
+              ${tableBadge}
               ${payLabel ? `<span class="badge">${escapeHtml(payLabel)}</span>` : ''}
               ${statusNote}
             </div>

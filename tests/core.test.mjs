@@ -15,7 +15,11 @@ import {
   resolveScanCode,
   getEffectiveDaySales,
   computeTallyLinesSummary,
-  reconcileLedgerRevenue
+  reconcileLedgerRevenue,
+  createOpenOrder,
+  addItemToOpenOrders,
+  removeOpenOrderById,
+  computeOpenOrderTotal
 } from '../js/utils.js';
 import { isNewerVersion, detectGithubRepoFromUrl } from '../js/updater.js';
 import {
@@ -299,4 +303,27 @@ test('encodeEan13Bits, encodeCode128BBits, and renderBarcodeSvg emit valid vecto
 
   const svg128 = renderBarcodeSvg('PRATO-01');
   assert.equal(svg128.includes('<svg ') && svg128.includes('<rect ') && svg128.includes('PRATO-01'), true);
+});
+
+test('createOpenOrder, addItemToOpenOrders, removeOpenOrderById manage concurrent table orders', () => {
+  const itemA = { id: 'a', name: 'Heineken', price: 15, barcode: '2000000000015', category: 'Cervejas' };
+  const itemB = { id: 'b', name: 'Prato Feito', price: 30, barcode: '2000000000022', category: 'Pratos' };
+
+  const first = addItemToOpenOrders([], '', itemA, { tableNumber: 'Mesa 4', createdBy: 'Ana' });
+  assert.equal(first.orders.length, 1);
+  assert.equal(first.orders[0].tableNumber, 'Mesa 4');
+  assert.equal(computeOpenOrderTotal(first.orders[0]), 15);
+
+  const secondEmpty = createOpenOrder({ tableNumber: 'Mesa 7', createdBy: 'Ana' });
+  const withTwo = [...first.orders, secondEmpty];
+  const afterSecondScan = addItemToOpenOrders(withTwo, secondEmpty.id, itemB);
+  assert.equal(afterSecondScan.orders.length, 2);
+  assert.equal(afterSecondScan.orders[0].items.length, 1);
+  assert.equal(afterSecondScan.orders[1].items.length, 1);
+  assert.equal(computeOpenOrderTotal(afterSecondScan.orders[1]), 30);
+
+  const afterRemove = removeOpenOrderById(afterSecondScan.orders, first.orders[0].id);
+  assert.equal(afterRemove.orders.length, 1);
+  assert.equal(afterRemove.orders[0].tableNumber, 'Mesa 7');
+  assert.equal(afterRemove.nextActiveOrderId, secondEmpty.id);
 });
