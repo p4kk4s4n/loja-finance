@@ -213,6 +213,19 @@ export const translations = {
     set_cat_item_cat: 'Categoria (opcional)',
     set_cat_item_barcode: 'Código de Barras (opcional)',
     cat_item_add_btn: 'Salvar Item',
+    set_cat_gen_btn: 'Gerar',
+    set_cat_logo_btn: 'Logo da Loja',
+    set_cat_subtitle_label: 'Subtítulo / Rodapé do Cardápio (opcional)',
+    set_cat_autofill_btn: 'Gerar Códigos Faltantes',
+    set_cat_print_btn: 'Imprimir Cardápio com Códigos',
+    pmenu_modal_title: 'Visualizar Cardápio para Impressão',
+    pmenu_fmt_a: 'Formato A · Clássico 2 Colunas',
+    pmenu_fmt_b: 'Formato B · Cartões Scanner (3 Col.)',
+    pmenu_fmt_c: 'Formato C · Editorial 1 Coluna',
+    pmenu_opt_barcodes: 'Incluir Códigos de Barras',
+    pmenu_opt_prices: 'Mostrar Preços (R$)',
+    pmenu_opt_large: 'Códigos Maiores (Fácil Leitura)',
+    pmenu_btn_print: 'Imprimir / Salvar PDF',
     btn_close: 'Fechar',
     btn_cancel: 'Cancelar',
     btn_save: 'Salvar'
@@ -428,6 +441,19 @@ export const translations = {
     set_cat_item_cat: 'Category (optional)',
     set_cat_item_barcode: 'Barcode (optional)',
     cat_item_add_btn: 'Save Item',
+    set_cat_gen_btn: 'Generate',
+    set_cat_logo_btn: 'Store Logo',
+    set_cat_subtitle_label: 'Menu Subtitle / Footer (optional)',
+    set_cat_autofill_btn: 'Auto-fill Missing Barcodes',
+    set_cat_print_btn: 'Print Barcode Menu',
+    pmenu_modal_title: 'Printable Menu Preview',
+    pmenu_fmt_a: 'Format A · Classic 2 Columns',
+    pmenu_fmt_b: 'Format B · Scanner Cards (3 Col.)',
+    pmenu_fmt_c: 'Format C · Editorial 1 Column',
+    pmenu_opt_barcodes: 'Include Barcodes',
+    pmenu_opt_prices: 'Show Prices (R$)',
+    pmenu_opt_large: 'Large Easy-Scan Barcodes',
+    pmenu_btn_print: 'Print / Save PDF',
     btn_close: 'Close',
     btn_cancel: 'Cancel',
     btn_save: 'Save'
@@ -484,6 +510,18 @@ export function translatePageLayout(lang = state.currentLanguage) {
   if (tallyScan) {
     tallyScan.placeholder =
       lang === 'pt' ? 'Bipe o código de barras ou busque item...' : 'Scan barcode or search item...';
+  }
+  const catBarcode = document.getElementById('catalog-item-barcode');
+  if (catBarcode) {
+    catBarcode.placeholder =
+      lang === 'pt' ? 'Vazio = gera automático ao salvar' : 'Blank = auto-generated on save';
+  }
+  const catSub = document.getElementById('catalog-menu-subtitle');
+  if (catSub) {
+    catSub.placeholder =
+      lang === 'pt'
+        ? 'Ex: Av. Principal, 120 · Wi-Fi: Loja123 · @sualoja'
+        : 'e.g. 120 Main St · Wi-Fi: Store123 · @yourstore';
   }
 
   const isPt = lang === 'pt';

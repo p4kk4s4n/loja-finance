@@ -9,6 +9,7 @@ export const state = {
   rawExpenses: [],
   groupedExpenses: [],
   menuItems: [],
+  storeBranding: {},
   tallyDays: [],
   activeTallyDayId: '',
   activeTallyLines: [],

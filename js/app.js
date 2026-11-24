@@ -13,6 +13,7 @@ import {
 import { subscribeRealtimeData } from './db.js';
 import { initUpdater, refreshPwaInstallUI } from './updater.js';
 import { closeCameraScanner } from './scanner.js';
+import { bindMenuPrintEvents } from './menu-print.js';
 import { bindSalesEvents, updateSalesTallyHint } from './ui-sales.js';
 import { bindTallyEvents, refreshTallyStoreOptions, refreshTallyUI, syncOfflineTallyQueue } from './ui-tally.js';
 import { bindExpenseEvents, renderExpenseLines, populateMasterCategoryDropdown } from './ui-expenses.js';
@@ -21,6 +22,7 @@ import {
   bindSettingsEvents,
   loadPreferences,
   populateStoreDropdowns,
+  refreshCatalogBrandingUI,
   renderIntegrationInputs,
   renderSettingsBusinesses,
   renderSettingsCatalog,
@@ -38,7 +40,7 @@ export function switchTab(tabName) {
   const navBtns = Array.from(document.querySelectorAll('.nav-btn[data-tab]'));
   let targetBtn = navBtns.find((b) => b.dataset.tab === tabName);
   if (!isNavTabVisible(targetBtn) || !document.getElementById(`tab-${tabName}`)) {
-    tabName = 'submit';
+    tabName = 'tally';
     targetBtn = navBtns.find((b) => b.dataset.tab === tabName) || targetBtn;
   }
 
@@ -132,7 +134,7 @@ async function applyLoginState() {
   else updateDOM();
 
   if (normalizeUserRole(user.role) === 'employee' && document.getElementById('tab-portfolio')?.classList.contains('active')) {
-    switchTab('submit');
+    switchTab('tally');
   }
 
   const roleKindUser = normalizeUserRole(user.role);
@@ -140,6 +142,7 @@ async function applyLoginState() {
   const canManageCatUser = roleKindUser === 'admin' || roleKindUser === 'partner';
   populateStoreDropdowns();
   refreshTallyStoreOptions();
+  refreshTallyUI();
   if (canManageCatUser) {
     renderSettingsCatalog();
   }
@@ -199,6 +202,12 @@ async function applyLoginState() {
       refreshTallyUI();
       updateSalesTallyHint();
       renderDashboard();
+    },
+    onStoreBrandingUpdated: () => {
+      const rk = normalizeUserRole(state.currentUser?.role);
+      if (rk === 'admin' || rk === 'partner') {
+        refreshCatalogBrandingUI();
+      }
     }
   });
 
@@ -423,6 +432,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   bindGlobalGesturesAndNav();
   bindSalesEvents(() => switchTab('dashboard'));
   bindTallyEvents(switchTab);
+  bindMenuPrintEvents();
   bindExpenseEvents(() => switchTab('dashboard'));
   bindDashboardEvents(switchTab);
   window.addEventListener('online', () => syncOfflineTallyQueue(true));

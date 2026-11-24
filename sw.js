@@ -1,4 +1,4 @@
-const APP_VERSION = '2.1.0';
+const APP_VERSION = '2.2.0';
 const CACHE_NAME = `loja-finance-v${APP_VERSION}`;
 
 const APP_SHELL_ASSETS = [
@@ -15,11 +15,13 @@ const APP_SHELL_ASSETS = [
   './js/vendor/zxing.min.js',
   './js/state.js',
   './js/utils.js',
+  './js/barcode-svg.js',
   './js/i18n.js',
   './js/auth.js',
   './js/db.js',
   './js/ai-ocr.js',
   './js/scanner.js',
+  './js/menu-print.js',
   './js/updater.js',
   './js/sheets-export.js',
   './js/ui-sales.js',

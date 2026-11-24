@@ -153,6 +153,51 @@ export function compressImage(file) {
   });
 }
 
+export function compressLogoImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Failed to read logo file.'));
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Invalid logo image file.'));
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const MAX_W = 420;
+        const MAX_H = 220;
+        let { width, height } = img;
+        const scale = Math.min(1, MAX_W / (width || 1), MAX_H / (height || 1));
+        canvas.width = Math.max(1, Math.round(width * scale));
+        canvas.height = Math.max(1, Math.round(height * scale));
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        const keepAlpha = file.type === 'image/png' || file.type === 'image/webp';
+        if (keepAlpha) {
+          const pngUrl = canvas.toDataURL('image/png');
+          if (pngUrl.length <= 220000) {
+            resolve(pngUrl);
+            return;
+          }
+          // Flatten onto white before JPEG fallback for overly heavy PNGs
+          const flatCanvas = document.createElement('canvas');
+          flatCanvas.width = canvas.width;
+          flatCanvas.height = canvas.height;
+          const flatCtx = flatCanvas.getContext('2d');
+          flatCtx.fillStyle = '#ffffff';
+          flatCtx.fillRect(0, 0, flatCanvas.width, flatCanvas.height);
+          flatCtx.drawImage(canvas, 0, 0);
+          resolve(flatCanvas.toDataURL('image/jpeg', 0.85));
+          return;
+        }
+        resolve(canvas.toDataURL('image/jpeg', 0.85));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 export function showToast(message, isError = false, isInfo = false) {
   const container = document.getElementById('toast-container');
   if (!container) return;

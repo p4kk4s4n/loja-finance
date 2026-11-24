@@ -18,6 +18,14 @@ import {
   reconcileLedgerRevenue
 } from '../js/utils.js';
 import { isNewerVersion, detectGithubRepoFromUrl } from '../js/updater.js';
+import {
+  computeEan13CheckDigit,
+  isValidEan13,
+  generateInStoreEan13,
+  encodeEan13Bits,
+  encodeCode128BBits,
+  renderBarcodeSvg
+} from '../js/barcode-svg.js';
 
 test('parseFlexibleNumber handles pt-BR and US decimal formats', () => {
   assert.equal(parseFlexibleNumber('2.345,67'), 2345.67);
@@ -257,4 +265,38 @@ test('reconcileLedgerRevenue and getScopedLedgerData enforce store/role scoping 
   });
   assert.equal(socio.scopedTallyDays.length, 1);
   assert.equal(socio.scopedTallyDays[0].storeId, 'Porteira Velho');
+});
+
+test('computeEan13CheckDigit, isValidEan13, and generateInStoreEan13 produce valid collision-free codes', () => {
+  assert.equal(computeEan13CheckDigit('789490001151'), '7');
+  assert.equal(computeEan13CheckDigit('400638133393'), '1');
+  assert.equal(isValidEan13('7894900011517'), true);
+  assert.equal(isValidEan13('7894900011518'), false);
+
+  const used = new Set();
+  const c1 = generateInStoreEan13('Porteira Velho', used);
+  used.add(c1);
+  const c2 = generateInStoreEan13('Porteira Velho', used);
+  assert.equal(c1.startsWith('20'), true);
+  assert.equal(isValidEan13(c1), true);
+  assert.equal(isValidEan13(c2), true);
+  assert.notEqual(c1, c2);
+});
+
+test('encodeEan13Bits, encodeCode128BBits, and renderBarcodeSvg emit valid vector SVG barcodes', () => {
+  const eanBits = encodeEan13Bits('7894900011517');
+  assert.equal(eanBits.length, 95);
+  assert.equal(eanBits.startsWith('101'), true);
+  assert.equal(eanBits.slice(45, 50), '01010');
+  assert.equal(eanBits.endsWith('101'), true);
+
+  const c128Bits = encodeCode128BBits('PRATO-01');
+  assert.equal(c128Bits.length, (1 + 8 + 1) * 11 + 13);
+  assert.equal(c128Bits.startsWith('11010010000'), true); // Start B
+
+  const svgEan = renderBarcodeSvg('7894900011517');
+  assert.equal(svgEan.includes('<svg ') && svgEan.includes('<rect ') && svgEan.includes('7894900011517'), true);
+
+  const svg128 = renderBarcodeSvg('PRATO-01');
+  assert.equal(svg128.includes('<svg ') && svg128.includes('<rect ') && svg128.includes('PRATO-01'), true);
 });

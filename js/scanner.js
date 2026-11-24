@@ -413,7 +413,8 @@ export async function openCameraScanner({ onDetected, continuous = false, title 
       hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
     }
 
-    const reader = new ZXing.BrowserMultiFormatReader(hints, 200);
+    const reader = new ZXing.MultiFormatReader();
+    reader.setHints(hints);
     activeSession.zxingReader = reader;
     setScannerStatus(
       continuous

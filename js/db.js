@@ -207,7 +207,29 @@ export async function subscribeRealtimeData(callbacks = {}) {
     callbacks.onTallyDaysUpdated?.(state.tallyDays);
   });
 
-  state.unsubscribes.push(uStores, uCats, uAi, uTeam, uSubs, uExp, uMenu, uTallyDays);
+  const uBranding = onSnapshot(collection(db, 'config'), (snap) => {
+    let changed = false;
+    const nextMap = { ...(state.storeBranding || {}) };
+    snap.docs.forEach((d) => {
+      if (!d.id.startsWith('logo_')) return;
+      const data = d.data();
+      const storeId = (data.storeId || decodeURIComponent(d.id.slice(5))).trim();
+      if (!storeId) return;
+      nextMap[storeId] = {
+        storeId,
+        logoDataUrl: data.logoDataUrl || '',
+        menuSubtitle: data.menuSubtitle || '',
+        updatedAt: toIsoTimestamp(data.updatedAt)
+      };
+      changed = true;
+    });
+    if (changed) {
+      state.storeBranding = nextMap;
+      callbacks.onStoreBrandingUpdated?.(state.storeBranding);
+    }
+  });
+
+  state.unsubscribes.push(uStores, uCats, uAi, uTeam, uSubs, uExp, uMenu, uTallyDays, uBranding);
   state.listenersReady = true;
 }
 
@@ -428,6 +450,65 @@ export async function copyMenuItemsToStoreInDb(sourceStoreId, targetStoreId, all
     await batch.commit();
   }
   return { copiedCount, skippedCount };
+}
+
+export function makeStoreBrandingDocId(storeId) {
+  return 'logo_' + encodeURIComponent((storeId || 'Store 1').toString().trim());
+}
+
+export async function fetchStoreBrandingFromDb(storeId) {
+  const cleanStore = (storeId || '').toString().trim();
+  if (!cleanStore) return { storeId: '', logoDataUrl: '', menuSubtitle: '' };
+  const { db } = await initFirebase();
+  const snap = await getDoc(doc(db, 'config', makeStoreBrandingDocId(cleanStore)));
+  const data = snap.exists() ? snap.data() : {};
+  const branding = {
+    storeId: cleanStore,
+    logoDataUrl: data.logoDataUrl || '',
+    menuSubtitle: data.menuSubtitle || '',
+    updatedAt: toIsoTimestamp(data.updatedAt)
+  };
+  state.storeBranding[cleanStore] = branding;
+  return branding;
+}
+
+export async function saveStoreBrandingToDb(storeId, updates = {}) {
+  const cleanStore = (storeId || '').toString().trim();
+  if (!cleanStore) return;
+  const { db } = await initFirebase();
+  const prev = state.storeBranding?.[cleanStore] || {};
+  const nowIso = new Date().toISOString();
+  const payload = {
+    storeId: cleanStore,
+    logoDataUrl: updates.logoDataUrl !== undefined ? updates.logoDataUrl || '' : prev.logoDataUrl || '',
+    menuSubtitle:
+      updates.menuSubtitle !== undefined
+        ? (updates.menuSubtitle || '').toString().trim()
+        : prev.menuSubtitle || '',
+    updatedAt: nowIso
+  };
+  await setDoc(doc(db, 'config', makeStoreBrandingDocId(cleanStore)), payload, { merge: true });
+  state.storeBranding[cleanStore] = payload;
+  return payload;
+}
+
+export async function bulkAssignBarcodesInDb(updates = []) {
+  const valid = (updates || []).filter((u) => u && u.id && normalizeBarcode(u.barcode));
+  if (valid.length === 0) return 0;
+  const { db } = await initFirebase();
+  const nowIso = new Date().toISOString();
+  for (let i = 0; i < valid.length; i += 400) {
+    const chunk = valid.slice(i, i + 400);
+    const batch = writeBatch(db);
+    for (const u of chunk) {
+      batch.update(doc(db, 'menuItems', u.id), {
+        barcode: normalizeBarcode(u.barcode),
+        updatedAt: nowIso
+      });
+    }
+    await batch.commit();
+  }
+  return valid.length;
 }
 
 export async function subscribeTallyDayLines(storeId, dateIso, onUpdate) {
