@@ -1,12 +1,21 @@
-// Printable Categorized Barcode Menu Generator (Formats A, B, C + @media print sheet)
+// Printable Categorized Barcode Menu Generator (Formats A, B, C, 4-7 cols + @media print sheet)
 import { state } from './state.js';
-import { escapeHtml, formatCurrency, normalizeBarcode, showToast } from './utils.js';
+import {
+  escapeHtml,
+  formatCurrency,
+  getCategoryAccentColor,
+  normalizeBarcode,
+  showToast,
+  sortCategoriesCanonical
+} from './utils.js';
 import { renderBarcodeSvg } from './barcode-svg.js';
 import { fetchStoreBrandingFromDb } from './db.js';
 
 let printState = {
   storeId: '',
   format: 'a',
+  orientation: 'portrait',
+  density: 'normal',
   showBarcodes: true,
   showPrices: true,
   largeBarcodes: false,
@@ -30,11 +39,8 @@ export function groupCatalogByCategory(items = [], storeId = '', lang = 'pt') {
     map.get(cat).push(item);
   }
 
-  const entries = Array.from(map.entries()).sort(([a], [b]) => {
-    if (a === generalLabel && b !== generalLabel) return 1;
-    if (b === generalLabel && a !== generalLabel) return -1;
-    return a.localeCompare(b);
-  });
+  const sortedKeys = sortCategoriesCanonical(Array.from(map.keys()));
+  const entries = sortedKeys.map((k) => [k, map.get(k)]);
 
   for (const [, list] of entries) {
     list.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
@@ -51,7 +57,9 @@ export function buildPrintableMenuHtml({
   lang = 'pt'
 } = {}) {
   const pt = lang === 'pt';
-  const format = ['a', 'b', 'c'].includes(options.format) ? options.format : 'a';
+  const validFormats = ['a', 'b', 'c', '4', '5', '6', '7'];
+  const format = validFormats.includes(options.format) ? options.format : 'a';
+  const density = options.density === 'super' ? 'super' : 'normal';
   const showBarcodes = options.showBarcodes !== false;
   const showPrices = options.showPrices !== false;
   const largeBarcodes = Boolean(options.largeBarcodes);
@@ -62,11 +70,14 @@ export function buildPrintableMenuHtml({
     groups = groups.filter(([cat]) => selectedCats.has(cat));
   }
 
+  const isMultiCol = ['4', '5', '6', '7'].includes(format);
   const svgOpts = largeBarcodes
-    ? { height: 48, barWidth: 1.75, quietModules: 11, showText: true }
-    : format === 'b'
-      ? { height: 38, barWidth: 1.4, quietModules: 9, showText: true }
-      : { height: 34, barWidth: 1.35, quietModules: 9, showText: true };
+    ? { height: isMultiCol ? 38 : 48, barWidth: isMultiCol ? 1.45 : 1.75, quietModules: 10, showText: true }
+    : isMultiCol
+      ? { height: density === 'super' ? 24 : 28, barWidth: 1.15, quietModules: 7, showText: true }
+      : format === 'b'
+        ? { height: 38, barWidth: 1.4, quietModules: 9, showText: true }
+        : { height: 34, barWidth: 1.35, quietModules: 9, showText: true };
 
   const logoHtml = branding?.logoDataUrl
     ? `<img class="pmenu-logo" src="${escapeHtml(branding.logoDataUrl)}" alt="${escapeHtml(storeId)}">`
@@ -81,28 +92,18 @@ export function buildPrintableMenuHtml({
       ? 'Cardápio'
       : 'Menu';
 
-  const headerHtml =
-    format === 'b'
-      ? `
-      <header class="pmenu-header pmenu-header--bar">
-        <div class="pmenu-header-left">
-          ${logoHtml}
-          <div>
-            <h1 class="pmenu-store">${escapeHtml(storeId || 'Loja')}</h1>
-            ${subtitleHtml}
-          </div>
-        </div>
-        <div class="pmenu-tag">${escapeHtml(docLabel)}</div>
-      </header>
-    `
-      : `
-      <header class="pmenu-header pmenu-header--center">
+  const headerHtml = `
+    <header class="pmenu-header pmenu-header--bar">
+      <div class="pmenu-header-left">
         ${logoHtml}
-        <h1 class="pmenu-store">${escapeHtml(storeId || 'Loja')}</h1>
-        ${subtitleHtml}
-        <div class="pmenu-rule"><span>${escapeHtml(docLabel)}</span></div>
-      </header>
-    `;
+        <div>
+          <h1 class="pmenu-store">${escapeHtml(storeId || 'Loja')}</h1>
+          ${subtitleHtml}
+        </div>
+      </div>
+      <div class="pmenu-tag">${escapeHtml(docLabel)}</div>
+    </header>
+  `;
 
   const renderBarcodeSlot = (item) => {
     if (!showBarcodes) return '';
@@ -147,13 +148,14 @@ export function buildPrintableMenuHtml({
           .join('')}
       </div>
     `;
-  } else if (format === 'b') {
+  } else if (['b', '4', '5', '6', '7'].includes(format)) {
+    const gridClass = format === 'b' ? 'pmenu-grid-3' : `pmenu-grid-${format}`;
     bodyHtml = groups
       .map(
         ([cat, list]) => `
-      <section class="pmenu-cat-block">
+      <section class="pmenu-cat-block" style="--cat-accent:${getCategoryAccentColor(cat)};">
         <h2 class="pmenu-cat-title pmenu-cat-title--bar">${escapeHtml(cat)}</h2>
-        <div class="pmenu-grid-3">
+        <div class="${gridClass}">
           ${list
             .map(
               (item) => `
@@ -202,7 +204,7 @@ export function buildPrintableMenuHtml({
   }
 
   return `
-    <div class="pmenu pmenu--${format}">
+    <div class="pmenu pmenu--${format} ${density === 'super' ? 'pmenu--super' : ''}">
       ${headerHtml}
       ${bodyHtml}
     </div>
@@ -254,7 +256,24 @@ export function bindMenuPrintEvents() {
     renderMenuPrintModal();
   });
 
+  document.getElementById('print-opt-orientation')?.addEventListener('change', (e) => {
+    printState.orientation = e.target.value === 'landscape' ? 'landscape' : 'portrait';
+    renderMenuPrintModal();
+  });
+
+  document.getElementById('print-opt-density')?.addEventListener('change', (e) => {
+    printState.density = e.target.value === 'super' ? 'super' : 'normal';
+    renderMenuPrintModal();
+  });
+
   document.getElementById('btn-print-menu-now')?.addEventListener('click', () => {
+    let styleEl = document.getElementById('print-page-orientation-style');
+    if (!styleEl) {
+      styleEl = document.createElement('style');
+      styleEl.id = 'print-page-orientation-style';
+      document.head.appendChild(styleEl);
+    }
+    styleEl.textContent = `@media print { @page { size: A4 ${printState.orientation}; margin: 8mm; } }`;
     const html = getCurrentMenuHtml();
     const sheet = document.getElementById('print-menu-sheet');
     if (sheet) sheet.innerHTML = html;
@@ -270,6 +289,8 @@ function getCurrentMenuHtml() {
     branding: state.storeBranding?.[printState.storeId] || {},
     options: {
       format: printState.format,
+      orientation: printState.orientation,
+      density: printState.density,
       showBarcodes: printState.showBarcodes,
       showPrices: printState.showPrices,
       largeBarcodes: printState.largeBarcodes,
@@ -283,6 +304,11 @@ export function renderMenuPrintModal() {
   document.querySelectorAll('#menu-print-formats [data-print-fmt]').forEach((btn) => {
     btn.classList.toggle('active', (btn.dataset.printFmt || 'a') === printState.format);
   });
+
+  const orientSel = document.getElementById('print-opt-orientation');
+  const densitySel = document.getElementById('print-opt-density');
+  if (orientSel) orientSel.value = printState.orientation;
+  if (densitySel) densitySel.value = printState.density;
 
   const barChk = document.getElementById('print-opt-barcodes');
   const priceChk = document.getElementById('print-opt-prices');

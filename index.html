@@ -29,7 +29,7 @@
       <div class="brand">
         <div class="brand-icon"><i class="fa-solid fa-chart-line"></i></div>
         <div class="brand-name">Loja Finance</div>
-        <span id="header-version-pill" class="version-pill">v2.2.1</span>
+        <span id="header-version-pill" class="version-pill">v2.2.2</span>
       </div>
 
       <div class="user-info">
@@ -75,6 +75,7 @@
               <span data-i18n="tally_title">Comanda &amp; Leitor</span>
             </h2>
             <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+              <img id="tally-store-logo" class="tally-store-logo hidden" alt="Store Logo">
               <select id="tally-store-select" style="width:auto; min-width:140px; padding:0.45rem 0.85rem; font-size:0.85rem;"></select>
               <div class="tally-view-switch" data-no-swipe="true">
                 <button id="btn-tally-view-order" type="button" class="tally-switch-btn active" data-i18n="tally_view_order">Novo Pedido</button>
@@ -529,129 +530,7 @@
 
       <!-- SETTINGS TAB -->
       <div id="tab-settings" class="tab-pane">
-        <!-- 1. Device UI Preferences (Top for All Roles) -->
-        <div class="glass-card">
-          <div class="glass-card-header">
-            <h3 class="glass-card-title"><i class="fa-solid fa-wand-magic-sparkles" style="color:var(--secondary);"></i> <span data-i18n="pref_title">UI Preferences &amp; Accessibility</span></h3>
-          </div>
-          <div class="form-grid">
-            <div class="form-group">
-              <label for="pref-theme" data-i18n="pref_theme">Theme Mode</label>
-              <select id="pref-theme">
-                <option value="light" selected data-i18n="pref_theme_light">Light Mode (Google Workspace)</option>
-                <option value="dark" data-i18n="pref_theme_dark">Dark Mode (Glow)</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="pref-palette" data-i18n="pref_palette">Color Accent Palette</label>
-              <select id="pref-palette">
-                <option value="workspace" selected data-i18n="pref_palette_workspace">Google Workspace Blue</option>
-                <option value="indigo" data-i18n="pref_palette_indigo">Classic Indigo &amp; Violet</option>
-                <option value="emerald" data-i18n="pref_palette_emerald">Neon Emerald &amp; Mint</option>
-                <option value="sunset" data-i18n="pref_palette_sunset">Sunset Coral &amp; Rose</option>
-                <option value="cyberpunk" data-i18n="pref_palette_cyberpunk">Cyberpunk Neon Cyan &amp; Pink</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="pref-fontsize" data-i18n="pref_fontsize">Font Size Scale</label>
-              <select id="pref-fontsize">
-                <option value="80" data-i18n="pref_fontsize_sm">80% (Small)</option>
-                <option value="90" data-i18n="pref_fontsize_compact">90% (Compact)</option>
-                <option value="100" selected data-i18n="pref_fontsize_normal">100% (Normal)</option>
-                <option value="110" data-i18n="pref_fontsize_md">110% (Medium)</option>
-                <option value="120" data-i18n="pref_fontsize_lg">120% (Large)</option>
-                <option value="130" data-i18n="pref_fontsize_xl">130% (Extra Large)</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="pref-lang" data-i18n="pref_lang">Idioma / Language</label>
-              <select id="pref-lang">
-                <option value="pt" selected>Português (Brasil)</option>
-                <option value="en">English (US)</option>
-              </select>
-            </div>
-            <div class="form-grid-full" style="display:flex; justify-content:flex-end;">
-              <button id="btn-save-prefs" type="button" class="btn-submit">
-                <i class="fa-solid fa-circle-check"></i> <span data-i18n="pref_btn_save">Save Preferences</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- 2. App Auto-Update Settings (Immediately Below Preferences for All Roles) -->
-        <div class="glass-card">
-          <div class="glass-card-header">
-            <h3 class="glass-card-title"><i class="fa-brands fa-github" style="color:var(--primary);"></i> <span data-i18n="upd_title">App Updates (GitHub)</span></h3>
-            <span id="update-status-text" class="badge">Checking...</span>
-          </div>
-          <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1.25rem;" data-i18n="upd_desc"></p>
-          <div id="update-banner" class="update-banner">
-            <div style="display:flex; align-items:center; gap:0.75rem;">
-              <i class="fa-solid fa-cloud-arrow-down" style="color:var(--primary); font-size:1.2rem;"></i>
-              <span id="update-banner-text" style="font-weight:600;">Update available</span>
-            </div>
-            <button id="btn-banner-update" type="button" class="btn-submit" style="padding:0.45rem 1rem; font-size:0.85rem;">
-              <i class="fa-solid fa-rotate"></i> <span data-i18n="upd_install_btn">Update Now</span>
-            </button>
-          </div>
-          <div class="calc-container" style="margin-bottom:1.25rem;">
-            <div class="calc-row">
-              <span data-i18n="upd_current">Installed Version:</span>
-              <strong id="upd-current-ver">v2.2.1</strong>
-            </div>
-            <div class="calc-row">
-              <span data-i18n="upd_latest">Latest on GitHub:</span>
-              <strong id="upd-latest-ver">v2.2.1</strong>
-            </div>
-            <div class="calc-row">
-              <label class="toggle-switch" for="pref-auto-update">
-                <input type="checkbox" id="pref-auto-update" checked>
-                <span data-i18n="upd_auto_label">Automatically update when a new version is available</span>
-              </label>
-            </div>
-          </div>
-          <div style="display:flex; justify-content:flex-end; gap:0.75rem; flex-wrap:wrap;">
-            <button id="btn-check-updates" type="button" class="btn-secondary">
-              <i class="fa-solid fa-magnifying-glass"></i> <span data-i18n="upd_check_btn">Check for Updates</span>
-            </button>
-            <button id="btn-install-update" type="button" class="btn-submit" style="display:none;">
-              <i class="fa-solid fa-cloud-arrow-down"></i> <span data-i18n="upd_install_btn">Update Now</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- 3. Install App to Device (PWA / WebAPK for All Roles) -->
-        <div class="glass-card" id="install-app-card">
-          <div class="glass-card-header">
-            <h3 class="glass-card-title"><i class="fa-solid fa-mobile-screen-button" style="color:var(--primary);"></i> <span data-i18n="pwa_title">Install App to Device</span></h3>
-            <span id="pwa-install-status" class="badge">Checking...</span>
-          </div>
-          <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1.25rem;" data-i18n="pwa_desc"></p>
-          <div class="calc-container" style="margin-bottom:1rem;">
-            <div class="calc-row">
-              <span data-i18n="pwa_url_label">Canonical App Link:</span>
-              <strong id="pwa-canonical-url" style="font-size:0.82rem; word-break:break-all; text-align:right;"></strong>
-            </div>
-            <div class="calc-row">
-              <span data-i18n="pwa_id_label">WebAPK App ID:</span>
-              <strong id="pwa-manifest-id" style="font-size:0.82rem; word-break:break-all; text-align:right;"></strong>
-            </div>
-          </div>
-          <p id="pwa-install-hint" style="font-size:0.82rem; color:var(--text-secondary); margin-bottom:1.25rem; line-height:1.45;"></p>
-          <div style="display:flex; justify-content:flex-end; gap:0.75rem; flex-wrap:wrap;">
-            <button id="btn-copy-app-link" type="button" class="btn-secondary">
-              <i class="fa-solid fa-share-nodes"></i> <span data-i18n="pwa_btn_copy">Copy Share Link</span>
-            </button>
-            <button id="btn-reset-pwa-cache" type="button" class="btn-secondary">
-              <i class="fa-solid fa-arrows-rotate"></i> <span data-i18n="pwa_btn_reset">Reset WebAPK Cache</span>
-            </button>
-            <button id="btn-install-pwa" type="button" class="btn-submit">
-              <i class="fa-solid fa-download"></i> <span data-i18n="pwa_btn_install">Install to Device</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- 4. Item Catalog per Store (Socio & Admin) -->
+        <!-- 0. Product Catalog & Barcodes (Top for Socio & Admin) -->
         <div id="settings-catalog-section" style="display:none;">
           <div class="glass-card">
             <div class="glass-card-header">
@@ -763,6 +642,130 @@
             <div id="catalog-items-list" class="calc-container"></div>
           </div>
         </div>
+
+        <!-- 1. Device UI Preferences (Top for All Roles) -->
+        <div class="glass-card">
+          <div class="glass-card-header">
+            <h3 class="glass-card-title"><i class="fa-solid fa-wand-magic-sparkles" style="color:var(--secondary);"></i> <span data-i18n="pref_title">UI Preferences &amp; Accessibility</span></h3>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="pref-theme" data-i18n="pref_theme">Theme Mode</label>
+              <select id="pref-theme">
+                <option value="light" selected data-i18n="pref_theme_light">Light Mode (Google Workspace)</option>
+                <option value="dark" data-i18n="pref_theme_dark">Dark Mode (Glow)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="pref-palette" data-i18n="pref_palette">Color Accent Palette</label>
+              <select id="pref-palette">
+                <option value="workspace" selected data-i18n="pref_palette_workspace">Google Workspace Blue</option>
+                <option value="indigo" data-i18n="pref_palette_indigo">Classic Indigo &amp; Violet</option>
+                <option value="emerald" data-i18n="pref_palette_emerald">Neon Emerald &amp; Mint</option>
+                <option value="sunset" data-i18n="pref_palette_sunset">Sunset Coral &amp; Rose</option>
+                <option value="cyberpunk" data-i18n="pref_palette_cyberpunk">Cyberpunk Neon Cyan &amp; Pink</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="pref-fontsize" data-i18n="pref_fontsize">Font Size Scale</label>
+              <select id="pref-fontsize">
+                <option value="80" data-i18n="pref_fontsize_sm">80% (Small)</option>
+                <option value="90" data-i18n="pref_fontsize_compact">90% (Compact)</option>
+                <option value="100" selected data-i18n="pref_fontsize_normal">100% (Normal)</option>
+                <option value="110" data-i18n="pref_fontsize_md">110% (Medium)</option>
+                <option value="120" data-i18n="pref_fontsize_lg">120% (Large)</option>
+                <option value="130" data-i18n="pref_fontsize_xl">130% (Extra Large)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="pref-lang" data-i18n="pref_lang">Idioma / Language</label>
+              <select id="pref-lang">
+                <option value="pt" selected>Português (Brasil)</option>
+                <option value="en">English (US)</option>
+              </select>
+            </div>
+            <div class="form-grid-full" style="display:flex; justify-content:flex-end;">
+              <button id="btn-save-prefs" type="button" class="btn-submit">
+                <i class="fa-solid fa-circle-check"></i> <span data-i18n="pref_btn_save">Save Preferences</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. App Auto-Update Settings (Immediately Below Preferences for All Roles) -->
+        <div class="glass-card">
+          <div class="glass-card-header">
+            <h3 class="glass-card-title"><i class="fa-brands fa-github" style="color:var(--primary);"></i> <span data-i18n="upd_title">App Updates (GitHub)</span></h3>
+            <span id="update-status-text" class="badge">Checking...</span>
+          </div>
+          <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1.25rem;" data-i18n="upd_desc"></p>
+          <div id="update-banner" class="update-banner">
+            <div style="display:flex; align-items:center; gap:0.75rem;">
+              <i class="fa-solid fa-cloud-arrow-down" style="color:var(--primary); font-size:1.2rem;"></i>
+              <span id="update-banner-text" style="font-weight:600;">Update available</span>
+            </div>
+            <button id="btn-banner-update" type="button" class="btn-submit" style="padding:0.45rem 1rem; font-size:0.85rem;">
+              <i class="fa-solid fa-rotate"></i> <span data-i18n="upd_install_btn">Update Now</span>
+            </button>
+          </div>
+          <div class="calc-container" style="margin-bottom:1.25rem;">
+            <div class="calc-row">
+              <span data-i18n="upd_current">Installed Version:</span>
+              <strong id="upd-current-ver">v2.2.2</strong>
+            </div>
+            <div class="calc-row">
+              <span data-i18n="upd_latest">Latest on GitHub:</span>
+              <strong id="upd-latest-ver">v2.2.2</strong>
+            </div>
+            <div class="calc-row">
+              <label class="toggle-switch" for="pref-auto-update">
+                <input type="checkbox" id="pref-auto-update" checked>
+                <span data-i18n="upd_auto_label">Automatically update when a new version is available</span>
+              </label>
+            </div>
+          </div>
+          <div style="display:flex; justify-content:flex-end; gap:0.75rem; flex-wrap:wrap;">
+            <button id="btn-check-updates" type="button" class="btn-secondary">
+              <i class="fa-solid fa-magnifying-glass"></i> <span data-i18n="upd_check_btn">Check for Updates</span>
+            </button>
+            <button id="btn-install-update" type="button" class="btn-submit" style="display:none;">
+              <i class="fa-solid fa-cloud-arrow-down"></i> <span data-i18n="upd_install_btn">Update Now</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 3. Install App to Device (PWA / WebAPK for All Roles) -->
+        <div class="glass-card" id="install-app-card">
+          <div class="glass-card-header">
+            <h3 class="glass-card-title"><i class="fa-solid fa-mobile-screen-button" style="color:var(--primary);"></i> <span data-i18n="pwa_title">Install App to Device</span></h3>
+            <span id="pwa-install-status" class="badge">Checking...</span>
+          </div>
+          <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1.25rem;" data-i18n="pwa_desc"></p>
+          <div class="calc-container" style="margin-bottom:1rem;">
+            <div class="calc-row">
+              <span data-i18n="pwa_url_label">Canonical App Link:</span>
+              <strong id="pwa-canonical-url" style="font-size:0.82rem; word-break:break-all; text-align:right;"></strong>
+            </div>
+            <div class="calc-row">
+              <span data-i18n="pwa_id_label">WebAPK App ID:</span>
+              <strong id="pwa-manifest-id" style="font-size:0.82rem; word-break:break-all; text-align:right;"></strong>
+            </div>
+          </div>
+          <p id="pwa-install-hint" style="font-size:0.82rem; color:var(--text-secondary); margin-bottom:1.25rem; line-height:1.45;"></p>
+          <div style="display:flex; justify-content:flex-end; gap:0.75rem; flex-wrap:wrap;">
+            <button id="btn-copy-app-link" type="button" class="btn-secondary">
+              <i class="fa-solid fa-share-nodes"></i> <span data-i18n="pwa_btn_copy">Copy Share Link</span>
+            </button>
+            <button id="btn-reset-pwa-cache" type="button" class="btn-secondary">
+              <i class="fa-solid fa-arrows-rotate"></i> <span data-i18n="pwa_btn_reset">Reset WebAPK Cache</span>
+            </button>
+            <button id="btn-install-pwa" type="button" class="btn-submit">
+              <i class="fa-solid fa-download"></i> <span data-i18n="pwa_btn_install">Install to Device</span>
+            </button>
+          </div>
+        </div>
+
+
 
         <!-- 5. Admin-Only Management Sections -->
         <div id="settings-admin-section" style="display:none;">
@@ -1076,9 +1079,27 @@
         <button type="button" class="tally-chip active" data-print-fmt="a" data-i18n="pmenu_fmt_a">Formato A · Clássico 2 Colunas</button>
         <button type="button" class="tally-chip" data-print-fmt="b" data-i18n="pmenu_fmt_b">Formato B · Cartões Scanner (3 Col.)</button>
         <button type="button" class="tally-chip" data-print-fmt="c" data-i18n="pmenu_fmt_c">Formato C · Editorial 1 Coluna</button>
+        <button type="button" class="tally-chip" data-print-fmt="4" data-i18n="pmenu_fmt_4">4 Colunas</button>
+        <button type="button" class="tally-chip" data-print-fmt="5" data-i18n="pmenu_fmt_5">5 Colunas</button>
+        <button type="button" class="tally-chip" data-print-fmt="6" data-i18n="pmenu_fmt_6">6 Colunas</button>
+        <button type="button" class="tally-chip" data-print-fmt="7" data-i18n="pmenu_fmt_7">7 Colunas</button>
       </div>
 
-      <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:0.75rem; font-size:0.84rem;">
+      <div style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center; margin-bottom:0.75rem; font-size:0.84rem;">
+        <label style="display:inline-flex; align-items:center; gap:0.35rem;">
+          <span data-i18n="pmenu_opt_orientation">Orientação:</span>
+          <select id="print-opt-orientation" style="width:auto; padding:0.3rem 0.55rem; font-size:0.82rem;">
+            <option value="portrait" data-i18n="pmenu_orient_portrait">Retrato</option>
+            <option value="landscape" data-i18n="pmenu_orient_landscape">Paisagem</option>
+          </select>
+        </label>
+        <label style="display:inline-flex; align-items:center; gap:0.35rem;">
+          <span data-i18n="pmenu_opt_density">Densidade:</span>
+          <select id="print-opt-density" style="width:auto; padding:0.3rem 0.55rem; font-size:0.82rem;">
+            <option value="normal" data-i18n="pmenu_density_normal">Normal</option>
+            <option value="super" data-i18n="pmenu_density_super">Super Compacto</option>
+          </select>
+        </label>
         <label class="toggle-switch" for="print-opt-barcodes">
           <input type="checkbox" id="print-opt-barcodes" checked>
           <span data-i18n="pmenu_opt_barcodes">Incluir Códigos de Barras</span>

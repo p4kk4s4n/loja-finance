@@ -1,6 +1,7 @@
 // Settings Tab: Businesses, Team Roster & Splits, Categories, Integrations, Auto-Update & Preferences
 import { state } from './state.js';
 import {
+  CANONICAL_CATEGORIES,
   compressLogoImage,
   computePartnerEquityValidation,
   escapeHtml,
@@ -12,6 +13,7 @@ import {
   parseFlexibleNumber,
   showLoadingScreen,
   showToast,
+  sortCategoriesCanonical,
   stripRoleSuffix
 } from './utils.js';
 import { t, translatePageLayout } from './i18n.js';
@@ -827,11 +829,12 @@ export function renderSettingsCatalog() {
   const showArchived = Boolean(document.getElementById('catalog-show-archived')?.checked);
   renderStoreBrandingUI(storeId);
 
-  // Sync category datalist suggestions for quick entry
+  // Sync category datalist suggestions for quick entry (canonical + store custom)
   if (catDatalist) {
-    const cats = Array.from(
-      new Set((state.menuItems || []).filter((i) => i.storeId === storeId && i.category).map((i) => i.category.trim()))
-    ).sort();
+    const storeCats = (state.menuItems || [])
+      .filter((i) => i.storeId === storeId && i.category)
+      .map((i) => i.category.trim());
+    const cats = sortCategoriesCanonical(Array.from(new Set([...CANONICAL_CATEGORIES, ...storeCats])));
     catDatalist.innerHTML = cats.map((c) => `<option value="${escapeHtml(c)}">`).join('');
   }
 

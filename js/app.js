@@ -204,6 +204,7 @@ async function applyLoginState() {
       renderDashboard();
     },
     onStoreBrandingUpdated: () => {
+      refreshTallyUI();
       const rk = normalizeUserRole(state.currentUser?.role);
       if (rk === 'admin' || rk === 'partner') {
         refreshCatalogBrandingUI();

@@ -7,6 +7,7 @@ import {
   createOpenOrder,
   escapeHtml,
   formatCurrency,
+  getCategoryAccentColor,
   getEffectiveDaySales,
   getSignedSubmissionAmount,
   getTodayISO,
@@ -19,6 +20,7 @@ import {
   round2,
   showLoadingScreen,
   showToast,
+  sortCategoriesCanonical,
   stripRoleSuffix
 } from './utils.js';
 import { t, getPaymentMethodTranslation } from './i18n.js';
@@ -26,6 +28,7 @@ import {
   addRetroactiveTallyLineToDb,
   addTallyOrderToDb,
   editTallyLineInDb,
+  fetchStoreBrandingFromDb,
   fetchTallyEditsFromDb,
   saveOpenOrdersToDb,
   subscribeTallyDayLines,
@@ -447,8 +450,38 @@ function renderBarcodeSizeToggle() {
   btn.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${escapeHtml(label)}</span>`;
 }
 
+function renderTallyStoreLogo(storeId) {
+  const img = document.getElementById('tally-store-logo');
+  if (!img) return;
+  const applyLogo = (branding) => {
+    const url = branding?.logoDataUrl || '';
+    if (url) {
+      img.src = url;
+      img.alt = storeId || 'Logo';
+      img.classList.remove('hidden');
+    } else {
+      img.removeAttribute('src');
+      img.classList.add('hidden');
+    }
+  };
+  const cached = state.storeBranding?.[storeId];
+  if (cached) {
+    applyLogo(cached);
+    return;
+  }
+  img.classList.add('hidden');
+  if (storeId && typeof fetchStoreBrandingFromDb === 'function') {
+    fetchStoreBrandingFromDb(storeId)
+      .then((b) => {
+        if (b && getSelectedStoreId() === storeId) applyLogo(b);
+      })
+      .catch(() => {});
+  }
+}
+
 export function refreshTallyUI() {
   refreshTallyStoreOptions();
+  renderTallyStoreLogo(getSelectedStoreId());
   ensureTallyDaySubscription();
   renderBarcodeSizeToggle();
   renderOfflineBadge();
@@ -561,7 +594,9 @@ function renderCategoryChips() {
   const container = document.getElementById('tally-category-chips');
   if (!container) return;
   const items = getStoreActiveItems();
-  const cats = Array.from(new Set(items.map((i) => (i.category || '').trim()).filter(Boolean))).sort();
+  const cats = sortCategoriesCanonical(
+    Array.from(new Set(items.map((i) => (i.category || '').trim()).filter(Boolean)))
+  );
   if (selectedCategory !== 'ALL' && !cats.includes(selectedCategory)) {
     selectedCategory = 'ALL';
   }
@@ -619,30 +654,57 @@ function renderMenuTiles() {
   const currentOrder = orders.find((o) => o.id === activeOrderId) || orders[0];
   const cartQtyMap = new Map((currentOrder?.items || []).map((c) => [c.itemId, c.qty]));
 
-  grid.innerHTML = filtered
-    .map((item) => {
-      const inCartQty = cartQtyMap.get(item.id) || 0;
-      const badgeHtml = inCartQty > 0 ? `<span class="tally-tile-qty">${inCartQty}</span>` : '';
-      const catHtml = item.category ? `<span class="tally-tile-cat">${escapeHtml(item.category)}</span>` : '';
-      let barcodeHtml = '';
-      if (item.barcode) {
-        barcodeHtml = compactTiles
-          ? `<span class="tally-tile-code"><i class="fa-solid fa-barcode"></i> ${escapeHtml(item.barcode)}</span>`
-          : `<div class="scan-barcode-box">${renderBarcodeSvg(item.barcode, { height: 48, barWidth: 1.75, quietModules: 10, showText: true })}</div>`;
-      }
-      return `
-        <button type="button" class="tally-tile ${inCartQty > 0 ? 'in-cart' : ''}" data-menu-item-id="${escapeHtml(item.id)}">
-          ${badgeHtml}
-          <div style="width:100%; display:flex; justify-content:space-between; align-items:baseline; gap:0.4rem;">
-            <span class="tally-tile-name">${escapeHtml(item.name)}</span>
-            <span class="tally-tile-price">${formatCurrency(item.price)}</span>
+  const renderTileHtml = (item) => {
+    const inCartQty = cartQtyMap.get(item.id) || 0;
+    const badgeHtml = inCartQty > 0 ? `<span class="tally-tile-qty">${inCartQty}</span>` : '';
+    const catHtml = item.category ? `<span class="tally-tile-cat">${escapeHtml(item.category)}</span>` : '';
+    const barcodeHtml = item.barcode
+      ? `<div class="scan-barcode-box">${renderBarcodeSvg(item.barcode, {
+          height: compactTiles ? 38 : 48,
+          barWidth: compactTiles ? 1.5 : 1.75,
+          quietModules: 10,
+          showText: true
+        })}</div>`
+      : '';
+    return `
+      <button type="button" class="tally-tile ${inCartQty > 0 ? 'in-cart' : ''}" data-menu-item-id="${escapeHtml(item.id)}">
+        ${badgeHtml}
+        <div style="width:100%; display:flex; justify-content:space-between; align-items:baseline; gap:0.4rem;">
+          <span class="tally-tile-name">${escapeHtml(item.name)}</span>
+          <span class="tally-tile-price">${formatCurrency(item.price)}</span>
+        </div>
+        ${catHtml ? `<span class="tally-tile-meta">${catHtml}</span>` : ''}
+        ${barcodeHtml}
+      </button>
+    `;
+  };
+
+  if (selectedCategory === 'ALL') {
+    const map = new Map();
+    filtered.forEach((item) => {
+      const cat = (item.category || '').trim() || 'Outro';
+      if (!map.has(cat)) map.set(cat, []);
+      map.get(cat).push(item);
+    });
+    const sortedCats = sortCategoriesCanonical(Array.from(map.keys()));
+    grid.innerHTML = sortedCats
+      .map((cat) => {
+        const list = map.get(cat).slice().sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        const accent = getCategoryAccentColor(cat);
+        return `
+          <div class="tally-cat-heading" style="--cat-accent:${accent};">
+            <span class="tally-cat-heading-dot"></span>
+            <span>${escapeHtml(cat)}</span>
+            <span class="tally-cat-heading-count">${list.length}</span>
           </div>
-          ${catHtml ? `<span class="tally-tile-meta">${catHtml}</span>` : ''}
-          ${barcodeHtml}
-        </button>
-      `;
-    })
-    .join('');
+          ${list.map(renderTileHtml).join('')}
+        `;
+      })
+      .join('');
+    return;
+  }
+
+  grid.innerHTML = filtered.map(renderTileHtml).join('');
 }
 
 function syncActiveOrderHighlightDom() {

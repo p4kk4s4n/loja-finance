@@ -618,3 +618,59 @@ export function computeOpenOrderTotal(order) {
   }
   return round2(total);
 }
+
+export const CANONICAL_CATEGORIES = [
+  'Comida',
+  'Bebidas',
+  'Cervejas',
+  'Doces',
+  'Energéticas',
+  'Pinga',
+  'Outro'
+];
+
+export function normalizeCategoryKey(cat) {
+  return (cat ?? '')
+    .toString()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase();
+}
+
+const CANONICAL_ORDER_MAP = new Map([
+  ['comida', 0],
+  ['bebidas', 1],
+  ['cervejas', 2],
+  ['doces', 3],
+  ['energeticas', 4],
+  ['pinga', 5],
+  ['outro', 100],
+  ['geral', 101],
+  ['general', 101]
+]);
+
+export function sortCategoriesCanonical(categories = []) {
+  return [...(categories || [])].sort((a, b) => {
+    const ka = normalizeCategoryKey(a);
+    const kb = normalizeCategoryKey(b);
+    const ra = CANONICAL_ORDER_MAP.has(ka) ? CANONICAL_ORDER_MAP.get(ka) : 50;
+    const rb = CANONICAL_ORDER_MAP.has(kb) ? CANONICAL_ORDER_MAP.get(kb) : 50;
+    if (ra !== rb) return ra - rb;
+    return (a || '').toString().localeCompare((b || '').toString());
+  });
+}
+
+export function getCategoryAccentColor(category) {
+  const k = normalizeCategoryKey(category);
+  const colors = {
+    comida: '#d97706',
+    bebidas: '#0284c7',
+    cervejas: '#ca8a04',
+    doces: '#db2777',
+    energeticas: '#7c3aed',
+    pinga: '#16a34a',
+    outro: '#64748b'
+  };
+  return colors[k] || '#1a73e8';
+}
