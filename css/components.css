@@ -723,17 +723,23 @@ dialog#receipt-modal { max-width: 720px; }
 
 .tally-cart-row {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.55rem 0.65rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.45rem;
+  padding: 0.6rem 0.7rem;
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
   border-radius: var(--radius-sm);
 }
-.tally-cart-info { min-width: 0; flex: 1; }
-.tally-cart-name { font-weight: 600; font-size: 0.88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tally-cart-unit { font-size: 0.76rem; color: var(--text-secondary); }
+.tally-cart-info { width: 100%; min-width: 0; }
+.tally-cart-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  line-height: 1.25;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.tally-cart-unit { font-size: 0.76rem; color: var(--text-secondary); margin-top: 2px; }
 
 .tally-qty-stepper {
   display: inline-flex;
@@ -1039,24 +1045,23 @@ dialog.menu-print-dialog {
 }
 .pmenu-item-row {
   display: flex;
-  align-items: baseline;
-  gap: 6px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
 }
 .pmenu-item-name {
   font-weight: 700;
-  font-size: 0.88rem;
+  font-size: 0.86rem;
+  line-height: 1.2;
   color: #111827;
-}
-.pmenu-dots {
-  flex: 1;
-  border-bottom: 1px dotted #9ca3af;
-  min-width: 12px;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .pmenu-item-price {
   font-family: 'Outfit', sans-serif;
   font-weight: 700;
-  font-size: 0.88rem;
-  color: #111827;
+  font-size: 0.84rem;
+  color: #1f2937;
   white-space: nowrap;
 }
 
@@ -1140,13 +1145,49 @@ dialog.menu-print-dialog {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 6px;
+  gap: 5px;
+  min-width: 0;
+  overflow: hidden;
 }
 .pmenu-card-b-top {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 6px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+}
+.pmenu--portrait {
+  max-width: 680px;
+  margin: 0 auto;
+}
+.pmenu--landscape {
+  max-width: 100%;
+  margin: 0 auto;
+}
+.menu-print-preview-frame .pmenu--landscape {
+  min-width: 760px;
+}
+.pmenu--landscape .pmenu-cols-2 {
+  column-count: 3;
+}
+.pmenu--landscape .pmenu-grid-3 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.pmenu--landscape .pmenu-grid-4 {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+.pmenu--landscape .pmenu-grid-5 {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.pmenu--landscape .pmenu-grid-6 {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+.pmenu--landscape .pmenu-grid-7 {
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+}
+.pmenu--landscape .pmenu-list-c {
+  column-count: 2;
+  column-gap: 16px;
 }
 
 /* Format C: Editorial 1-Column */
@@ -1217,11 +1258,6 @@ dialog.menu-print-dialog {
   }
 }
 
-@page {
-  size: A4 portrait;
-  margin: 10mm;
-}
-
 @media print {
   body {
     background: #ffffff !important;
@@ -1245,13 +1281,8 @@ dialog.menu-print-dialog {
     padding: 0 !important;
     margin: 0 !important;
     max-width: none !important;
+    min-width: 0 !important;
     border-radius: 0 !important;
-  }
-  .pmenu-cols-2 {
-    column-count: 2 !important;
-  }
-  .pmenu-grid-3 {
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   }
   .pmenu-item-c {
     flex-direction: row !important;

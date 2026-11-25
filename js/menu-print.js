@@ -59,6 +59,7 @@ export function buildPrintableMenuHtml({
   const pt = lang === 'pt';
   const validFormats = ['a', 'b', 'c', '4', '5', '6', '7'];
   const format = validFormats.includes(options.format) ? options.format : 'a';
+  const orientation = options.orientation === 'landscape' ? 'landscape' : 'portrait';
   const density = options.density === 'super' ? 'super' : 'normal';
   const showBarcodes = options.showBarcodes !== false;
   const showPrices = options.showPrices !== false;
@@ -134,7 +135,7 @@ export function buildPrintableMenuHtml({
                 <article class="pmenu-item-a">
                   <div class="pmenu-item-row">
                     <span class="pmenu-item-name">${escapeHtml(item.name)}</span>
-                    ${showPrices ? `<span class="pmenu-dots"></span><span class="pmenu-item-price">${formatCurrency(item.price)}</span>` : ''}
+                    ${showPrices ? `<span class="pmenu-item-price">${formatCurrency(item.price)}</span>` : ''}
                   </div>
                   ${renderBarcodeSlot(item)}
                 </article>
@@ -218,12 +219,23 @@ export function buildPrintableMenuHtml({
     : '';
 
   return `
-    <div class="pmenu pmenu--${format} ${density === 'super' ? 'pmenu--super' : ''}">
+    <div class="pmenu pmenu--${format} pmenu--${orientation} ${density === 'super' ? 'pmenu--super' : ''}">
       ${headerHtml}
       ${bodyHtml}
       ${miscPrintHtml}
     </div>
   `;
+}
+
+export function syncPrintOrientationStyle(orientation = printState.orientation) {
+  let styleEl = document.getElementById('print-page-orientation-style');
+  if (!styleEl) {
+    styleEl = document.createElement('style');
+    styleEl.id = 'print-page-orientation-style';
+    document.head.appendChild(styleEl);
+  }
+  const dir = orientation === 'landscape' ? 'landscape' : 'portrait';
+  styleEl.textContent = `@page { size: A4 ${dir}; margin: 8mm; }`;
 }
 
 export function bindMenuPrintEvents() {
@@ -273,6 +285,7 @@ export function bindMenuPrintEvents() {
 
   document.getElementById('print-opt-orientation')?.addEventListener('change', (e) => {
     printState.orientation = e.target.value === 'landscape' ? 'landscape' : 'portrait';
+    syncPrintOrientationStyle(printState.orientation);
     renderMenuPrintModal();
   });
 
@@ -282,13 +295,7 @@ export function bindMenuPrintEvents() {
   });
 
   document.getElementById('btn-print-menu-now')?.addEventListener('click', () => {
-    let styleEl = document.getElementById('print-page-orientation-style');
-    if (!styleEl) {
-      styleEl = document.createElement('style');
-      styleEl.id = 'print-page-orientation-style';
-      document.head.appendChild(styleEl);
-    }
-    styleEl.textContent = `@media print { @page { size: A4 ${printState.orientation}; margin: 8mm; } }`;
+    syncPrintOrientationStyle(printState.orientation);
     const html = getCurrentMenuHtml();
     const sheet = document.getElementById('print-menu-sheet');
     if (sheet) sheet.innerHTML = html;
@@ -316,6 +323,7 @@ function getCurrentMenuHtml() {
 }
 
 export function renderMenuPrintModal() {
+  syncPrintOrientationStyle(printState.orientation);
   document.querySelectorAll('#menu-print-formats [data-print-fmt]').forEach((btn) => {
     btn.classList.toggle('active', (btn.dataset.printFmt || 'a') === printState.format);
   });

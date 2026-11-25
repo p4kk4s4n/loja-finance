@@ -1,4 +1,4 @@
-const APP_VERSION = '2.2.3';
+const APP_VERSION = '2.2.4';
 const CACHE_NAME = `loja-finance-v${APP_VERSION}`;
 
 const APP_SHELL_ASSETS = [
