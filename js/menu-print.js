@@ -203,10 +203,25 @@ export function buildPrintableMenuHtml({
     `;
   }
 
+  const miscPrintHtml = showBarcodes
+    ? `
+      <section class="pmenu-cat-block" style="--cat-accent:#64748b; margin-top:8px;">
+        <h2 class="pmenu-cat-title pmenu-cat-title--bar">${escapeHtml(pt ? 'Diversos / Avulso' : 'Miscellaneous')}</h2>
+        <div class="pmenu-card-b" style="max-width:240px;">
+          <div class="pmenu-card-b-top">
+            <span class="pmenu-item-name">${escapeHtml(pt ? 'Item Diversos (Digitar Nome & R$)' : 'Misc Item (Custom Name & Price)')}</span>
+          </div>
+          <div class="pmenu-barcode-wrap">${renderBarcodeSvg('2099999999990', svgOpts)}</div>
+        </div>
+      </section>
+    `
+    : '';
+
   return `
     <div class="pmenu pmenu--${format} ${density === 'super' ? 'pmenu--super' : ''}">
       ${headerHtml}
       ${bodyHtml}
+      ${miscPrintHtml}
     </div>
   `;
 }

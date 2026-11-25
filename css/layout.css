@@ -3,6 +3,8 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 header {
@@ -28,22 +30,21 @@ header {
 
 .brand-icon {
   background: linear-gradient(135deg, var(--primary), var(--secondary));
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-md);
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.25rem;
+  font-size: 0.72rem;
   color: #fff;
-  box-shadow: 0 0 20px var(--primary-glow);
 }
 
 .brand-name {
   font-family: var(--font-display);
-  font-size: 1.4rem;
+  font-size: 0.9rem;
   font-weight: 700;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.02em;
   color: var(--text-primary);
 }
 

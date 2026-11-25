@@ -17,6 +17,37 @@ import {
   stripRoleSuffix
 } from './utils.js';
 import { t, translatePageLayout } from './i18n.js';
+
+let accordionsInitialized = false;
+export function initSettingsAccordions() {
+  if (accordionsInitialized) return;
+  const tab = document.getElementById('tab-settings');
+  if (!tab) return;
+  const cards = Array.from(tab.children).flatMap((el) => {
+    if (el.classList.contains('glass-card')) return [el];
+    if (el.id === 'settings-catalog-section' || el.id === 'settings-admin-section') {
+      return Array.from(el.children).filter((c) => c.classList.contains('glass-card'));
+    }
+    return [];
+  });
+  cards.forEach((card) => {
+    if (card.closest('details.settings-accordion')) return;
+    const titleEl = card.querySelector('.glass-card-header .glass-card-title');
+    if (!titleEl) return;
+    const details = document.createElement('details');
+    details.className = 'settings-accordion';
+    const summary = document.createElement('summary');
+    summary.className = 'settings-accordion-summary';
+    summary.innerHTML = `<span>${titleEl.innerHTML}</span>`;
+    const body = document.createElement('div');
+    body.className = 'settings-accordion-body';
+    card.parentNode.insertBefore(details, card);
+    body.appendChild(card);
+    details.appendChild(summary);
+    details.appendChild(body);
+  });
+  accordionsInitialized = true;
+}
 import {
   archiveMenuItemInDb,
   bulkAssignBarcodesInDb,
@@ -820,6 +851,7 @@ function startEditCatalogItem(itemId) {
 }
 
 export function renderSettingsCatalog() {
+  initSettingsAccordions();
   const listEl = document.getElementById('catalog-items-list');
   const catDatalist = document.getElementById('catalog-category-suggestions');
   if (!listEl) return;

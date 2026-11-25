@@ -2,7 +2,7 @@
 <html lang="pt-BR" class="theme-light palette-workspace">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Loja Finance — Business Operations Dashboard</title>
 
   <link rel="icon" type="image/svg+xml" href="./icons/icon.svg">
@@ -29,7 +29,7 @@
       <div class="brand">
         <div class="brand-icon"><i class="fa-solid fa-chart-line"></i></div>
         <div class="brand-name">Loja Finance</div>
-        <span id="header-version-pill" class="version-pill">v2.2.2</span>
+        <span id="header-version-pill" class="version-pill">v2.2.3</span>
       </div>
 
       <div class="user-info">
@@ -711,11 +711,11 @@
           <div class="calc-container" style="margin-bottom:1.25rem;">
             <div class="calc-row">
               <span data-i18n="upd_current">Installed Version:</span>
-              <strong id="upd-current-ver">v2.2.2</strong>
+              <strong id="upd-current-ver">v2.2.3</strong>
             </div>
             <div class="calc-row">
               <span data-i18n="upd_latest">Latest on GitHub:</span>
-              <strong id="upd-latest-ver">v2.2.2</strong>
+              <strong id="upd-latest-ver">v2.2.3</strong>
             </div>
             <div class="calc-row">
               <label class="toggle-switch" for="pref-auto-update">
@@ -1063,6 +1063,44 @@
   </dialog>
 
   <!-- Printable Menu Preview Modal -->
+  <!-- Mobile Sticky Bottom Bar for Comandas Abertas -->
+  <div id="tally-mobile-sticky-bar" class="tally-mobile-sticky-bar hidden">
+    <div class="tally-mobile-sticky-info">
+      <span id="tally-mobile-sticky-table" class="tally-mobile-sticky-table">Mesa —</span>
+      <span id="tally-mobile-sticky-total" class="tally-mobile-sticky-total">R$ 0,00</span>
+    </div>
+    <button id="btn-tally-mobile-jump" type="button" class="btn-submit" style="padding:0.45rem 0.85rem; font-size:0.82rem; white-space:nowrap;">
+      <i class="fa-solid fa-receipt"></i> <span data-i18n="tally_mobile_jump">Ver Comanda / Confirmar</span>
+    </button>
+  </div>
+
+  <!-- Miscellaneous (Diversos / Avulso) Item Modal -->
+  <dialog id="tally-misc-modal" class="app-dialog" style="max-width:400px;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-tag" style="color:var(--primary);"></i> <span data-i18n="tally_misc_title">Item Diversos / Avulso</span></h3>
+        <button id="btn-close-tally-misc" type="button" class="btn-icon" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="tally-misc-form" style="display:flex; flex-direction:column; gap:0.85rem; margin-top:0.5rem;">
+        <div class="form-group">
+          <label for="tally-misc-name" data-i18n="tally_misc_name_lbl">Nome do Item</label>
+          <input type="text" id="tally-misc-name" required placeholder="Ex: Porção Extra, Taxa...">
+        </div>
+        <div class="form-group">
+          <label for="tally-misc-price" data-i18n="tally_misc_price_lbl">Preço (R$)</label>
+          <div class="currency-field">
+            <span class="currency-prefix">R$</span>
+            <input type="text" inputmode="decimal" id="tally-misc-price" required placeholder="0,00">
+          </div>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:0.25rem;">
+          <button id="btn-cancel-tally-misc" type="button" class="btn-secondary" data-i18n="btn_cancel">Cancelar</button>
+          <button type="submit" class="btn-submit"><i class="fa-solid fa-plus"></i> <span data-i18n="tally_misc_add_btn">Adicionar</span></button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
   <dialog id="menu-print-modal" class="app-dialog menu-print-dialog">
     <div class="glass-card" style="padding:1.25rem;">
       <div style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem; margin-bottom:0.85rem; flex-wrap:wrap;">

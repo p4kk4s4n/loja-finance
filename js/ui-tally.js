@@ -191,6 +191,44 @@ export function bindTallyEvents(switchTab) {
     }
   });
 
+  document.getElementById('btn-tally-mobile-jump')?.addEventListener('click', () => {
+    document.getElementById('tally-open-orders-list')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  document.getElementById('tally-tiles-grid')?.addEventListener('click', (e) => {
+    const miscBtn = e.target.closest('[data-misc-item="true"]');
+    if (miscBtn) {
+      openMiscItemModal();
+    }
+  });
+
+  const miscModal = document.getElementById('tally-misc-modal');
+  document.getElementById('btn-close-tally-misc')?.addEventListener('click', () => miscModal?.close());
+  document.getElementById('btn-cancel-tally-misc')?.addEventListener('click', () => miscModal?.close());
+  document.getElementById('tally-misc-form')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = (document.getElementById('tally-misc-name')?.value || '').trim();
+    const price = parseFlexibleNumber(document.getElementById('tally-misc-price')?.value || '');
+    if (!name || !(price > 0)) {
+      showToast(isPt() ? 'Informe nome e preço válidos.' : 'Enter a valid name and price.', true);
+      return;
+    }
+    addItemToCart({ id: `misc_${Date.now()}`, name, price, category: 'Outro' });
+    miscModal?.close();
+    showToast(`+1 ${name} (${formatCurrency(price)})`);
+    if (document.activeElement && typeof document.activeElement.blur === 'function') {
+      document.activeElement.blur();
+    }
+  });
+
+  // Keep Bluetooth scanner active after tapping non-input buttons on mobile
+  document.getElementById('tab-tally')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (btn && typeof btn.blur === 'function') {
+      setTimeout(() => btn.blur(), 0);
+    }
+  });
+
   const scanInput = document.getElementById('tally-scan-input');
   scanInput?.addEventListener('input', (e) => {
     searchQuery = e.target.value || '';
@@ -275,8 +313,9 @@ export function bindTallyEvents(switchTab) {
     persistOpenOrders(storeId, existing, true);
     renderOpenOrders();
     renderMenuTiles();
-    const newInput = document.querySelector(`[data-order-table="${fresh.id}"]`);
-    newInput?.focus();
+    if (document.activeElement && typeof document.activeElement.blur === 'function') {
+      document.activeElement.blur();
+    }
   });
 
   const ordersContainer = document.getElementById('tally-open-orders-list');
@@ -504,14 +543,72 @@ export function openTallyHistoryForDate(storeId, dateIso) {
   setActiveView('history');
 }
 
+const MISC_BARCODE = '2099999999990';
+
+function openMiscItemModal() {
+  const modal = document.getElementById('tally-misc-modal');
+  const nameIn = document.getElementById('tally-misc-name');
+  const priceIn = document.getElementById('tally-misc-price');
+  if (nameIn) nameIn.value = '';
+  if (priceIn) priceIn.value = '';
+  if (modal && typeof modal.showModal === 'function') {
+    modal.showModal();
+    setTimeout(() => nameIn?.focus(), 50);
+  }
+}
+
 function handleBarcodeScan(rawCode) {
+  const cleanCode = (rawCode || '').trim();
+  if (cleanCode === MISC_BARCODE) {
+    playScanFeedback(true);
+    openMiscItemModal();
+    return { itemName: 'Diversos' };
+  }
   const storeId = getSelectedStoreId();
   const match = resolveScanCode(rawCode, state.menuItems, storeId);
   if (match) {
     addItemToCart(match);
     playScanFeedback(true);
     searchQuery = '';
-    const scanInput = document.getElementById('tally-scan-input');
+    document.getElementById('btn-tally-mobile-jump')?.addEventListener('click', () => {
+    document.getElementById('tally-open-orders-list')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  document.getElementById('tally-tiles-grid')?.addEventListener('click', (e) => {
+    const miscBtn = e.target.closest('[data-misc-item="true"]');
+    if (miscBtn) {
+      openMiscItemModal();
+    }
+  });
+
+  const miscModal = document.getElementById('tally-misc-modal');
+  document.getElementById('btn-close-tally-misc')?.addEventListener('click', () => miscModal?.close());
+  document.getElementById('btn-cancel-tally-misc')?.addEventListener('click', () => miscModal?.close());
+  document.getElementById('tally-misc-form')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = (document.getElementById('tally-misc-name')?.value || '').trim();
+    const price = parseFlexibleNumber(document.getElementById('tally-misc-price')?.value || '');
+    if (!name || !(price > 0)) {
+      showToast(isPt() ? 'Informe nome e preço válidos.' : 'Enter a valid name and price.', true);
+      return;
+    }
+    addItemToCart({ id: `misc_${Date.now()}`, name, price, category: 'Outro' });
+    miscModal?.close();
+    showToast(`+1 ${name} (${formatCurrency(price)})`);
+    if (document.activeElement && typeof document.activeElement.blur === 'function') {
+      document.activeElement.blur();
+    }
+  });
+
+  // Keep Bluetooth scanner active after tapping non-input buttons on mobile
+  document.getElementById('tab-tally')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (btn && typeof btn.blur === 'function') {
+      setTimeout(() => btn.blur(), 0);
+    }
+  });
+
+  const scanInput = document.getElementById('tally-scan-input');
     if (scanInput) scanInput.value = '';
     renderMenuTiles();
     showToast(`+1 ${match.name} (${formatCurrency(match.price)})`);
@@ -679,6 +776,23 @@ function renderMenuTiles() {
     `;
   };
 
+  const miscTileHtml = `
+    <button type="button" class="tally-tile tally-tile--misc" data-misc-item="true">
+      <div style="width:100%; display:flex; justify-content:space-between; align-items:baseline; gap:0.4rem;">
+        <span class="tally-tile-name"><i class="fa-solid fa-tag" style="color:var(--primary);"></i> ${escapeHtml(
+          isPt() ? 'Diversos / Avulso' : 'Miscellaneous'
+        )}</span>
+        <span class="tally-tile-price">${escapeHtml(isPt() ? 'Digitar R$' : 'Custom')}</span>
+      </div>
+      <div class="scan-barcode-box">${renderBarcodeSvg(MISC_BARCODE, {
+        height: compactTiles ? 38 : 48,
+        barWidth: compactTiles ? 1.5 : 1.75,
+        quietModules: 10,
+        showText: true
+      })}</div>
+    </button>
+  `;
+
   if (selectedCategory === 'ALL') {
     const map = new Map();
     filtered.forEach((item) => {
@@ -687,11 +801,12 @@ function renderMenuTiles() {
       map.get(cat).push(item);
     });
     const sortedCats = sortCategoriesCanonical(Array.from(map.keys()));
-    grid.innerHTML = sortedCats
-      .map((cat) => {
-        const list = map.get(cat).slice().sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-        const accent = getCategoryAccentColor(cat);
-        return `
+    grid.innerHTML =
+      sortedCats
+        .map((cat) => {
+          const list = map.get(cat).slice().sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+          const accent = getCategoryAccentColor(cat);
+          return `
           <div class="tally-cat-heading" style="--cat-accent:${accent};">
             <span class="tally-cat-heading-dot"></span>
             <span>${escapeHtml(cat)}</span>
@@ -699,12 +814,12 @@ function renderMenuTiles() {
           </div>
           ${list.map(renderTileHtml).join('')}
         `;
-      })
-      .join('');
+        })
+        .join('') + miscTileHtml;
     return;
   }
 
-  grid.innerHTML = filtered.map(renderTileHtml).join('');
+  grid.innerHTML = filtered.map(renderTileHtml).join('') + miscTileHtml;
 }
 
 function syncActiveOrderHighlightDom() {
@@ -727,6 +842,25 @@ function renderOpenOrders() {
   const storeId = getSelectedStoreId();
   const orders = getStoreOpenOrders(storeId);
   if (countBadge) countBadge.textContent = String(orders.length);
+
+  const stickyBar = document.getElementById('tally-mobile-sticky-bar');
+  if (stickyBar) {
+    if (orders.length === 0) {
+      stickyBar.classList.add('hidden');
+    } else {
+      const cur = orders.find((o) => o.id === activeOrderId) || orders[0];
+      const itemCount = (cur.items || []).reduce((s, it) => s + (Number(it.qty) || 0), 0);
+      const total = computeOpenOrderTotal(cur.items || []);
+      const tblEl = document.getElementById('tally-mobile-sticky-table');
+      const totEl = document.getElementById('tally-mobile-sticky-total');
+      if (tblEl) {
+        const tblLabel = cur.tableNumber ? `${isPt() ? 'Mesa' : 'Table'} ${cur.tableNumber}` : isPt() ? 'Comanda Aberta' : 'Open Order';
+        tblEl.textContent = `${tblLabel} · ${itemCount} ${itemCount === 1 ? 'item' : 'itens'}`;
+      }
+      if (totEl) totEl.textContent = formatCurrency(total);
+      stickyBar.classList.remove('hidden');
+    }
+  }
 
   if (orders.length === 0) {
     activeOrderId = '';

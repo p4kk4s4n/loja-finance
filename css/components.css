@@ -1258,3 +1258,114 @@ dialog.menu-print-dialog {
     align-items: center !important;
   }
 }
+
+
+/* v2.2.3 Settings Accordions, Mobile Sticky Bar & Foldable Fixes */
+.settings-accordion {
+  margin-bottom: 0.75rem;
+  border-radius: var(--radius-lg, 14px);
+  background: var(--card-bg, #ffffff);
+  border: 1px solid var(--panel-border, #e2e8f0);
+  overflow: hidden;
+}
+.settings-accordion-summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 0.9rem 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-weight: 700;
+  font-size: 0.98rem;
+  color: var(--text-primary);
+  user-select: none;
+}
+.settings-accordion-summary::-webkit-details-marker {
+  display: none;
+}
+.settings-accordion-summary::after {
+  content: '\f078';
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  transition: transform 0.2s ease;
+}
+.settings-accordion[open] > .settings-accordion-summary::after {
+  transform: rotate(180deg);
+}
+.settings-accordion-body {
+  padding: 0 1.1rem 1.1rem;
+}
+.settings-accordion-body > .glass-card {
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+}
+.settings-accordion-body > .glass-card > .glass-card-header:first-child {
+  display: none;
+}
+
+.tally-mobile-sticky-bar {
+  display: none;
+}
+@media (max-width: 768px) {
+  .tally-layout > *,
+  .glass-card,
+  .tally-toolbar,
+  .filter-bar {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .tally-mobile-sticky-bar:not(.hidden) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 90;
+    padding: 0.6rem 0.9rem calc(0.6rem + env(safe-area-inset-bottom, 0px));
+    background: var(--header-bg, rgba(255, 255, 255, 0.96));
+    backdrop-filter: blur(10px);
+    border-top: 1px solid var(--panel-border, #e2e8f0);
+    box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.08);
+  }
+  .tally-mobile-sticky-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .tally-mobile-sticky-table {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .tally-mobile-sticky-total {
+    font-size: 0.98rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  #tab-tally.active {
+    padding-bottom: 4.5rem;
+  }
+  .tally-summary-bar.tally-summary-bar--collapsed .tally-summary-pill:not(:first-child) {
+    display: none;
+  }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+  header {
+    position: static;
+  }
+  .tally-cart {
+    position: static;
+  }
+}
