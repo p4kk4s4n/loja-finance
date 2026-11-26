@@ -34,7 +34,7 @@ import {
   subscribeTallyDayLines,
   voidTallyLineInDb
 } from './db.js';
-import { createWedgeScanner, openCameraScanner, playScanFeedback } from './scanner.js';
+import { closeCameraScanner, createWedgeScanner, openCameraScanner, playScanFeedback } from './scanner.js';
 import { renderBarcodeSvg } from './barcode-svg.js';
 
 const OFFLINE_QUEUE_KEY = 'loja_tally_offline_queue';
@@ -53,6 +53,8 @@ try {
 let openOrdersSaveTimer = null;
 let subscribedKey = '';
 let wedgeScanner = null;
+let eventsBound = false;
+let miscItemSeq = 0;
 let editingLineTarget = null;
 let switchTabCallback = null;
 
@@ -150,6 +152,8 @@ function persistOpenOrders(storeId, orders, immediate = true) {
 
 export function bindTallyEvents(switchTab) {
   switchTabCallback = switchTab;
+  if (eventsBound) return;
+  eventsBound = true;
 
   const storeSelect = document.getElementById('tally-store-select');
   storeSelect?.addEventListener('change', () => {
@@ -195,26 +199,28 @@ export function bindTallyEvents(switchTab) {
     document.getElementById('tally-open-orders-list')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 
-  document.getElementById('tally-tiles-grid')?.addEventListener('click', (e) => {
-    const miscBtn = e.target.closest('[data-misc-item="true"]');
-    if (miscBtn) {
-      openMiscItemModal();
-    }
-  });
-
   const miscModal = document.getElementById('tally-misc-modal');
   document.getElementById('btn-close-tally-misc')?.addEventListener('click', () => miscModal?.close());
   document.getElementById('btn-cancel-tally-misc')?.addEventListener('click', () => miscModal?.close());
   document.getElementById('tally-misc-form')?.addEventListener('submit', (e) => {
     e.preventDefault();
-    const name = (document.getElementById('tally-misc-name')?.value || '').trim();
-    const price = parseFlexibleNumber(document.getElementById('tally-misc-price')?.value || '');
+    if (miscModal && !miscModal.open) return;
+    const nameIn = document.getElementById('tally-misc-name');
+    const priceIn = document.getElementById('tally-misc-price');
+    const name = (nameIn?.value || '').trim();
+    const price = parseFlexibleNumber(priceIn?.value || '');
     if (!name || !(price > 0)) {
       showToast(isPt() ? 'Informe nome e preço válidos.' : 'Enter a valid name and price.', true);
       return;
     }
-    addItemToCart({ id: `misc_${Date.now()}`, name, price, category: 'Outro' });
     miscModal?.close();
+    if (nameIn) nameIn.value = '';
+    if (priceIn) priceIn.value = '';
+    const miscId =
+      typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+        ? `misc_${crypto.randomUUID()}`
+        : `misc_${Date.now()}_${++miscItemSeq}`;
+    addItemToCart({ id: miscId, name, price, category: 'Outro' });
     showToast(`+1 ${name} (${formatCurrency(price)})`);
     if (document.activeElement && typeof document.activeElement.blur === 'function') {
       document.activeElement.blur();
@@ -293,6 +299,10 @@ export function bindTallyEvents(switchTab) {
   });
 
   document.getElementById('tally-tiles-grid')?.addEventListener('click', (e) => {
+    if (e.target.closest('[data-misc-item="true"]')) {
+      openMiscItemModal();
+      return;
+    }
     const tile = e.target.closest('[data-menu-item-id]');
     if (!tile) return;
     const item = (state.menuItems || []).find((m) => m.id === tile.dataset.menuItemId);
@@ -546,12 +556,18 @@ export function openTallyHistoryForDate(storeId, dateIso) {
 const MISC_BARCODE = '2099999999990';
 
 function openMiscItemModal() {
+  if (document.getElementById('camera-scanner-modal')?.open) {
+    try {
+      closeCameraScanner();
+    } catch (_) {}
+  }
   const modal = document.getElementById('tally-misc-modal');
+  if (!modal || modal.open) return;
   const nameIn = document.getElementById('tally-misc-name');
   const priceIn = document.getElementById('tally-misc-price');
   if (nameIn) nameIn.value = '';
   if (priceIn) priceIn.value = '';
-  if (modal && typeof modal.showModal === 'function') {
+  if (typeof modal.showModal === 'function') {
     modal.showModal();
     setTimeout(() => nameIn?.focus(), 50);
   }
@@ -570,45 +586,7 @@ function handleBarcodeScan(rawCode) {
     addItemToCart(match);
     playScanFeedback(true);
     searchQuery = '';
-    document.getElementById('btn-tally-mobile-jump')?.addEventListener('click', () => {
-    document.getElementById('tally-open-orders-list')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  });
-
-  document.getElementById('tally-tiles-grid')?.addEventListener('click', (e) => {
-    const miscBtn = e.target.closest('[data-misc-item="true"]');
-    if (miscBtn) {
-      openMiscItemModal();
-    }
-  });
-
-  const miscModal = document.getElementById('tally-misc-modal');
-  document.getElementById('btn-close-tally-misc')?.addEventListener('click', () => miscModal?.close());
-  document.getElementById('btn-cancel-tally-misc')?.addEventListener('click', () => miscModal?.close());
-  document.getElementById('tally-misc-form')?.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const name = (document.getElementById('tally-misc-name')?.value || '').trim();
-    const price = parseFlexibleNumber(document.getElementById('tally-misc-price')?.value || '');
-    if (!name || !(price > 0)) {
-      showToast(isPt() ? 'Informe nome e preço válidos.' : 'Enter a valid name and price.', true);
-      return;
-    }
-    addItemToCart({ id: `misc_${Date.now()}`, name, price, category: 'Outro' });
-    miscModal?.close();
-    showToast(`+1 ${name} (${formatCurrency(price)})`);
-    if (document.activeElement && typeof document.activeElement.blur === 'function') {
-      document.activeElement.blur();
-    }
-  });
-
-  // Keep Bluetooth scanner active after tapping non-input buttons on mobile
-  document.getElementById('tab-tally')?.addEventListener('click', (e) => {
-    const btn = e.target.closest('button');
-    if (btn && typeof btn.blur === 'function') {
-      setTimeout(() => btn.blur(), 0);
-    }
-  });
-
-  const scanInput = document.getElementById('tally-scan-input');
+    const scanInput = document.getElementById('tally-scan-input');
     if (scanInput) scanInput.value = '';
     renderMenuTiles();
     showToast(`+1 ${match.name} (${formatCurrency(match.price)})`);
