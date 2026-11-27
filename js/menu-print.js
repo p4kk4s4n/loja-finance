@@ -212,7 +212,7 @@ export function buildPrintableMenuHtml({
           <div class="pmenu-card-b-top">
             <span class="pmenu-item-name">${escapeHtml(pt ? 'Item Diversos (Digitar Nome & R$)' : 'Misc Item (Custom Name & Price)')}</span>
           </div>
-          <div class="pmenu-barcode-wrap">${renderBarcodeSvg('2099999999990', svgOpts)}</div>
+          <div class="pmenu-barcode-wrap">${renderBarcodeSvg('2099999999998', svgOpts)}</div>
         </div>
       </section>
     `

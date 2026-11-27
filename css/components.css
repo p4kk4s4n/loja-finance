@@ -494,6 +494,12 @@ dialog#receipt-modal { max-width: 720px; }
   align-items: start;
 }
 
+@media (min-aspect-ratio: 4/3) and (min-width: 1200px) {
+  .tally-layout {
+    grid-template-columns: minmax(0, 1fr) clamp(320px, 24vw, 400px);
+  }
+}
+
 .tally-chips {
   display: flex;
   gap: 0.45rem;
@@ -548,6 +554,10 @@ dialog#receipt-modal { max-width: 720px; }
 }
 .tally-cat-heading {
   grid-column: 1 / -1;
+  width: 100%;
+  border: none;
+  cursor: pointer;
+  text-align: left;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -559,6 +569,14 @@ dialog#receipt-modal { max-width: 720px; }
   font-weight: 700;
   font-size: 0.92rem;
   color: var(--text-primary);
+}
+.tally-cat-chevron {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  transition: transform 0.18s ease;
+}
+.tally-cat-heading[aria-expanded="false"] .tally-cat-chevron {
+  transform: rotate(-90deg);
 }
 .tally-cat-heading-dot {
   width: 8px;
@@ -582,7 +600,7 @@ dialog#receipt-modal { max-width: 720px; }
   justify-content: center;
   align-items: center;
   width: 100%;
-  overflow-x: auto;
+  overflow: hidden;
 }
 .scan-barcode-box--catalog {
   width: auto;
@@ -590,8 +608,8 @@ dialog#receipt-modal { max-width: 720px; }
   max-width: 260px;
 }
 .scan-barcode-box .barcode-svg {
-  flex-shrink: 0;
-  max-width: none;
+  flex-shrink: 1;
+  max-width: 100%;
   height: auto;
   display: block;
 }

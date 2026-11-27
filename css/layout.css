@@ -137,6 +137,13 @@ main {
   margin: 0 auto;
 }
 
+@media (min-aspect-ratio: 4/3) and (min-width: 1200px) {
+  main:has(#tab-tally.active) {
+    max-width: 100%;
+    padding: 1.5rem 1.25rem;
+  }
+}
+
 .tab-pane {
   display: none;
   container-type: inline-size;

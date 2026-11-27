@@ -40,6 +40,7 @@ import { renderBarcodeSvg } from './barcode-svg.js';
 const OFFLINE_QUEUE_KEY = 'loja_tally_offline_queue';
 const OPEN_ORDERS_CACHE_KEY = 'loja_open_orders_cache';
 const COMPACT_TILES_KEY = 'loja_tally_compact_tiles';
+const COLLAPSED_CATS_KEY = 'loja_tally_collapsed_cats';
 
 let activeOrderId = '';
 let selectedCategory = 'ALL';
@@ -47,8 +48,11 @@ let searchQuery = '';
 let activeView = 'order'; // 'order' | 'history'
 let btScannerMode = false;
 let compactTiles = false;
+let collapsedCats = new Set();
 try {
   compactTiles = localStorage.getItem(COMPACT_TILES_KEY) === '1';
+  const rawCollapsed = localStorage.getItem(COLLAPSED_CATS_KEY);
+  if (rawCollapsed) collapsedCats = new Set(JSON.parse(rawCollapsed));
 } catch (_) {}
 let openOrdersSaveTimer = null;
 let subscribedKey = '';
@@ -299,6 +303,19 @@ export function bindTallyEvents(switchTab) {
   });
 
   document.getElementById('tally-tiles-grid')?.addEventListener('click', (e) => {
+    const catBtn = e.target.closest('[data-toggle-cat]');
+    if (catBtn) {
+      const cat = catBtn.dataset.toggleCat;
+      if (cat) {
+        if (collapsedCats.has(cat)) collapsedCats.delete(cat);
+        else collapsedCats.add(cat);
+        try {
+          localStorage.setItem(COLLAPSED_CATS_KEY, JSON.stringify(Array.from(collapsedCats)));
+        } catch (_) {}
+        renderMenuTiles();
+      }
+      return;
+    }
     if (e.target.closest('[data-misc-item="true"]')) {
       openMiscItemModal();
       return;
@@ -553,7 +570,8 @@ export function openTallyHistoryForDate(storeId, dateIso) {
   setActiveView('history');
 }
 
-const MISC_BARCODE = '2099999999990';
+const MISC_BARCODE = '2099999999998';
+const LEGACY_MISC_BARCODE = '2099999999990';
 
 function openMiscItemModal() {
   if (document.getElementById('camera-scanner-modal')?.open) {
@@ -575,7 +593,7 @@ function openMiscItemModal() {
 
 function handleBarcodeScan(rawCode) {
   const cleanCode = (rawCode || '').trim();
-  if (cleanCode === MISC_BARCODE) {
+  if (cleanCode === MISC_BARCODE || cleanCode === LEGACY_MISC_BARCODE) {
     playScanFeedback(true);
     openMiscItemModal();
     return { itemName: 'Diversos' };
@@ -784,13 +802,15 @@ function renderMenuTiles() {
         .map((cat) => {
           const list = map.get(cat).slice().sort((a, b) => (a.name || '').localeCompare(b.name || ''));
           const accent = getCategoryAccentColor(cat);
+          const isCollapsed = !q && collapsedCats.has(cat);
           return `
-          <div class="tally-cat-heading" style="--cat-accent:${accent};">
+          <button type="button" class="tally-cat-heading" data-toggle-cat="${escapeHtml(cat)}" aria-expanded="${!isCollapsed}" style="--cat-accent:${accent};">
+            <i class="fa-solid fa-chevron-down tally-cat-chevron"></i>
             <span class="tally-cat-heading-dot"></span>
             <span>${escapeHtml(cat)}</span>
             <span class="tally-cat-heading-count">${list.length}</span>
-          </div>
-          ${list.map(renderTileHtml).join('')}
+          </button>
+          ${isCollapsed ? '' : list.map(renderTileHtml).join('')}
         `;
         })
         .join('') + miscTileHtml;
