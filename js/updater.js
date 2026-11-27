@@ -3,7 +3,7 @@ import { state } from './state.js';
 import { showToast } from './utils.js';
 
 const AUTO_UPDATE_KEY = 'loja_auto_update';
-const INSTALLED_VERSION_FALLBACK = '2.2.5';
+const INSTALLED_VERSION_FALLBACK = '2.2.6';
 
 let swRegistration = null;
 let installedVersion = INSTALLED_VERSION_FALLBACK;

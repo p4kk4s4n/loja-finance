@@ -16,6 +16,7 @@ export const state = {
   activeTallyLines: [],
   tallyDayUnsub: null,
   aiApiKey: '',
+  aiModel: '',
   sheetsConfig: { spreadsheetId: '', googleClientId: '' },
   currentLanguage: 'pt',
   uploadedImages: {},

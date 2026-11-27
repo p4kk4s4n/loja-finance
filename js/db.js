@@ -61,6 +61,7 @@ export async function fetchInitialConfigAndRoster() {
   if (aiSnap.exists()) {
     const aiData = aiSnap.data();
     state.aiApiKey = aiData.geminiApiKey || '';
+    state.aiModel = aiData.geminiModel || '';
     state.sheetsConfig = {
       spreadsheetId: aiData.spreadsheetId || '',
       googleClientId: aiData.googleClientId || ''
@@ -140,6 +141,7 @@ export async function subscribeRealtimeData(callbacks = {}) {
     if (snap.exists()) {
       const data = snap.data();
       state.aiApiKey = data.geminiApiKey || '';
+      state.aiModel = data.geminiModel || '';
       state.sheetsConfig = {
         spreadsheetId: data.spreadsheetId || '',
         googleClientId: data.googleClientId || ''
@@ -336,12 +338,13 @@ export async function saveCategoriesToDb(categories) {
   await setDoc(doc(db, 'config', 'categories'), { items: categories });
 }
 
-export async function saveIntegrationConfigToDb({ geminiApiKey, spreadsheetId, googleClientId }) {
+export async function saveIntegrationConfigToDb({ geminiApiKey, geminiModel, spreadsheetId, googleClientId }) {
   const { db } = await initFirebase();
   await setDoc(
     doc(db, 'config', 'ai'),
     {
       geminiApiKey: geminiApiKey || '',
+      geminiModel: geminiModel || '',
       spreadsheetId: spreadsheetId || '',
       googleClientId: googleClientId || '',
       updatedAt: new Date().toISOString()

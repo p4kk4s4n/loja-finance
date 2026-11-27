@@ -65,6 +65,7 @@ import { openMenuPrintModal } from './menu-print.js';
 import { applyAppUpdate, checkForUpdates } from './updater.js';
 import { syncSnapshotToGoogleSheets } from './sheets-export.js';
 import { openCameraScanner } from './scanner.js';
+import { DEFAULT_GEMINI_MODEL, testGeminiConnection } from './ai-ocr.js';
 import { renderDynamicStreams } from './ui-sales.js';
 import { populateMasterCategoryDropdown } from './ui-expenses.js';
 
@@ -184,6 +185,18 @@ export function bindSettingsEvents(onPrefsOrDashboardRefresh) {
   // Integrations (Gemini + Sheets)
   document.getElementById('btn-save-integrations')?.addEventListener('click', saveIntegrations);
   document.getElementById('btn-sync-sheets-now')?.addEventListener('click', syncSnapshotToGoogleSheets);
+  document.getElementById('btn-test-gemini')?.addEventListener('click', handleTestGeminiApi);
+  document.getElementById('gemini-test-status')?.addEventListener('click', (e) => {
+    const chip = e.target.closest('[data-pick-gemini-model]');
+    if (!chip) return;
+    const modelInput = document.getElementById('set-gemini-model');
+    if (modelInput) modelInput.value = chip.dataset.pickGeminiModel || DEFAULT_GEMINI_MODEL;
+    showToast(
+      state.currentLanguage === 'pt'
+        ? `Modelo "${chip.dataset.pickGeminiModel}" selecionado. Clique em Testar API ou Salvar.`
+        : `Selected "${chip.dataset.pickGeminiModel}". Click Test API or Save.`
+    );
+  });
 
   // Updater controls
   document.getElementById('btn-check-updates')?.addEventListener('click', () => checkForUpdates(false));
@@ -720,22 +733,80 @@ async function saveTeamRoster() {
 
 export function renderIntegrationInputs() {
   const gemEl = document.getElementById('set-gemini-key');
+  const modEl = document.getElementById('set-gemini-model');
   const sheetIdEl = document.getElementById('set-spreadsheet-id');
   const clientIdEl = document.getElementById('set-google-client-id');
   if (gemEl) gemEl.value = state.aiApiKey || '';
+  if (modEl) modEl.value = state.aiModel || DEFAULT_GEMINI_MODEL;
   if (sheetIdEl) sheetIdEl.value = state.sheetsConfig?.spreadsheetId || '';
   if (clientIdEl) clientIdEl.value = state.sheetsConfig?.googleClientId || '';
+}
+
+async function handleTestGeminiApi() {
+  const btn = document.getElementById('btn-test-gemini');
+  const statusEl = document.getElementById('gemini-test-status');
+  const apiKey = (document.getElementById('set-gemini-key')?.value || '').trim();
+  const model = (document.getElementById('set-gemini-model')?.value || '').trim() || DEFAULT_GEMINI_MODEL;
+  const pt = state.currentLanguage === 'pt';
+
+  if (!statusEl) return;
+  statusEl.className = 'form-grid-full gemini-test-status';
+  statusEl.textContent = pt ? `Testando modelo "${model}"...` : `Testing model "${model}"...`;
+  if (btn) btn.disabled = true;
+
+  try {
+    const res = await testGeminiConnection({ apiKey, model });
+    if (res.ok) {
+      statusEl.className = 'form-grid-full gemini-test-status gemini-test-status--ok';
+      const verNote =
+        res.modelVersion && res.modelVersion !== res.requestedModel ? ` (versão: ${escapeHtml(res.modelVersion)})` : '';
+      statusEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> <strong>${
+        pt ? 'Conectado!' : 'Connected!'
+      }</strong> ${pt ? 'Modelo chamado:' : 'Model called:'} <code>${escapeHtml(
+        res.requestedModel
+      )}</code>${verNote} · ${res.latencyMs}ms`;
+    } else {
+      statusEl.className = 'form-grid-full gemini-test-status gemini-test-status--err';
+      const chipsHtml =
+        res.availableModels && res.availableModels.length > 0
+          ? `<div style="margin-top:0.4rem;"><strong>${
+              pt ? 'Modelos disponíveis nesta chave (clique para selecionar):' : 'Available models on this key (click to select):'
+            }</strong><div class="gemini-model-chips">${res.availableModels
+              .map(
+                (m) =>
+                  `<button type="button" class="tally-chip" data-pick-gemini-model="${escapeHtml(m)}">${escapeHtml(
+                    m
+                  )}</button>`
+              )
+              .join('')}</div></div>`
+          : '';
+      statusEl.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> <strong>${
+        pt ? 'Falha' : 'Failed'
+      }</strong> (${pt ? 'modelo:' : 'model:'} <code>${escapeHtml(res.requestedModel)}</code>${
+        res.status ? ` · HTTP ${res.status}` : ''
+      }): ${escapeHtml(res.error || 'Unknown error')}${chipsHtml}`;
+    }
+  } finally {
+    if (btn) btn.disabled = false;
+  }
 }
 
 async function saveIntegrations() {
   if (normalizeUserRole(state.currentUser?.role) !== 'admin') return;
   const geminiApiKey = document.getElementById('set-gemini-key')?.value.trim() || '';
+  const geminiModel = document.getElementById('set-gemini-model')?.value.trim() || DEFAULT_GEMINI_MODEL;
   const spreadsheetId = document.getElementById('set-spreadsheet-id')?.value.trim() || '';
   const googleClientId = document.getElementById('set-google-client-id')?.value.trim() || '';
 
   showLoadingScreen('Saving integration settings...');
   try {
-    await saveIntegrationConfigToDb({ geminiApiKey, spreadsheetId, googleClientId });
+    await saveIntegrationConfigToDb({ geminiApiKey, geminiModel, spreadsheetId, googleClientId });
+    state.aiApiKey = geminiApiKey;
+    state.aiModel = geminiModel;
+    try {
+      localStorage.setItem('loja_gemini_key', geminiApiKey);
+      localStorage.setItem('loja_gemini_model', geminiModel);
+    } catch (_) {}
     showToast(state.currentLanguage === 'pt' ? 'Integrações salvas!' : 'Integrations saved!');
   } catch (err) {
     showToast('Failed to save integrations: ' + err.message, true);

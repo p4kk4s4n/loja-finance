@@ -29,7 +29,7 @@
       <div class="brand">
         <div class="brand-icon"><i class="fa-solid fa-chart-line"></i></div>
         <div class="brand-name">Loja Finance</div>
-        <span id="header-version-pill" class="version-pill">v2.2.5</span>
+        <span id="header-version-pill" class="version-pill">v2.2.6</span>
       </div>
 
       <div class="user-info">
@@ -711,11 +711,11 @@
           <div class="calc-container" style="margin-bottom:1.25rem;">
             <div class="calc-row">
               <span data-i18n="upd_current">Installed Version:</span>
-              <strong id="upd-current-ver">v2.2.5</strong>
+              <strong id="upd-current-ver">v2.2.6</strong>
             </div>
             <div class="calc-row">
               <span data-i18n="upd_latest">Latest on GitHub:</span>
-              <strong id="upd-latest-ver">v2.2.5</strong>
+              <strong id="upd-latest-ver">v2.2.6</strong>
             </div>
             <div class="calc-row">
               <label class="toggle-switch" for="pref-auto-update">
@@ -895,10 +895,26 @@
               <h3 class="glass-card-title"><i class="fa-solid fa-plug" style="color:var(--accent);"></i> Gemini AI &amp; Google Sheets Backup</h3>
             </div>
             <div class="form-grid">
-              <div class="form-group form-grid-full">
+              <div class="form-group">
                 <label for="set-gemini-key">Gemini API Key (HTTP-Referrer Restricted)</label>
-                <input type="password" id="set-gemini-key" placeholder="AIza...">
+                <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                  <input type="password" id="set-gemini-key" placeholder="AIza..." style="flex:1; min-width:160px;">
+                  <button id="btn-test-gemini" type="button" class="btn-secondary" style="white-space:nowrap;">
+                    <i class="fa-solid fa-vial"></i> <span data-i18n="set_gemini_test_btn">Testar API</span>
+                  </button>
+                </div>
               </div>
+              <div class="form-group">
+                <label for="set-gemini-model" data-i18n="set_gemini_model_lbl">Modelo Gemini (OCR)</label>
+                <input type="text" id="set-gemini-model" list="gemini-model-suggestions" placeholder="gemini-2.5-flash">
+                <datalist id="gemini-model-suggestions">
+                  <option value="gemini-2.5-flash"></option>
+                  <option value="gemini-3.5-flash"></option>
+                  <option value="gemini-2.5-flash-lite"></option>
+                  <option value="gemini-2.0-flash"></option>
+                </datalist>
+              </div>
+              <div id="gemini-test-status" class="form-grid-full gemini-test-status hidden" aria-live="polite"></div>
               <div class="form-group">
                 <label for="set-spreadsheet-id">Backup Google Spreadsheet ID (Optional)</label>
                 <input type="text" id="set-spreadsheet-id" placeholder="1G-TFhcsMCb6v4g19IjGIV6wMccDVXUyjgYJvwi3fO9Q">
