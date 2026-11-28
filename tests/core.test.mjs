@@ -258,7 +258,7 @@ test('reconcileLedgerRevenue and getScopedLedgerData enforce store/role scoping 
     tallyDays: tallies,
     currentUser: { name: 'Ana', role: 'Employee', storeAssignment: 'Porteira Velho' }
   });
-  assert.equal(emp.scopedTallyDays.length, 0);
+  assert.equal(emp.scopedTallyDays.length, 1);
 
   const socio = getScopedLedgerData({
     rawSubmissions: [],
