@@ -324,13 +324,10 @@ export function getScopedLedgerData({
 
   const scopedSubmissions = rawSubmissions.filter(matchesScope);
   const scopedExpenses = groupedExpenses.filter(matchesScope);
-  const scopedTallyDays =
-    roleKind === 'employee'
-      ? []
-      : (tallyDays || []).filter((td) => {
-          const tdStore = (td.storeId || td.store || '').trim();
-          return effectiveStore === 'All Stores' || tdStore === effectiveStore;
-        });
+  const scopedTallyDays = (tallyDays || []).filter((td) => {
+    const tdStore = (td.storeId || td.store || '').trim();
+    return effectiveStore === 'All Stores' || tdStore === effectiveStore;
+  });
 
   const visibleBusinesses =
     roleKind === 'employee'

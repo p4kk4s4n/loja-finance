@@ -29,7 +29,7 @@
       <div class="brand">
         <div class="brand-icon"><i class="fa-solid fa-chart-line"></i></div>
         <div class="brand-name">Loja Finance</div>
-        <span id="header-version-pill" class="version-pill">v2.2.7</span>
+        <span id="header-version-pill" class="version-pill">v2.2.8</span>
       </div>
 
       <div class="user-info">
@@ -53,9 +53,6 @@
       </button>
       <button type="button" class="nav-btn" data-tab="dashboard">
         <i class="fa-solid fa-gauge-high"></i> <span data-i18n="nav_dashboard">Dashboard</span>
-      </button>
-      <button id="nav-btn-portfolio" type="button" class="nav-btn" data-tab="portfolio">
-        <i class="fa-solid fa-briefcase"></i> <span data-i18n="nav_portfolio">Portfolio</span>
       </button>
       <button type="button" class="nav-btn" data-tab="history">
         <i class="fa-solid fa-clock-rotate-left"></i> <span data-i18n="nav_history">History Logs</span>
@@ -454,39 +451,11 @@
           </div>
         </div>
 
-        <div class="glass-card" id="dashboard-reconciliation-card" style="display:none; margin-top:1.5rem;">
-          <div class="glass-card-header">
-            <h3 class="glass-card-title">
-              <i class="fa-solid fa-scale-balanced" style="color:var(--primary);"></i>
-              <span data-i18n="dash_recon_title">Reconciliação Comanda vs. Caixa Diário</span>
-            </h3>
-          </div>
-          <div class="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th data-i18n="recon_col_date">Data</th>
-                  <th data-i18n="recon_col_store">Loja</th>
-                  <th data-i18n="recon_col_tally">Comanda (R$)</th>
-                  <th data-i18n="recon_col_manual">Manual (R$)</th>
-                  <th data-i18n="recon_col_unitemized">Não Itemizado (R$)</th>
-                  <th data-i18n="recon_col_reported">Considerado (R$)</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody id="dashboard-reconciliation-tbody"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- PORTFOLIO TAB -->
-      <div id="tab-portfolio" class="tab-pane">
-        <div class="glass-card">
+        <div class="glass-card" id="dashboard-portfolio-card" style="margin-top:1.5rem;">
           <div class="glass-card-header">
             <h3 class="glass-card-title"><i class="fa-solid fa-briefcase" style="color:var(--primary);"></i> <span data-i18n="port_title">Macro-Portfolio Performance</span></h3>
           </div>
-          <div style="position:relative; height:480px; width:100%;">
+          <div style="position:relative; height:360px; width:100%;">
             <canvas id="portfolio-chart"></canvas>
           </div>
         </div>
@@ -499,6 +468,29 @@
           <button id="btn-export-csv" type="button" class="btn-secondary">
             <i class="fa-solid fa-file-csv"></i> <span data-i18n="btn_export_all">Export CSV (All Reports)</span>
           </button>
+        </div>
+
+        <div class="glass-card" id="history-daily-summary-card">
+          <div class="glass-card-header">
+            <h2 class="glass-card-title"><i class="fa-solid fa-calendar-day" style="color:var(--primary);"></i> <span data-i18n="hist_daily_summary_title">Resumo Diário (Comanda, Caixa &amp; Despesas)</span></h2>
+            <div style="font-size:0.85rem; color:var(--text-secondary);"><span data-i18n="hist_count">Entries:</span> <span id="history-daily-summary-count" style="font-weight:700; color:var(--primary);">0</span></div>
+          </div>
+          <div class="table-container">
+            <table id="history-daily-summary-table">
+              <thead>
+                <tr>
+                  <th data-i18n="recon_col_date">Data</th>
+                  <th data-i18n="recon_col_store">Loja</th>
+                  <th data-i18n="recon_col_tally">Comanda (R$)</th>
+                  <th data-i18n="recon_col_manual">Caixa (R$)</th>
+                  <th data-i18n="dash_kpi_exp">Despesas (R$)</th>
+                  <th data-i18n="recon_col_reported">Considerado (R$)</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="history-daily-summary-tbody"></tbody>
+            </table>
+          </div>
         </div>
 
         <div class="glass-card">
@@ -711,11 +703,11 @@
           <div class="calc-container" style="margin-bottom:1.25rem;">
             <div class="calc-row">
               <span data-i18n="upd_current">Installed Version:</span>
-              <strong id="upd-current-ver">v2.2.7</strong>
+              <strong id="upd-current-ver">v2.2.8</strong>
             </div>
             <div class="calc-row">
               <span data-i18n="upd_latest">Latest on GitHub:</span>
-              <strong id="upd-latest-ver">v2.2.7</strong>
+              <strong id="upd-latest-ver">v2.2.8</strong>
             </div>
             <div class="calc-row">
               <label class="toggle-switch" for="pref-auto-update">

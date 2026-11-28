@@ -154,8 +154,7 @@ export function renderDashboard() {
   renderPartnerSharesList(netProfit, bizProfit, scoped.visiblePartners);
   renderDashboardChart(rev.dateRevenue, filteredExpenses);
   renderPortfolioChart(rev.bizRevenue, filteredExpenses, scoped.visibleBusinesses);
-  renderReconciliationTable(rev.dailyBreakdown);
-  renderHistoryTables(storeSubmissions, storeExpenses);
+  renderHistoryTables(filteredSubmissions, filteredExpenses, rev.dailyBreakdown, filteredTallyDays);
 }
 
 function renderPartnerSharesList(netProfit, bizProfit, partners) {
@@ -379,42 +378,81 @@ async function openReceiptModal(receiptId) {
   }
 }
 
-function renderReconciliationTable(dailyBreakdown = []) {
-  const card = document.getElementById('dashboard-reconciliation-card');
-  const tbody = document.getElementById('dashboard-reconciliation-tbody');
-  if (!card || !tbody) return;
+function renderDailySummaryTable(dailyBreakdown = [], expLogs = [], tallyDays = []) {
+  const tbody = document.getElementById('history-daily-summary-tbody');
+  const countEl = document.getElementById('history-daily-summary-count');
+  if (!tbody) return;
 
-  const tallyRows = (dailyBreakdown || []).filter((r) => r.tally > 0);
-  if (tallyRows.length === 0) {
-    card.style.display = 'none';
-    tbody.innerHTML = '';
+  const pt = state.currentLanguage === 'pt';
+  const expByKey = new Map();
+  for (const exp of expLogs || []) {
+    const key = `${exp.date || ''}__${(exp.store || 'Store 1').trim()}`;
+    expByKey.set(key, (expByKey.get(key) || 0) + (parseFlexibleNumber(exp.amount) || 0));
+  }
+  const tallyMetaByKey = new Map();
+  for (const td of tallyDays || []) {
+    const key = `${td.date || ''}__${(td.storeId || td.store || '').trim()}`;
+    tallyMetaByKey.set(key, td);
+  }
+
+  const allKeys = new Set((dailyBreakdown || []).map((r) => `${r.date}__${r.store}`));
+  for (const k of expByKey.keys()) allKeys.add(k);
+
+  const rows = Array.from(allKeys)
+    .map((key) => {
+      const [date, store] = key.split('__');
+      const bd = (dailyBreakdown || []).find((r) => r.date === date && r.store === store);
+      const td = tallyMetaByKey.get(key);
+      const expTotal = expByKey.get(key) || 0;
+      return {
+        date,
+        store,
+        tally: bd ? bd.tally : Number(td?.total) || 0,
+        manual: bd ? bd.manual : 0,
+        reported: bd ? bd.reported : Number(td?.total) || 0,
+        expenses: expTotal,
+        orderCount: Number(td?.orderCount) || 0,
+        itemCount: Number(td?.itemCount) || 0
+      };
+    })
+    .sort((a, b) => (b.date || '').localeCompare(a.date || '') || (a.store || '').localeCompare(b.store || ''));
+
+  if (countEl) countEl.textContent = String(rows.length);
+
+  if (rows.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">${escapeHtml(t('txt_no_records'))}</td></tr>`;
     return;
   }
 
-  card.style.display = 'block';
-  const pt = state.currentLanguage === 'pt';
-  tbody.innerHTML = tallyRows
-    .map(
-      (r) => `
+  tbody.innerHTML = rows
+    .map((r) => {
+      const ordersMeta =
+        r.tally > 0
+          ? `<div style="font-size:0.72rem; color:var(--text-muted); font-weight:400;">${
+              r.orderCount > 0 ? `${r.orderCount} ${pt ? 'ped.' : 'ord.'} · ` : ''
+            }${r.itemCount} ${pt ? 'itens' : 'items'}</div>`
+          : '';
+      return `
       <tr>
         <td style="font-weight:600;">${escapeHtml(r.date)}</td>
         <td><span class="badge">${escapeHtml(r.store)}</span></td>
-        <td style="color:var(--primary); font-weight:600;">${formatCurrency(r.tally)}</td>
+        <td style="color:var(--primary); font-weight:600;">${formatCurrency(r.tally)}${ordersMeta}</td>
         <td>${formatCurrency(r.manual)}</td>
-        <td style="color:${r.unitemized > 0 ? 'var(--warning)' : 'var(--text-muted)'}; font-weight:${r.unitemized > 0 ? '700' : '400'};">${formatCurrency(r.unitemized)}</td>
+        <td style="color:var(--danger);">${formatCurrency(r.expenses)}</td>
         <td style="font-weight:700; color:var(--success);">${formatCurrency(r.reported)}</td>
         <td style="text-align:right;">
           <button type="button" class="btn-secondary" style="padding:0.25rem 0.65rem; font-size:0.75rem;" data-open-tally-store="${escapeHtml(r.store)}" data-open-tally-date="${escapeHtml(r.date)}">
-            <i class="fa-solid fa-eye"></i> ${escapeHtml(pt ? 'Revisar' : 'Review')}
+            <i class="fa-solid fa-eye"></i> ${escapeHtml(pt ? 'Abrir na Comanda' : 'Open in Tally')}
           </button>
         </td>
       </tr>
-    `
-    )
+    `;
+    })
     .join('');
 }
 
-export function renderHistoryTables(subsLogs, expLogs) {
+export function renderHistoryTables(subsLogs, expLogs, dailyBreakdown = [], tallyDays = []) {
+  renderDailySummaryTable(dailyBreakdown, expLogs, tallyDays);
   const tbodySubs = document.getElementById('history-tbody');
   document.getElementById('history-count').innerText = subsLogs.length;
   const dupLabel = t('btn_duplicate', 'Duplicate');

@@ -639,6 +639,7 @@ export async function addTallyOrderToDb({
       date,
       total: increment(orderTotal),
       itemCount: increment(orderQty),
+      orderCount: increment(1),
       cardPixTotal: increment(cardPixDelta),
       updatedAt: nowIso
     },
